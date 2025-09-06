@@ -17,13 +17,19 @@ const Navbar = () => {
   const { getTotalItems } = useCart();
   const cartItemCount = getTotalItems();
 
+  // const mainNavItems = [
+  //   { name: "ALL PRODUCTS", href: "/products" },
+  //   { name: "SHOP BY CATEGORY", href: "#" },
+  //   { name: "ROOMS", href: "#" },
+  //   { name: "MADE TO ORDER", href: "#" },
+  //   { name: "VILLA TEXTILES & RUGS", href: "#" },
+  //   { name: "IN STOCK", href: "#" },
+  // ];
   const mainNavItems = [
-    { name: "ALL PRODUCTS", href: "/products" },
-    { name: "SHOP BY CATEGORY", href: "#" },
-    { name: "ROOMS", href: "#" },
-    { name: "MADE TO ORDER", href: "#" },
-    { name: "VILLA TEXTILES & RUGS", href: "#" },
-    { name: "IN STOCK", href: "#" },
+    { name: "", href: "#" },
+    // { name: "TEST1", href: "#" },
+    // { name: "TEST2", href: "#" },
+    // { name: "TEST3", href: "#" },
   ];
 
   return (
@@ -60,40 +66,47 @@ const Navbar = () => {
           {/* Right Side Actions */}
           <div className="flex items-center space-x-6">
             {/* Admin Panel */}
-            <Link
+            {/* <Link
               href="/admin/content"
               className="flex items-center text-sm text-gray-700 hover:text-gray-900 transition-colors"
             >
               <Settings className="h-4 w-4 mr-1" />
               Admin
-            </Link>
+            </Link> */}
+            {/* <Link 
+              href="#"
+              className="flex items-center text-sm text-gray-700 hover:text-gray-900 transition-colors"
+            >
+              <Settings className="h-4 w-4 mr-1" />
+              Test1
+            </Link> */}
 
             {/* Track Order */}
-            <Link
+            {/* <Link
               href="/track"
               className="flex items-center text-sm text-gray-700 hover:text-gray-900 transition-colors"
             >
               <Package className="h-4 w-4 mr-1" />
               Track Order
-            </Link>
+            </Link> */}
 
             {/* Become A Member */}
-            <button className="flex items-center text-sm text-gray-700 hover:text-gray-900 transition-colors">
+            {/* <button className="flex items-center text-sm text-gray-700 hover:text-gray-900 transition-colors">
               <Plus className="h-4 w-4 mr-1" />
               Become A Member
-            </button>
+            </button> */}
 
             {/* Sign In */}
-            <Link
+            {/* <Link
               href="/login"
               className="flex items-center text-sm text-gray-700 hover:text-gray-900 transition-colors"
             >
               <User className="h-4 w-4 mr-1" />
               Sign In
-            </Link>
+            </Link> */}
 
             {/* Cart */}
-            <Link
+            {/* <Link
               href="/cart"
               className="flex items-center text-sm text-gray-700 hover:text-gray-900 transition-colors relative"
             >
@@ -104,7 +117,7 @@ const Navbar = () => {
                   {cartItemCount > 99 ? "99+" : cartItemCount}
                 </span>
               )}
-            </Link>
+            </Link> */}
           </div>
         </div>
       </div>
