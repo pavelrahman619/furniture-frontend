@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import {
   Search,
   User,
@@ -36,14 +37,18 @@ const Navbar = () => {
     <nav className="sticky top-0 z-50 w-full bg-white border-b border-gray-200 shadow-sm">
       {/* Top Navigation Bar */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+        <div className="flex items-center justify-between h-20">
           {/* Logo */}
-          <div className="flex-shrink-0">
+          <div className="flex-shrink-0 py-2">
             <Link
               href="/"
-              className="text-2xl font-light tracking-wider text-gray-900 hover:text-gray-700 transition-colors"
+              className="flex items-center hover:opacity-80 transition-opacity duration-200"
             >
-              CLASSIC HOME
+              <img
+                src="/furniture/logo.svg"
+                alt="PALACIOS HOME"
+                className="h-auto w-15 object-contain"
+              />
             </Link>
           </div>
 

@@ -16,46 +16,78 @@ const CategorySlider = () => {
   const sliderRef = useRef<HTMLDivElement>(null);
 
   const categories: Category[] = [
+    // {
+    //   id: "artisan-house",
+    //   title: "ARTISAN HOUSE",
+    //   description:
+    //     "Where craftsmanship meets timeless beauty. Each curated, found piece is an heirloom of artisanal design, meticulously hand-carved from reclaimed wood to reveal layers of character and history.",
+    //   image:
+    //     "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+    // },
     {
-      id: "artisan-house",
-      title: "ARTISAN HOUSE",
+      id: "living-room",
+      title: "LIVING ROOM",
       description:
-        "Where craftsmanship meets timeless beauty. Each curated, found piece is an heirloom of artisanal design, meticulously hand-carved from reclaimed wood to reveal layers of character and history.",
+        "Discover the living room section, where sophisticated design meets modern luxury. From statement seating to elegant accents, elevate your home with enduring style.",
       image:
-        "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+        "/furniture/living room.webp",
     },
     {
-      id: "living",
-      title: "LIVING",
+      id: "dining-room",
+      title: "DINING ROOM",
       description:
-        "Discover our living room collections - a selection of beautifully handcrafted items, designed to last a lifetime.",
+        "Our dining room section brings elegance to every occasion. Discover refined tables and seating designed for timeless gatherings.",
       image:
-        "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-    },
-    {
-      id: "dining",
-      title: "DINING",
-      description:
-        "Inspired by the people and places that form the heart of our brand, each piece invites you to relax in style and comfort.",
-      image:
-        "https://images.unsplash.com/photo-1449247709967-d4461a6a6103?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+        "/furniture/dining room.webp",
     },
     {
       id: "bedroom",
       title: "BEDROOM",
       description:
-        "Transform your bedroom into an oasis of your own with our thoughtfully curated collections.",
+        "Transform your bedroom into a sanctuary of elegance and comfort",
       image:
-        "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+        "/furniture/bedroom.jpg",
+    },
+    // {
+    //   id: "bedroom 1",
+    //   title: "BEDROOM 1",
+    //   description:
+    //     "Transform your bedroom into a sanctuary of elegance and comfort",
+    //   image:
+    //     "/furniture/bedroom 1.jpg",
+    // },
+    // {
+    //   id: "bedroom 2",
+    //   title: "BEDROOM 2",
+    //   description:
+    //     "Transform your bedroom into a sanctuary of elegance and comfort",
+    //   image:
+    //     "/furniture/bedroom 2.jpg",
+    // },
+    {
+      id: "office",
+      title: "OFFICE",
+      description:
+        "Curated office pieces that inspire success and style.",
+      image:
+        "/furniture/office.webp",
     },
     {
-      id: "lighting",
-      title: "LIGHTING",
+      id: "entry-and-decor",
+      title: "ENTRY & DECOR",
       description:
-        "From charming chandeliers to accent pieces, these handcrafted fixtures bring warmth, personality, and artisanal beauty to every space.",
+        "Make a lasting first impression with elegant entryway pieces and decor.",
       image:
-        "https://images.unsplash.com/photo-1524484485831-a92ffc0de03f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+        "/furniture/entry and decor.webp",
     },
+    // {
+    //   id: "lighting",
+    //   title: "LIGHTING",
+    //   description:
+    //     "From charming chandeliers to accent pieces, these handcrafted fixtures bring warmth, personality, and artisanal beauty to every space.",
+    //   image:
+    //     "https://images.unsplash.com/photo-1524484485831-a92ffc0de03f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+    // },
   ];
 
   const slideLeft = () => {
