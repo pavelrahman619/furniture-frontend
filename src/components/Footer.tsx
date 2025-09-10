@@ -6,40 +6,60 @@ import { Instagram, Facebook, Linkedin, ChevronRight } from "lucide-react";
 const Footer = () => {
   const [email, setEmail] = useState("");
 
-  const companyLinks = [
-    "About Classic Home",
-    "Careers",
-    "Meet Our Team",
-    "Press Inquiries",
-    "Contact Us",
-    "Join Today",
-    "Made In America",
-    "Terms & Conditions",
-    "Privacy Policy",
+  // First column links
+  const firstColumnLinks = [
+    "About us",
+    "Contact us", 
+    "Terms and conditions"
   ];
 
-  const accountLinks = [
-    "My Account",
-    "Claims Portal",
-    "Delivery & Shipping",
-    "Catalogs & Subscriptions",
+  // Second column links
+  const secondColumnLinks = [
+    "Delivery status",
+    "Admin login"
   ];
 
-  const connectLinks = [
-    "FAQs",
-    "Classic Home Trade Program",
-    "Design Services",
-    "Find an Account Manager",
-    "Care Guide",
+  // Third column links
+  const thirdColumnLinks = [
+    "Privacy policy",
+    "Delivery policy"
   ];
 
-  const showroomLinks = [
-    "Las Vegas Tour",
-    "High Point Tour",
-    "Atlanta Tour",
-    "Dallas Tour",
-    "Los Angeles Tour",
-  ];
+  // Commented out - not needed
+  // const companyLinks = [
+  //   "About Palacios Home",
+  //   "Careers",
+  //   "Meet Our Team",
+  //   "Press Inquiries",
+  //   "Contact Us",
+  //   "Join Today",
+  //   "Made In America",
+  //   "Terms & Conditions",
+  //   "Privacy Policy",
+  // ];
+
+  // const accountLinks = [
+  //   "My Account",
+  //   "Claims Portal",
+  //   "Delivery & Shipping",
+  //   "Catalogs & Subscriptions",
+  // ];
+
+  // const connectLinks = [
+  //   "FAQs",
+  //   "Palacios Home Trade Program",
+  //   "Design Services",
+  //   "Find an Account Manager",
+  //   "Care Guide",
+  // ];
+
+  // const showroomLinks = [
+  //   "Las Vegas Tour",
+  //   "High Point Tour",
+  //   "Atlanta Tour",
+  //   "Dallas Tour",
+  //   "Los Angeles Tour",
+  // ];
 
   const handleEmailSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,11 +76,103 @@ const Footer = () => {
           {/* Logo Section */}
           <div className="lg:col-span-5 mb-8">
             <h2 className="text-3xl font-light tracking-widest text-white">
-              CLASSIC HOME
+              PALACIOS HOME
             </h2>
           </div>
 
-          {/* Company Links */}
+          {/* First Column - About us, Contact us, Terms and conditions */}
+          <div className="space-y-4">
+            <ul className="space-y-3">
+              {firstColumnLinks.map((link, index) => (
+                <li key={index}>
+                  <a
+                    href="#"
+                    className="text-sm text-gray-400 hover:text-white transition-colors duration-200"
+                  >
+                    {link}
+                  </a>
+                </li>
+              ))}
+            </ul>
+            {/* Email contact */}
+            <div className="mt-4">
+              <p className="text-sm text-gray-400 mb-1">Email</p>
+              <a
+                href="mailto:info@palacioshomeco.com"
+                className="text-sm text-white hover:text-gray-300 transition-colors duration-200"
+              >
+                info@palacioshomeco.com
+              </a>
+            </div>
+          </div>
+
+          {/* Second Column - Delivery status, Admin login */}
+          <div className="space-y-4">
+            <ul className="space-y-3">
+              {secondColumnLinks.map((link, index) => (
+                <li key={index}>
+                  <a
+                    href="#"
+                    className="text-sm text-gray-400 hover:text-white transition-colors duration-200"
+                  >
+                    {link}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Third Column - Privacy policy, Delivery policy */}
+          <div className="space-y-4">
+            <ul className="space-y-3">
+              {thirdColumnLinks.map((link, index) => (
+                <li key={index}>
+                  <a
+                    href="#"
+                    className="text-sm text-gray-400 hover:text-white transition-colors duration-200"
+                  >
+                    {link}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Fourth Column - Omitted as requested */}
+          {/* <div></div> */}
+
+          {/* Fifth Column - Social Media */}
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold tracking-wider text-gray-300 uppercase">
+              Follow Us:
+            </h3>
+            <div className="flex space-x-4">
+              <a
+                href="#"
+                className="text-gray-400 hover:text-white transition-colors duration-200"
+                aria-label="Instagram"
+              >
+                <Instagram className="h-6 w-6" />
+              </a>
+              <a
+                href="#"
+                className="text-gray-400 hover:text-white transition-colors duration-200"
+                aria-label="Facebook"
+              >
+                <Facebook className="h-6 w-6" />
+              </a>
+              <a
+                href="#"
+                className="text-gray-400 hover:text-white transition-colors duration-200"
+                aria-label="LinkedIn"
+              >
+                <Linkedin className="h-6 w-6" />
+              </a>
+            </div>
+          </div>
+
+          {/* Commented out sections - not needed */}
+          {/* 
           <div className="space-y-4">
             <h3 className="text-sm font-semibold tracking-wider text-gray-300 uppercase">
               Company
@@ -79,7 +191,6 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Account Links */}
           <div className="space-y-4">
             <h3 className="text-sm font-semibold tracking-wider text-gray-300 uppercase">
               Account
@@ -98,7 +209,6 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Connect Links */}
           <div className="space-y-4">
             <h3 className="text-sm font-semibold tracking-wider text-gray-300 uppercase">
               Connect
@@ -117,7 +227,6 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Showrooms Links */}
           <div className="space-y-4">
             <h3 className="text-sm font-semibold tracking-wider text-gray-300 uppercase">
               Showrooms
@@ -136,9 +245,24 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Newsletter and Social Media */}
           <div className="space-y-6">
-            {/* Newsletter Section */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-semibold tracking-wider text-gray-300 uppercase">
+                Contact
+              </h3>
+              <div className="space-y-3">
+                <div>
+                  <p className="text-sm text-gray-400 mb-1">Email</p>
+                  <a
+                    href="mailto:info@palacioshomeco.com"
+                    className="text-sm text-white hover:text-gray-300 transition-colors duration-200"
+                  >
+                    info@palacioshomeco.com
+                  </a>
+                </div>
+              </div>
+            </div>
+
             <div className="space-y-4">
               <h3 className="text-sm font-semibold tracking-wider text-gray-300 uppercase">
                 Newsletter
@@ -163,37 +287,8 @@ const Footer = () => {
                 </button>
               </form>
             </div>
-
-            {/* Social Media Section */}
-            <div className="space-y-4">
-              <h3 className="text-sm font-semibold tracking-wider text-gray-300 uppercase">
-                Follow Us:
-              </h3>
-              <div className="flex space-x-4">
-                <a
-                  href="#"
-                  className="text-gray-400 hover:text-white transition-colors duration-200"
-                  aria-label="Instagram"
-                >
-                  <Instagram className="h-6 w-6" />
-                </a>
-                <a
-                  href="#"
-                  className="text-gray-400 hover:text-white transition-colors duration-200"
-                  aria-label="Facebook"
-                >
-                  <Facebook className="h-6 w-6" />
-                </a>
-                <a
-                  href="#"
-                  className="text-gray-400 hover:text-white transition-colors duration-200"
-                  aria-label="LinkedIn"
-                >
-                  <Linkedin className="h-6 w-6" />
-                </a>
-              </div>
-            </div>
           </div>
+          */}
         </div>
       </div>
     </footer>

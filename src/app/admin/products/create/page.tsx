@@ -336,11 +336,16 @@ export default function CreateProductPage() {
                     required
                   >
                     <option value="">Select category</option>
-                    <option value="Console Tables">Console Tables</option>
+                    <option value="Living Room">Living Room</option>
+                    <option value="Dining Room">Dining Room</option>
+                    <option value="Bedroom">Bedroom</option>
+                    <option value="Office">Office</option>
+                    <option value="Entry & Decor">Entry & Decor</option>
+                    {/* <option value="Console Tables">Console Tables</option>
                     <option value="Dining Tables">Dining Tables</option>
                     <option value="Coffee Tables">Coffee Tables</option>
                     <option value="Chairs">Chairs</option>
-                    <option value="Storage">Storage</option>
+                    <option value="Storage">Storage</option> */}
                   </select>
                 </div>
               </div>

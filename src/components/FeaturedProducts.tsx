@@ -11,22 +11,19 @@ interface FeaturedItem {
 const FeaturedProducts = () => {
   const featuredItems: FeaturedItem[] = [
     {
-      id: "design",
-      title: "DESIGN",
-      image:
-        "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+      id: "living-room",
+      title: "LIVING ROOM",
+      image: "/furniture/living room.webp",
     },
     {
-      id: "craftsmanship",
-      title: "CRAFTSMANSHIP",
-      image:
-        "https://images.unsplash.com/photo-1449247709967-d4461a6a6103?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+      id: "dining-room",
+      title: "DINING ROOM",
+      image: "/furniture/dining room.webp",
     },
     {
-      id: "sustainability",
-      title: "SUSTAINABILITY",
-      image:
-        "https://images.unsplash.com/photo-1549497538-303791108f95?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+      id: "bedroom",
+      title: "BEDROOM",
+      image: "/furniture/bedroom.jpg",
     },
   ];
 
@@ -36,7 +33,7 @@ const FeaturedProducts = () => {
         {/* Section Header */}
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-light tracking-[0.2em] text-gray-900">
-            FEATURED PRODUCTS
+            FEATURED COLLECTIONS
           </h2>
         </div>
 
