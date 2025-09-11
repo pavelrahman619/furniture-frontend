@@ -47,7 +47,7 @@ const Navbar = () => {
               <img
                 src="/furniture/logo.svg"
                 alt="PALACIOS HOME"
-                className="h-auto w-15 object-contain"
+                className="h-14 w-auto object-contain"
               />
             </Link>
           </div>
