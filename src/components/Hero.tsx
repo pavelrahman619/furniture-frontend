@@ -12,8 +12,8 @@ interface HeroContent {
 // Default content values
 const defaultContent: HeroContent = {
   backgroundImage: "/furniture/new intro.webp",
-  title: "NEW INTRODUCTIONS",
-  buttonText: "NEW INTROS",
+  title: "NEW ARRIVALS",
+  buttonText: "CHECK IT OUT",
 };
 
 const Hero = () => {
