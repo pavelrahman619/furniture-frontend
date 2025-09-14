@@ -15,12 +15,12 @@ const MadeInUSA = () => {
       <div className="relative z-10 h-full flex flex-col items-center justify-center text-center px-4">
         {/* Main Title */}
         <h2 className="text-4xl md:text-6xl lg:text-7xl font-light tracking-[0.3em] text-white mb-6 drop-shadow-lg">
-          MADE IN THE USA
+          PALACIOS HOME CUSTOM COUCHES
         </h2>
 
         {/* Subtitle */}
         <p className="text-lg md:text-xl lg:text-2xl font-light tracking-wider text-white mb-12 drop-shadow-lg">
-          Custom Palacios Home Made to Order
+          American Made Quality
         </p>
 
         {/* Contact Us Button */}

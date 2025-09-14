@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Instagram, Facebook, Linkedin, ChevronRight } from "lucide-react";
+import { Instagram, Facebook, Linkedin } from "lucide-react";
 
 const Footer = () => {
   const [email, setEmail] = useState("");
@@ -76,7 +76,7 @@ const Footer = () => {
           {/* Logo Section */}
           <div className="lg:col-span-5 mb-8">
             <h2 className="text-3xl font-light tracking-widest text-white">
-              PALACIOS HOME
+              PALACIOS HOME CO.
             </h2>
           </div>
 
@@ -96,7 +96,7 @@ const Footer = () => {
             </ul>
             {/* Email contact */}
             <div className="mt-4">
-              <p className="text-sm text-gray-400 mb-1">Email</p>
+              <span className="text-sm text-gray-400 mb-1">Email: </span>
               <a
                 href="mailto:info@palacioshomeco.com"
                 className="text-sm text-white hover:text-gray-300 transition-colors duration-200"
@@ -141,21 +141,47 @@ const Footer = () => {
           {/* Fourth Column - Omitted as requested */}
           {/* <div></div> */}
 
-          {/* Fifth Column - Social Media */}
+          {/* Fifth Column - Contact Info & Social Media */}
           <div className="space-y-4">
-            <h3 className="text-sm font-semibold tracking-wider text-gray-300 uppercase">
-              Follow Us:
-            </h3>
+            {/* Address */}
+            <div>
+              <h3 className="text-sm font-semibold tracking-wider text-gray-300 uppercase mb-2">
+                Address:
+              </h3>
+              <p className="text-sm text-gray-400">
+                500 W 7th St<br />
+                Los Angeles, CA 90014
+              </p>
+            </div>
+            
+            {/* Phone */}
+            <div>
+              <h3 className="text-sm font-semibold tracking-wider text-gray-300 uppercase mb-2">
+                Phone:
+              </h3>
+              <a
+                href="tel:(323)618-4663"
+                className="text-sm text-gray-400 hover:text-white transition-colors duration-200"
+              >
+                (323) 618-4663
+              </a>
+            </div>
+
+            {/* Social Media */}
+            <div>
+              <h3 className="text-sm font-semibold tracking-wider text-gray-300 uppercase mb-2">
+                Follow Us:
+              </h3>
             <div className="flex space-x-4">
               <a
-                href="#"
+                href="https://www.instagram.com/palacioshomeco?igsh=NTc4MTIwNjQ2YQ%3D%3D&utm_source=qr"
                 className="text-gray-400 hover:text-white transition-colors duration-200"
                 aria-label="Instagram"
               >
                 <Instagram className="h-6 w-6" />
               </a>
               <a
-                href="#"
+                href="https://www.facebook.com/profile.php?id=61576768246518&mibextid=wwXIfr"
                 className="text-gray-400 hover:text-white transition-colors duration-200"
                 aria-label="Facebook"
               >
@@ -168,6 +194,7 @@ const Footer = () => {
               >
                 <Linkedin className="h-6 w-6" />
               </a>
+            </div>
             </div>
           </div>
 

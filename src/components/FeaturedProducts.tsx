@@ -13,17 +13,17 @@ const FeaturedProducts = () => {
     {
       id: "living-room",
       title: "LIVING ROOM",
-      image: "/furniture/living room.webp",
+      image: "/furniture/featured/living.png",
     },
     {
       id: "dining-room",
       title: "DINING ROOM",
-      image: "/furniture/dining room.webp",
+      image: "/furniture/featured/dining.jpg",
     },
     {
       id: "bedroom",
       title: "BEDROOM",
-      image: "/furniture/bedroom.jpg",
+      image: "/furniture/featured/bedroom.jpg",
     },
   ];
 

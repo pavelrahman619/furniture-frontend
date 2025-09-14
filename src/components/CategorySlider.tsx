@@ -28,7 +28,7 @@ const CategorySlider = () => {
       id: "living-room",
       title: "LIVING ROOM",
       description:
-        "Discover the living room section, where sophisticated design meets modern luxury. From statement seating to elegant accents, elevate your home with enduring style.",
+        "Discover the living room section, where sophisticated design meets modern luxury. From statement seating to elegant accents, elevate your home with enduring style",
       image:
         "/furniture/living room.webp",
     },
@@ -36,7 +36,7 @@ const CategorySlider = () => {
       id: "dining-room",
       title: "DINING ROOM",
       description:
-        "Our dining room section brings elegance to every occasion. Discover refined tables and seating designed for timeless gatherings.",
+        "Our dining room section brings elegance to every occasion. Discover refined tables and seating designed for timeless gatherings",
       image:
         "/furniture/dining room.webp",
     },
@@ -44,7 +44,7 @@ const CategorySlider = () => {
       id: "bedroom",
       title: "BEDROOM",
       description:
-        "Transform your bedroom into a sanctuary of elegance and comfort",
+        "Transform your bedroom into a sanctuary of comfort & style",
       image:
         "/furniture/bedroom.jpg",
     },
@@ -52,7 +52,7 @@ const CategorySlider = () => {
     //   id: "bedroom 1",
     //   title: "BEDROOM 1",
     //   description:
-    //     "Transform your bedroom into a sanctuary of elegance and comfort",
+    //     "Transform your bedroom into a sanctuary of comfort & style",
     //   image:
     //     "/furniture/bedroom 1.jpg",
     // },
@@ -60,7 +60,7 @@ const CategorySlider = () => {
     //   id: "bedroom 2",
     //   title: "BEDROOM 2",
     //   description:
-    //     "Transform your bedroom into a sanctuary of elegance and comfort",
+    //     "Transform your bedroom into a sanctuary of comfort & style",
     //   image:
     //     "/furniture/bedroom 2.jpg",
     // },
@@ -68,7 +68,7 @@ const CategorySlider = () => {
       id: "office",
       title: "OFFICE",
       description:
-        "Curated office pieces that inspire success and style.",
+        "Curated office pieces that inspire success and style",
       image:
         "/furniture/office.webp",
     },
@@ -76,9 +76,17 @@ const CategorySlider = () => {
       id: "entry-and-decor",
       title: "ENTRY & DECOR",
       description:
-        "Make a lasting first impression with elegant entryway pieces and decor.",
+        "Make a lasting first impression with entryway pieces and decor",
       image:
         "/furniture/entry and decor.webp",
+    },
+    {
+      id: "outdoor",
+      title: "OUTDOOR",
+      description:
+        "Outdoor living made easy with modern, weather-ready furniture",
+      image:
+        "/furniture/outdoor.jpg",
     },
     // {
     //   id: "lighting",
