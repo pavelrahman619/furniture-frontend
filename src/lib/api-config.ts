@@ -35,14 +35,13 @@ export const API_ENDPOINTS = {
     DELETE_ADDRESS: '/user/delete-address',
   },
 
-  // Products
+  // Products - matching backend routes
   PRODUCTS: {
-    LIST: '/product/list',
-    DETAIL: (id: string) => `/product/${id}`,
-    SEARCH: '/product/search',
-    BY_CATEGORY: (categoryId: string) => `/product/category/${categoryId}`,
-    FEATURED: '/product/featured',
-    ON_SALE: '/product/on-sale',
+    LIST: '/products',
+    DETAIL: (id: string) => `/products/${id}`,
+    SEARCH: '/products/search',
+    STOCK: (id: string) => `/products/${id}/stock`,
+    UPDATE_STOCK: (id: string) => `/products/${id}/stock`,
   },
 
   // Categories

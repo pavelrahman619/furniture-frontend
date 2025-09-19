@@ -16,12 +16,15 @@ export type {
   ResetPasswordRequest 
 } from './auth.service';
 
-export { default as productService } from './product.service';
+export { default as productService, transformProductForDisplay } from './product.service';
 export type { 
-  Product, 
-  ProductListParams, 
-  ProductListResponse 
-} from './product.service';
+  ProductsQueryParams,
+  ProductsResponse,
+  SingleProductResponse,
+  ProductSearchResponse,
+  StockResponse,
+  DisplayProduct
+} from '../types/product.types';
 
 export { default as cartService } from './cart.service';
 export type { 

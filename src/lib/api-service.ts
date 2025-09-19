@@ -109,8 +109,16 @@ const apiRequest = async <T = unknown>(
       );
     }
 
-    // Return success response
-    return data as ApiResponse<T>;
+    // Check if data already has success field (some APIs might return this format)
+    if (data && typeof data === 'object' && 'success' in data) {
+      return data as ApiResponse<T>;
+    }
+    
+    // For APIs that return data directly (like your backend), wrap it in ApiResponse format
+    return {
+      success: true,
+      data: data as T
+    } as ApiResponse<T>;
   } catch (error) {
     clearTimeout(timeoutId);
     

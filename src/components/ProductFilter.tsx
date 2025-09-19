@@ -2,14 +2,10 @@
 
 import { useState } from "react";
 import { ChevronDown, SlidersHorizontal } from "lucide-react";
+import { ProductFilters } from "@/types/product.types";
 
 interface FilterProps {
-  onFilterChange: (filters: {
-    availability: string[];
-    category: string[];
-    features: string[];
-    shape: string[];
-  }) => void;
+  onFilterChange: (filters: ProductFilters) => void;
   onSortChange: (sortBy: string) => void;
   productCount: number;
   sortBy: string;
@@ -76,11 +72,13 @@ const ProductFilter = ({
   productCount,
   sortBy,
 }: FilterProps) => {
-  const [filters, setFilters] = useState({
-    availability: [] as string[],
-    category: [] as string[],
-    features: [] as string[],
-    shape: [] as string[],
+  const [filters, setFilters] = useState<ProductFilters>({
+    availability: [],
+    category: [],
+    features: [],
+    shape: [],
+    colors: [],
+    materials: [],
   });
 
   const [showAllFilters, setShowAllFilters] = useState(false);
@@ -109,6 +107,22 @@ const ProductFilter = ({
     { value: "industrial", label: "Industrial" },
   ];
 
+  const colorOptions = [
+    { value: "brown", label: "Brown" },
+    { value: "black", label: "Black" },
+    { value: "white", label: "White" },
+    { value: "gray", label: "Gray" },
+    { value: "natural", label: "Natural" },
+  ];
+
+  const materialOptions = [
+    { value: "wood", label: "Wood" },
+    { value: "metal", label: "Metal" },
+    { value: "leather", label: "Leather" },
+    { value: "fabric", label: "Fabric" },
+    { value: "glass", label: "Glass" },
+  ];
+
   const shapeOptions = [
     { value: "rectangular", label: "Rectangular" },
     { value: "curved", label: "Curved" },
@@ -133,11 +147,13 @@ const ProductFilter = ({
   };
 
   const clearAllFilters = () => {
-    const emptyFilters = {
+    const emptyFilters: ProductFilters = {
       availability: [],
       category: [],
       features: [],
       shape: [],
+      colors: [],
+      materials: [],
     };
     setFilters(emptyFilters);
     onFilterChange(emptyFilters);
@@ -181,6 +197,20 @@ const ProductFilter = ({
             options={shapeOptions}
             selected={filters.shape}
             onChange={(selected) => handleFilterUpdate("shape", selected)}
+          />
+
+          <Dropdown
+            label="Colors"
+            options={colorOptions}
+            selected={filters.colors || []}
+            onChange={(selected) => handleFilterUpdate("colors", selected)}
+          />
+
+          <Dropdown
+            label="Materials"
+            options={materialOptions}
+            selected={filters.materials || []}
+            onChange={(selected) => handleFilterUpdate("materials", selected)}
           />
 
           {/* All Filters Button */}

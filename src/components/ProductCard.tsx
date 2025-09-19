@@ -4,10 +4,10 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Heart } from "lucide-react";
-import { Product } from "@/app/products/page";
+import { DisplayProduct } from "@/types/product.types";
 
 interface ProductCardProps {
-  product: Product;
+  product: DisplayProduct;
 }
 
 const ProductCard = ({ product }: ProductCardProps) => {
@@ -70,11 +70,74 @@ const ProductCard = ({ product }: ProductCardProps) => {
       </div>
 
       {/* Product Info */}
-      <div className="space-y-1">
+      <div className="space-y-2">
         {/* Product Name */}
         <h3 className="text-sm font-normal text-gray-900 line-clamp-2">
           {product.name}
         </h3>
+        
+        {/* Category & Features */}
+        <div className="flex items-center justify-between text-xs text-gray-500">
+          <span className="capitalize">{product.category}</span>
+          {product.isFirstLook && (
+            <span className="bg-gray-100 px-2 py-1 rounded text-xs font-medium">
+              First Look
+            </span>
+          )}
+        </div>
+        
+        {/* Price */}
+        <div className="flex items-center justify-between">
+          <span className="text-lg font-medium text-gray-900">
+            ${product.price.toLocaleString()}
+          </span>
+          
+          {/* Stock Status */}
+          <div className="flex items-center">
+            <div 
+              className={`w-2 h-2 rounded-full mr-2 ${
+                product.availability === 'in-stock' 
+                  ? 'bg-green-500' 
+                  : product.availability === 'pre-order'
+                  ? 'bg-yellow-500'
+                  : 'bg-red-500'
+              }`}
+            />
+            <span className={`text-xs ${
+              product.availability === 'in-stock' 
+                ? 'text-green-600' 
+                : product.availability === 'pre-order'
+                ? 'text-yellow-600'
+                : 'text-red-600'
+            }`}>
+              {product.availability === 'in-stock' 
+                ? 'In Stock' 
+                : product.availability === 'pre-order'
+                ? 'Pre-Order'
+                : 'Out of Stock'
+              }
+            </span>
+          </div>
+        </div>
+        
+        {/* Features Preview */}
+        {product.features.length > 0 && (
+          <div className="flex flex-wrap gap-1">
+            {product.features.slice(0, 2).map((feature) => (
+              <span 
+                key={feature}
+                className="text-xs bg-gray-50 text-gray-600 px-2 py-1 rounded capitalize"
+              >
+                {feature.replace('-', ' ')}
+              </span>
+            ))}
+            {product.features.length > 2 && (
+              <span className="text-xs text-gray-400">
+                +{product.features.length - 2} more
+              </span>
+            )}
+          </div>
+        )}
       </div>
     </Link>
   );
