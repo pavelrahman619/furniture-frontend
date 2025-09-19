@@ -18,20 +18,20 @@ const Navbar = () => {
   const { getTotalItems } = useCart();
   const cartItemCount = getTotalItems();
 
-  // const mainNavItems = [
-  //   { name: "ALL PRODUCTS", href: "/products" },
+  const mainNavItems = [
+    { name: "ALL PRODUCTS", href: "/products" },
   //   { name: "SHOP BY CATEGORY", href: "#" },
   //   { name: "ROOMS", href: "#" },
   //   { name: "MADE TO ORDER", href: "#" },
   //   { name: "VILLA TEXTILES & RUGS", href: "#" },
   //   { name: "IN STOCK", href: "#" },
-  // ];
-  const mainNavItems = [
-    { name: "", href: "#" },
+  ];
+  // const mainNavItems = [
+    // { name: "", href: "#" },
     // { name: "TEST1", href: "#" },
     // { name: "TEST2", href: "#" },
     // { name: "TEST3", href: "#" },
-  ];
+  // ];
 
   return (
     <nav className="sticky top-0 z-50 w-full bg-white border-b border-gray-200 shadow-sm">
@@ -111,7 +111,7 @@ const Navbar = () => {
             </Link> */}
 
             {/* Cart */}
-            {/* <Link
+            <Link
               href="/cart"
               className="flex items-center text-sm text-gray-700 hover:text-gray-900 transition-colors relative"
             >
@@ -122,7 +122,7 @@ const Navbar = () => {
                   {cartItemCount > 99 ? "99+" : cartItemCount}
                 </span>
               )}
-            </Link> */}
+            </Link>
           </div>
         </div>
       </div>
