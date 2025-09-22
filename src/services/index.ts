@@ -16,7 +16,7 @@ export type {
   ResetPasswordRequest 
 } from './auth.service';
 
-export { default as productService, transformProductForDisplay } from './product.service';
+export { default as productService } from './product.service';
 export type { 
   ProductsQueryParams,
   ProductsResponse,

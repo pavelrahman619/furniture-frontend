@@ -1,14 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ChevronDown, SlidersHorizontal } from "lucide-react";
-import { ProductFilters } from "@/types/product.types";
+import { 
+  useFilters, 
+  useFilterOptions, 
+  useShowAllFilters, 
+  useSortBy, 
+  useHasActiveFilters,
+  useSetFilter,
+  useSetShowAllFilters,
+  useSetSortBy,
+  useClearAllFilters
+} from "@/stores/filterStore";
 
 interface FilterProps {
-  onFilterChange: (filters: ProductFilters) => void;
-  onSortChange: (sortBy: string) => void;
   productCount: number;
-  sortBy: string;
 }
 
 interface DropdownProps {
@@ -20,6 +27,7 @@ interface DropdownProps {
 
 const Dropdown = ({ label, options, selected, onChange }: DropdownProps) => {
   const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const handleOptionToggle = (value: string) => {
     const newSelected = selected.includes(value)
@@ -28,8 +36,25 @@ const Dropdown = ({ label, options, selected, onChange }: DropdownProps) => {
     onChange(newSelected);
   };
 
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen]);
+
   return (
-    <div className="relative">
+    <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center justify-between min-w-[120px] px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
@@ -66,69 +91,26 @@ const Dropdown = ({ label, options, selected, onChange }: DropdownProps) => {
   );
 };
 
-const ProductFilter = ({
-  onFilterChange,
-  onSortChange,
-  productCount,
-  sortBy,
-}: FilterProps) => {
-  const [filters, setFilters] = useState<ProductFilters>({
-    availability: [],
-    category: [],
-    features: [],
-    shape: [],
-    colors: [],
-    materials: [],
-  });
+const ProductFilter = ({ productCount }: FilterProps) => {
+  const [isClient, setIsClient] = useState(false);
+  
+  // Get state and actions from Zustand
+  const filters = useFilters();
+  const filterOptions = useFilterOptions();
+  const showAllFilters = useShowAllFilters();
+  const sortBy = useSortBy();
+  const hasActiveFilters = useHasActiveFilters();
+  
+  // Individual action selectors
+  const setFilter = useSetFilter();
+  const setShowAllFilters = useSetShowAllFilters();
+  const setSortBy = useSetSortBy();
+  const clearAllFilters = useClearAllFilters();
 
-  const [showAllFilters, setShowAllFilters] = useState(false);
-
-  const availabilityOptions = [
-    { value: "in-stock", label: "In Stock" },
-    { value: "out-of-stock", label: "Out of Stock" },
-    { value: "pre-order", label: "Pre-Order" },
-  ];
-
-  const categoryOptions = [
-    { value: "console", label: "Console Tables" },
-    { value: "table", label: "Dining Tables" },
-    { value: "chair", label: "Chairs" },
-    { value: "bench", label: "Benches" },
-    { value: "storage", label: "Storage" },
-  ];
-
-  const featureOptions = [
-    { value: "reclaimed-wood", label: "Reclaimed Wood" },
-    { value: "handcrafted", label: "Handcrafted" },
-    { value: "solid-wood", label: "Solid Wood" },
-    { value: "leather", label: "Leather" },
-    { value: "metal", label: "Metal" },
-    { value: "modern", label: "Modern" },
-    { value: "industrial", label: "Industrial" },
-  ];
-
-  const colorOptions = [
-    { value: "brown", label: "Brown" },
-    { value: "black", label: "Black" },
-    { value: "white", label: "White" },
-    { value: "gray", label: "Gray" },
-    { value: "natural", label: "Natural" },
-  ];
-
-  const materialOptions = [
-    { value: "wood", label: "Wood" },
-    { value: "metal", label: "Metal" },
-    { value: "leather", label: "Leather" },
-    { value: "fabric", label: "Fabric" },
-    { value: "glass", label: "Glass" },
-  ];
-
-  const shapeOptions = [
-    { value: "rectangular", label: "Rectangular" },
-    { value: "curved", label: "Curved" },
-    { value: "linear", label: "Linear" },
-    { value: "round", label: "Round" },
-  ];
+  // Ensure we're on the client side
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const sortOptions = [
     { value: "new", label: "New" },
@@ -141,27 +123,36 @@ const ProductFilter = ({
     filterType: keyof typeof filters,
     newValues: string[]
   ) => {
-    const newFilters = { ...filters, [filterType]: newValues };
-    setFilters(newFilters);
-    onFilterChange(newFilters);
+    setFilter(filterType, newValues);
   };
 
-  const clearAllFilters = () => {
-    const emptyFilters: ProductFilters = {
-      availability: [],
-      category: [],
-      features: [],
-      shape: [],
-      colors: [],
-      materials: [],
-    };
-    setFilters(emptyFilters);
-    onFilterChange(emptyFilters);
+  const handleSortChange = (sortOption: string) => {
+    setSortBy(sortOption);
   };
 
-  const hasActiveFilters = Object.values(filters).some(
-    (filterArray) => filterArray.length > 0
-  );
+  const handleClearAllFilters = () => {
+    clearAllFilters();
+  };
+
+  // Show loading state during SSR
+  if (!isClient) {
+    return (
+      <div className="mb-8">
+        <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-gray-200">
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="h-10 w-24 bg-gray-200 rounded animate-pulse"></div>
+            <div className="h-10 w-24 bg-gray-200 rounded animate-pulse"></div>
+            <div className="h-10 w-24 bg-gray-200 rounded animate-pulse"></div>
+            <div className="h-10 w-24 bg-gray-200 rounded animate-pulse"></div>
+          </div>
+          <div className="flex items-center gap-6">
+            <div className="h-4 w-20 bg-gray-200 rounded animate-pulse"></div>
+            <div className="h-8 w-32 bg-gray-200 rounded animate-pulse"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mb-8">
@@ -171,7 +162,7 @@ const ProductFilter = ({
         <div className="flex flex-wrap items-center gap-3">
           <Dropdown
             label="Availability"
-            options={availabilityOptions}
+            options={filterOptions.availability}
             selected={filters.availability}
             onChange={(selected) =>
               handleFilterUpdate("availability", selected)
@@ -180,35 +171,35 @@ const ProductFilter = ({
 
           <Dropdown
             label="Category"
-            options={categoryOptions}
+            options={filterOptions.categories}
             selected={filters.category}
             onChange={(selected) => handleFilterUpdate("category", selected)}
           />
 
           <Dropdown
             label="Features"
-            options={featureOptions}
+            options={filterOptions.features}
             selected={filters.features}
             onChange={(selected) => handleFilterUpdate("features", selected)}
           />
 
           <Dropdown
             label="Shape"
-            options={shapeOptions}
+            options={filterOptions.shapes}
             selected={filters.shape}
             onChange={(selected) => handleFilterUpdate("shape", selected)}
           />
 
           <Dropdown
             label="Colors"
-            options={colorOptions}
+            options={filterOptions.colors}
             selected={filters.colors || []}
             onChange={(selected) => handleFilterUpdate("colors", selected)}
           />
 
           <Dropdown
             label="Materials"
-            options={materialOptions}
+            options={filterOptions.materials}
             selected={filters.materials || []}
             onChange={(selected) => handleFilterUpdate("materials", selected)}
           />
@@ -221,16 +212,6 @@ const ProductFilter = ({
             <SlidersHorizontal className="mr-2 h-4 w-4" />
             All Filters
           </button>
-
-          {/* Clear Filters */}
-          {hasActiveFilters && (
-            <button
-              onClick={clearAllFilters}
-              className="text-sm text-gray-600 hover:text-gray-800 underline"
-            >
-              Clear All
-            </button>
-          )}
         </div>
 
         {/* Right Side - Product Count & Sort */}
@@ -246,7 +227,7 @@ const ProductFilter = ({
             <select
               id="sort"
               value={sortBy}
-              onChange={(e) => onSortChange(e.target.value)}
+              onChange={(e) => handleSortChange(e.target.value)}
               className="text-sm border-gray-300 rounded-md focus:ring-gray-500 focus:border-gray-500"
             >
               {sortOptions.map((option) => (
@@ -259,6 +240,18 @@ const ProductFilter = ({
         </div>
       </div>
 
+      {/* Clear Filters - Separate Row */}
+      {hasActiveFilters() && (
+        <div className="flex justify-end mt-2">
+          <button
+            onClick={handleClearAllFilters}
+            className="text-sm text-gray-600 hover:text-gray-800 underline cursor-pointer hover:no-underline hover:bg-gray-100 px-2 py-1 rounded transition-colors duration-200"
+          >
+            Clear All Filters
+          </button>
+        </div>
+      )}
+
       {/* Extended Filters Panel */}
       {showAllFilters && (
         <div className="mt-4 p-4 bg-gray-50 rounded-lg">
@@ -268,7 +261,7 @@ const ProductFilter = ({
                 Availability
               </h4>
               <div className="space-y-2">
-                {availabilityOptions.map((option) => (
+                {filterOptions.availability.map((option) => (
                   <label
                     key={option.value}
                     className="flex items-center text-sm"
@@ -299,7 +292,7 @@ const ProductFilter = ({
                 Category
               </h4>
               <div className="space-y-2">
-                {categoryOptions.map((option) => (
+                {filterOptions.categories.map((option) => (
                   <label
                     key={option.value}
                     className="flex items-center text-sm"
@@ -330,7 +323,7 @@ const ProductFilter = ({
                 Features
               </h4>
               <div className="space-y-2">
-                {featureOptions.slice(0, 4).map((option) => (
+                {filterOptions.features.slice(0, 4).map((option) => (
                   <label
                     key={option.value}
                     className="flex items-center text-sm"
@@ -359,7 +352,7 @@ const ProductFilter = ({
             <div>
               <h4 className="text-sm font-medium text-gray-900 mb-2">Shape</h4>
               <div className="space-y-2">
-                {shapeOptions.map((option) => (
+                {filterOptions.shapes.map((option) => (
                   <label
                     key={option.value}
                     className="flex items-center text-sm"
