@@ -16,8 +16,8 @@ describe('FilterStore', () => {
       expect(result.current.filters).toEqual({
         availability: [],
         category: [],
-        features: [],
-        shape: [],
+        // features: [], // Commented out - not in product model
+        // shape: [], // Commented out - not in product model
         colors: [],
         materials: [],
       })
@@ -34,8 +34,8 @@ describe('FilterStore', () => {
       expect(result.current.filterOptions.categories).toHaveLength(5)
       expect(result.current.filterOptions.colors).toHaveLength(7)
       expect(result.current.filterOptions.materials).toHaveLength(7)
-      expect(result.current.filterOptions.features).toHaveLength(8)
-      expect(result.current.filterOptions.shapes).toHaveLength(6)
+      // expect(result.current.filterOptions.features).toHaveLength(8) // Commented out - not in product model
+      // expect(result.current.filterOptions.shapes).toHaveLength(6) // Commented out - not in product model
     })
   })
 
@@ -203,8 +203,8 @@ describe('FilterStore', () => {
       expect(result.current.categories).toHaveLength(5)
       expect(result.current.colors).toHaveLength(7)
       expect(result.current.materials).toHaveLength(7)
-      expect(result.current.features).toHaveLength(8)
-      expect(result.current.shapes).toHaveLength(6)
+      // expect(result.current.features).toHaveLength(8) // Commented out - not in product model
+      // expect(result.current.shapes).toHaveLength(6) // Commented out - not in product model
     })
 
     it('should return current filters', () => {
@@ -213,8 +213,8 @@ describe('FilterStore', () => {
       expect(result.current).toEqual({
         availability: [],
         category: [],
-        features: [],
-        shape: [],
+        // features: [], // Commented out - not in product model
+        // shape: [], // Commented out - not in product model
         colors: [],
         materials: [],
       })

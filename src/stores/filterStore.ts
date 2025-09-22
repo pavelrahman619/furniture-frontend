@@ -13,8 +13,8 @@ interface FilterState {
     categories: Array<{ value: string; label: string; slug: string }>;
     colors: Array<{ value: string; label: string }>;
     materials: Array<{ value: string; label: string }>;
-    features: Array<{ value: string; label: string }>;
-    shapes: Array<{ value: string; label: string }>;
+    // features: Array<{ value: string; label: string }>; // Commented out - not in product model
+    // shapes: Array<{ value: string; label: string }>; // Commented out - not in product model
   };
   
   // UI state
@@ -85,25 +85,25 @@ const STATIC_FILTER_OPTIONS = {
     { value: "marble", label: "Marble" },
   ],
   
-  features: [
-    { value: "reclaimed-wood", label: "Reclaimed Wood" },
-    { value: "handcrafted", label: "Handcrafted" },
-    { value: "solid-wood", label: "Solid Wood" },
-    { value: "modern", label: "Modern" },
-    { value: "industrial", label: "Industrial" },
-    { value: "vintage", label: "Vintage" },
-    { value: "rustic", label: "Rustic" },
-    { value: "minimalist", label: "Minimalist" },
-  ],
+  // features: [
+  //   { value: "reclaimed-wood", label: "Reclaimed Wood" },
+  //   { value: "handcrafted", label: "Handcrafted" },
+  //   { value: "solid-wood", label: "Solid Wood" },
+  //   { value: "modern", label: "Modern" },
+  //   { value: "industrial", label: "Industrial" },
+  //   { value: "vintage", label: "Vintage" },
+  //   { value: "rustic", label: "Rustic" },
+  //   { value: "minimalist", label: "Minimalist" },
+  // ],
   
-  shapes: [
-    { value: "rectangular", label: "Rectangular" },
-    { value: "curved", label: "Curved" },
-    { value: "linear", label: "Linear" },
-    { value: "round", label: "Round" },
-    { value: "oval", label: "Oval" },
-    { value: "square", label: "Square" },
-  ],
+  // shapes: [
+  //   { value: "rectangular", label: "Rectangular" },
+  //   { value: "curved", label: "Curved" },
+  //   { value: "linear", label: "Linear" },
+  //   { value: "round", label: "Round" },
+  //   { value: "oval", label: "Oval" },
+  //   { value: "square", label: "Square" },
+  // ],
 };
 
 // Initial state
@@ -111,8 +111,8 @@ const initialState: FilterState = {
   filters: {
     availability: [],
     category: [],
-    features: [],
-    shape: [],
+    // features: [], // Commented out - not in product model
+    // shape: [], // Commented out - not in product model
     colors: [],
     materials: [],
   },

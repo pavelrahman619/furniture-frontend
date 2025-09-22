@@ -176,7 +176,8 @@ const ProductFilter = ({ productCount }: FilterProps) => {
             onChange={(selected) => handleFilterUpdate("category", selected)}
           />
 
-          <Dropdown
+          {/* Features and Shape filters commented out - not in product model */}
+          {/* <Dropdown
             label="Features"
             options={filterOptions.features}
             selected={filters.features}
@@ -188,7 +189,7 @@ const ProductFilter = ({ productCount }: FilterProps) => {
             options={filterOptions.shapes}
             selected={filters.shape}
             onChange={(selected) => handleFilterUpdate("shape", selected)}
-          />
+          /> */}
 
           <Dropdown
             label="Colors"
@@ -318,7 +319,8 @@ const ProductFilter = ({ productCount }: FilterProps) => {
               </div>
             </div>
 
-            <div>
+            {/* Features and Shape sections commented out - not in product model */}
+            {/* <div>
               <h4 className="text-sm font-medium text-gray-900 mb-2">
                 Features
               </h4>
@@ -374,7 +376,7 @@ const ProductFilter = ({ productCount }: FilterProps) => {
                   </label>
                 ))}
               </div>
-            </div>
+            </div> */}
           </div>
         </div>
       )}

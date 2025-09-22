@@ -38,8 +38,8 @@ describe('useProducts', () => {
           name: 'Test Product 1',
           price: 100,
           availability: 'in-stock',
-          features: ['handcrafted'],
-          shape: 'rectangular',
+          // features: ['handcrafted'], // Commented out - not in product model
+          // shape: 'rectangular', // Commented out - not in product model
         },
       ]
 

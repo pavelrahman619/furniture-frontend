@@ -67,21 +67,21 @@ describe('ProductFilter', () => {
       { value: 'wood', label: 'Wood' },
       { value: 'metal', label: 'Metal' },
     ],
-    features: [
-      { value: 'handcrafted', label: 'Handcrafted' },
-      { value: 'modern', label: 'Modern' },
-    ],
-    shapes: [
-      { value: 'rectangular', label: 'Rectangular' },
-      { value: 'round', label: 'Round' },
-    ],
+    // features: [
+    //   { value: 'handcrafted', label: 'Handcrafted' },
+    //   { value: 'modern', label: 'Modern' },
+    // ], // Commented out - not in product model
+    // shapes: [
+    //   { value: 'rectangular', label: 'Rectangular' },
+    //   { value: 'round', label: 'Round' },
+    // ], // Commented out - not in product model
   }
 
   const mockFilters = {
     availability: [],
     category: [],
-    features: [],
-    shape: [],
+    // features: [], // Commented out - not in product model
+    // shape: [], // Commented out - not in product model
     colors: [],
     materials: [],
   }
@@ -109,8 +109,8 @@ describe('ProductFilter', () => {
 
       expect(screen.getByText('Availability')).toBeInTheDocument()
       expect(screen.getByText('Category')).toBeInTheDocument()
-      expect(screen.getByText('Features')).toBeInTheDocument()
-      expect(screen.getByText('Shape')).toBeInTheDocument()
+      // expect(screen.getByText('Features')).toBeInTheDocument() // Commented out - not in product model
+      // expect(screen.getByText('Shape')).toBeInTheDocument() // Commented out - not in product model
       expect(screen.getByText('Colors')).toBeInTheDocument()
       expect(screen.getByText('Materials')).toBeInTheDocument()
     })
@@ -238,8 +238,8 @@ describe('ProductFilter', () => {
       // Check for the extended panel by looking for the panel container
       expect(screen.getAllByText('Availability')).toHaveLength(2) // One in main bar, one in extended panel
       expect(screen.getAllByText('Category')).toHaveLength(2)
-      expect(screen.getAllByText('Features')).toHaveLength(2)
-      expect(screen.getAllByText('Shape')).toHaveLength(2)
+      // expect(screen.getAllByText('Features')).toHaveLength(2) // Commented out - not in product model
+      // expect(screen.getAllByText('Shape')).toHaveLength(2) // Commented out - not in product model
     })
   })
 

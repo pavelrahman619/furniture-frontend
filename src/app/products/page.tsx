@@ -76,19 +76,18 @@ function ProductsPageContent() {
       );
     }
 
-    // Apply features filter (client-side)
-    if (filters.features.length > 0) {
-      filtered = filtered.filter((product) =>
-        filters.features.some((feature) => product.features.includes(feature))
-      );
-    }
+    // Features and shape filters commented out - not in product model
+    // if (filters.features.length > 0) {
+    //   filtered = filtered.filter((product) =>
+    //     filters.features.some((feature) => product.features.includes(feature))
+    //   );
+    // }
 
-    // Apply shape filter (client-side)
-    if (filters.shape.length > 0) {
-      filtered = filtered.filter((product) =>
-        filters.shape.includes(product.shape)
-      );
-    }
+    // if (filters.shape.length > 0) {
+    //   filtered = filtered.filter((product) =>
+    //     filters.shape.includes(product.shape)
+    //   );
+    // }
 
     return filtered;
   }, [products, filters]);

@@ -93,8 +93,8 @@ export interface ProductsQueryParams {
 export interface ProductFilters {
   availability: string[];
   category: string[];
-  features: string[];
-  shape: string[];
+  // features: string[]; // Commented out - not in product model
+  // shape: string[]; // Commented out - not in product model
   colors?: string[];
   materials?: string[];
   price_min?: number;

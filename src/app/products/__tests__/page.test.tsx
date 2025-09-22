@@ -50,24 +50,24 @@ describe('ProductsPage', () => {
       name: 'Test Product 1',
       price: 100,
       availability: 'in-stock',
-      features: ['handcrafted'],
-      shape: 'rectangular',
+      // features: ['handcrafted'], // Commented out - not in product model
+      // shape: 'rectangular', // Commented out - not in product model
     },
     {
       id: '2',
       name: 'Test Product 2',
       price: 200,
       availability: 'out-of-stock',
-      features: ['modern'],
-      shape: 'round',
+      // features: ['modern'], // Commented out - not in product model
+      // shape: 'round', // Commented out - not in product model
     },
   ]
 
   const mockFilters = {
     availability: [],
     category: [],
-    features: [],
-    shape: [],
+    // features: [], // Commented out - not in product model
+    // shape: [], // Commented out - not in product model
     colors: [],
     materials: [],
   }
