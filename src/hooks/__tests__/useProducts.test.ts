@@ -20,9 +20,11 @@ const createWrapper = () => {
       },
     },
   })
-  return ({ children }: { children: React.ReactNode }) => {
+  const Wrapper = ({ children }: { children: React.ReactNode }) => {
     return React.createElement(QueryClientProvider, { client: queryClient }, children)
   }
+  Wrapper.displayName = 'TestWrapper'
+  return Wrapper
 }
 
 describe('useProducts', () => {

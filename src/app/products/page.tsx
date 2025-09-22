@@ -31,9 +31,10 @@ function ProductsPageContent() {
       limit: 12,
     };
 
-    // Category filtering is now handled server-side with proper ObjectIds
-    // Note: Frontend filtering by category name would need category mapping
-    // For now, skip category filtering until we implement proper category selection UI 
+    // Add category filter
+    if (filters.category && filters.category.length > 0) {
+      params.category = filters.category[0]; // Backend expects single category ID
+    }
     
     // Add color filter
     if (filters.colors && filters.colors.length > 0) {

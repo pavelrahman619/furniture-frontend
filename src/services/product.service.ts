@@ -84,6 +84,21 @@ export const productService = {
           response.data.filters_available.categories.forEach(cat => {
             categoryMap.set(cat.id, cat.name);
           });
+          
+          // Update filter store with dynamic category data
+          try {
+            const { useFilterStore } = await import('../stores/filterStore');
+            const store = useFilterStore.getState();
+            store.updateFilterOptions({
+              categories: response.data.filters_available.categories.map(cat => ({
+                value: cat.id,
+                label: cat.name,
+                slug: cat.name.toLowerCase().replace(/\s+/g, '-')
+              }))
+            });
+          } catch (error) {
+            console.warn('Failed to update filter store with category data:', error);
+          }
         }
 
         return response.data.products.map(product => {

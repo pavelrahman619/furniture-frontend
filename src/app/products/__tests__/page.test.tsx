@@ -1,5 +1,5 @@
 import React from 'react'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import ProductsPage from '../page'
 
 // Mock the hooks and components
@@ -19,7 +19,7 @@ jest.mock('../../../components/ProductFilter', () => {
 })
 
 jest.mock('../../../components/ProductGrid', () => {
-  return function MockProductGrid({ products }: { products: any[] }) {
+  return function MockProductGrid({ products }: { products: unknown[] }) {
     return <div data-testid="product-grid">{products.length} products</div>
   }
 })

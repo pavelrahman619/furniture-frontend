@@ -34,6 +34,9 @@ interface FilterActions {
   clearFilter: (filterType: keyof ProductFilters) => void;
   clearAllFilters: () => void;
   
+  // Filter options management
+  updateFilterOptions: (options: Partial<FilterState['filterOptions']>) => void;
+  
   // UI management
   setShowAllFilters: (show: boolean) => void;
   setSortBy: (sortBy: string) => void;
@@ -179,8 +182,8 @@ export const useFilterStore = create<FilterStore>()(
               filters: {
                 availability: [],
                 category: [],
-                features: [],
-                shape: [],
+                // features: [], // Commented out - not in product model
+                // shape: [], // Commented out - not in product model
                 colors: [],
                 materials: [],
                 price_min: undefined,
@@ -200,6 +203,20 @@ export const useFilterStore = create<FilterStore>()(
         
         setSortBy: (sortBy) => {
           set({ sortBy }, false, 'setSortBy');
+        },
+        
+        // Filter options management
+        updateFilterOptions: (options) => {
+          set(
+            (state) => ({
+              filterOptions: {
+                ...state.filterOptions,
+                ...options,
+              },
+            }),
+            false,
+            'updateFilterOptions'
+          );
         },
         
         // Utility functions
@@ -250,6 +267,7 @@ export const useClearFilter = () => useFilterStore((state) => state.clearFilter)
 export const useClearAllFilters = () => useFilterStore((state) => state.clearAllFilters);
 export const useSetShowAllFilters = () => useFilterStore((state) => state.setShowAllFilters);
 export const useSetSortBy = () => useFilterStore((state) => state.setSortBy);
+export const useUpdateFilterOptions = () => useFilterStore((state) => state.updateFilterOptions);
 export const useReset = () => useFilterStore((state) => state.reset);
 
 // Additional selectors for better performance
