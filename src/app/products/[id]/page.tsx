@@ -13,18 +13,18 @@ interface ProductDetails {
   sku: string;
   images: string[];
   category: string;
-  availability: "in-stock" | "out-of-stock" | "on-order";
-  features: string[];
-  shape: string;
+  // availability: "in-stock" | "out-of-stock" | "on-order"; // Not available in backend model
+  // features: string[]; // Not available in backend model
+  // shape: string; // Not available in backend model
   price: number;
-  isFirstLook?: boolean;
-  stockInfo: {
-    location: string;
-    stock: number;
-    moreArriving: string;
-  }[];
+  // isFirstLook?: boolean; // Not available in backend model
+  // stockInfo: { // Not available in backend model - only simple stock field exists
+  //   location: string;
+  //   stock: number;
+  //   moreArriving: string;
+  // }[];
   description?: string;
-  note?: string;
+  // note?: string; // Not available in backend model
   variants: {
     size: {
       name: string;
@@ -63,19 +63,19 @@ const getProductById = (id: string): ProductDetails => {
       "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     ],
     category: "Console Tables",
-    availability: "on-order",
-    features: ["reclaimed-wood", "four-drawer"],
-    shape: "rectangular",
+    // availability: "on-order", // Not available in backend model
+    // features: ["reclaimed-wood", "four-drawer"], // Not available in backend model
+    // shape: "rectangular", // Not available in backend model
     price: 1599,
-    isFirstLook: true,
-    stockInfo: [
-      {
-        location: "Los Angeles, CA",
-        stock: 0,
-        moreArriving: "On Order",
-      },
-    ],
-    note: "The color of the product might differ due to production and your monitor screen settings. It's essential to ensure proper color calibration to accurately represent our products.",
+    // isFirstLook: true, // Not available in backend model
+    // stockInfo: [ // Not available in backend model - only simple stock field exists
+    //   {
+    //     location: "Los Angeles, CA",
+    //     stock: 0,
+    //     moreArriving: "On Order",
+    //   },
+    // ],
+    // note: "The color of the product might differ due to production and your monitor screen settings. It's essential to ensure proper color calibration to accurately represent our products.", // Not available in backend model
     variants: {
       size: {
         name: "Size",
@@ -250,13 +250,13 @@ export default function ProductPage({ params }: ProductPageProps) {
           {/* Product Details */}
           <div className="space-y-8">
             {/* First Look Badge */}
-            {product.isFirstLook && (
+            {/* {product.isFirstLook && (
               <div className="inline-block">
                 <span className="text-xs font-medium text-gray-600 bg-gray-100 px-3 py-1 rounded-full">
                   First Look
                 </span>
               </div>
-            )}
+            )} */}
 
             {/* Product Title */}
             <div>
@@ -267,13 +267,13 @@ export default function ProductPage({ params }: ProductPageProps) {
             </div>
 
             {/* Status */}
-            <div>
+            {/* <div>
               <span className="text-lg font-medium text-gray-900">
                 {product.availability === "on-order" && "On Order"}
                 {product.availability === "in-stock" && "In Stock"}
                 {product.availability === "out-of-stock" && "Out of Stock"}
               </span>
-            </div>
+            </div> */}
 
             {/* Variant Selection */}
             <div className="space-y-6">
@@ -382,7 +382,7 @@ export default function ProductPage({ params }: ProductPageProps) {
             </div>
 
             {/* Stock Information Table */}
-            <div className="border border-gray-200">
+            {/* <div className="border border-gray-200">
               <table className="w-full">
                 <thead className="bg-gray-50">
                   <tr>
@@ -413,7 +413,7 @@ export default function ProductPage({ params }: ProductPageProps) {
                   ))}
                 </tbody>
               </table>
-            </div>
+            </div> */}
 
             {/* Quantity Selector */}
             <div className="flex items-center space-x-4 mb-6">
@@ -469,7 +469,7 @@ export default function ProductPage({ params }: ProductPageProps) {
                     price: calculateTotalPrice(),
                     sku: product.sku,
                     category: product.category,
-                    availability: product.availability,
+                    // availability: product.availability, // availability not available in backend
                   },
                   quantity
                 );
@@ -477,11 +477,12 @@ export default function ProductPage({ params }: ProductPageProps) {
                 setTimeout(() => setShowAddedMessage(false), 3000);
               }}
               className="w-full bg-gray-900 text-white py-4 px-8 font-medium tracking-wider hover:bg-gray-800 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
-              disabled={product.availability === "out-of-stock"}
+              // disabled={product.availability === "out-of-stock"} // availability not available in backend
             >
-              {product.availability === "out-of-stock"
+              {/* {product.availability === "out-of-stock"
                 ? "Out of Stock"
-                : "Add to Cart"}
+                : "Add to Cart"} */}
+              Add to Cart
             </button>
 
             {/* Added to Cart Message */}
@@ -507,13 +508,13 @@ export default function ProductPage({ params }: ProductPageProps) {
             </div>
 
             {/* Product Note */}
-            {product.note && (
+            {/* {product.note && (
               <div className="border-t border-gray-200 pt-8">
                 <p className="text-sm text-gray-600 leading-relaxed">
                   <strong>Note:</strong> {product.note}
                 </p>
               </div>
-            )}
+            )} */}
           </div>
         </div>
       </div>
