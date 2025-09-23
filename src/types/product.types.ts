@@ -119,8 +119,8 @@ export interface DisplayProduct {
   image: string;
   category: string;
   availability: "in-stock" | "out-of-stock" | "pre-order";
-  features: string[];
-  shape: string;
+  // features: string[]; // Commented out - not available in backend
+  // shape: string; // Commented out - not available in backend
   price: number;
   isFirstLook?: boolean;
   sku: string;
@@ -128,4 +128,44 @@ export interface DisplayProduct {
   variants: ProductVariant[];
   images: ProductImage[];
   stock: number;
+}
+
+// Extended Product interface for single product page (keeping some frontend-specific features)
+export interface ProductDetails {
+  id: string;
+  name: string;
+  sku: string;
+  images: string[];
+  category: string;
+  availability: "in-stock" | "out-of-stock" | "on-order";
+  // features: string[]; // Commented out - not available in backend
+  // shape: string; // Commented out - not available in backend
+  price: number;
+  isFirstLook?: boolean;
+  stockInfo: {
+    location: string;
+    stock: number;
+    moreArriving: string;
+  }[];
+  description?: string;
+  note?: string;
+  variants: {
+    size: {
+      name: string;
+      options: { value: string; label: string; priceModifier?: number }[];
+    };
+    color: {
+      name: string;
+      options: {
+        value: string;
+        label: string;
+        colorCode?: string;
+        priceModifier?: number;
+      }[];
+    };
+    finish: {
+      name: string;
+      options: { value: string; label: string; priceModifier?: number }[];
+    };
+  };
 }

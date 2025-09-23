@@ -1,131 +1,39 @@
 "use client";
 
-import { useState, use } from "react";
+import { useState, use, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ChevronRight, Plus, Minus } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
+import { useProduct } from "@/hooks/useProduct";
+import { ProductDetails } from "@/types/product.types";
+import LoadingSpinner from "@/components/LoadingSpinner";
+import ErrorMessage from "@/components/ErrorMessage";
 
-// Extended Product interface for single product page
-interface ProductDetails {
-  id: string;
-  name: string;
-  sku: string;
-  images: string[];
-  category: string;
-  // availability: "in-stock" | "out-of-stock" | "on-order"; // Not available in backend model
-  // features: string[]; // Not available in backend model
-  // shape: string; // Not available in backend model
-  price: number;
-  // isFirstLook?: boolean; // Not available in backend model
-  // stockInfo: { // Not available in backend model - only simple stock field exists
-  //   location: string;
-  //   stock: number;
-  //   moreArriving: string;
-  // }[];
-  description?: string;
-  // note?: string; // Not available in backend model
-  variants: {
-    size: {
-      name: string;
-      options: { value: string; label: string; priceModifier?: number }[];
-    };
-    color: {
-      name: string;
-      options: {
-        value: string;
-        label: string;
-        colorCode?: string;
-        priceModifier?: number;
-      }[];
-    };
-    finish: {
-      name: string;
-      options: { value: string; label: string; priceModifier?: number }[];
-    };
-  };
-}
-
-// Sample product data - In a real app, this would come from an API
-const getProductById = (id: string): ProductDetails => {
-  // This would typically be an API call using the id parameter
-  // For demo purposes, returning static data regardless of id
-  console.log(`Fetching product with ID: ${id}`);
+// Static fallback data for when API is not available
+const getFallbackProduct = (id: string): ProductDetails => {
   return {
-    id: "59972101",
-    name: "Mattai Reclaimed Wood 4Dwr Console",
-    sku: "59972101",
-    images: [
-      "https://images.unsplash.com/photo-1494947665470-20322015e3a8?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-      "https://images.unsplash.com/photo-1506439773649-6e0eb8cfb237?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-      "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-      "https://images.unsplash.com/photo-1549497538-303791108f95?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-      "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-    ],
-    category: "Console Tables",
-    // availability: "on-order", // Not available in backend model
-    // features: ["reclaimed-wood", "four-drawer"], // Not available in backend model
+    id: id || "fallback",
+    name: "Product Not Found",
+    sku: "N/A",
+    images: ["/placeholder-image.jpg"],
+    category: "Unknown",
+    availability: "out-of-stock", // Required for CartItem compatibility
+    // features: [], // Not available in backend model
     // shape: "rectangular", // Not available in backend model
-    price: 1599,
-    // isFirstLook: true, // Not available in backend model
-    // stockInfo: [ // Not available in backend model - only simple stock field exists
-    //   {
-    //     location: "Los Angeles, CA",
-    //     stock: 0,
-    //     moreArriving: "On Order",
-    //   },
-    // ],
-    // note: "The color of the product might differ due to production and your monitor screen settings. It's essential to ensure proper color calibration to accurately represent our products.", // Not available in backend model
+    price: 0,
+    // isFirstLook: false, // Not available in backend model
+    stockInfo: [], // Required for ProductDetails compatibility
+    description: "Product information is not available.",
+    // note: "Please try refreshing the page or contact support if the problem persists.", // Not available in backend model
     variants: {
-      size: {
-        name: "Size",
-        options: [
-          { value: "small", label: '48" W x 16" D x 32" H', priceModifier: 0 },
-          {
-            value: "medium",
-            label: '60" W x 18" D x 32" H',
-            priceModifier: 200,
-          },
-          {
-            value: "large",
-            label: '72" W x 20" D x 32" H',
-            priceModifier: 400,
-          },
-        ],
-      },
-      color: {
-        name: "Wood Color",
-        options: [
-          {
-            value: "natural",
-            label: "Natural Reclaimed",
-            colorCode: "#D2B48C",
-          },
-          {
-            value: "dark-walnut",
-            label: "Dark Walnut",
-            colorCode: "#5D4037",
-            priceModifier: 100,
-          },
-          {
-            value: "weathered-gray",
-            label: "Weathered Gray",
-            colorCode: "#9E9E9E",
-            priceModifier: 150,
-          },
-        ],
-      },
-      finish: {
-        name: "Finish",
-        options: [
-          { value: "matte", label: "Matte Protective", priceModifier: 0 },
-          { value: "satin", label: "Satin", priceModifier: 75 },
-          { value: "distressed", label: "Distressed", priceModifier: 125 },
-        ],
-      },
+      size: { name: "Size", options: [] },
+      color: { name: "Color", options: [] },
+      finish: { name: "Material", options: [] },
     },
   };
 };
+
 
 interface ProductPageProps {
   params: Promise<{
@@ -135,28 +43,65 @@ interface ProductPageProps {
 
 export default function ProductPage({ params }: ProductPageProps) {
   const resolvedParams = use(params);
-  const product = getProductById(resolvedParams.id);
+  const { product, productDetails, loading, error, refetch } = useProduct(resolvedParams.id);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [showAddedMessage, setShowAddedMessage] = useState(false);
-  const [selectedVariants, setSelectedVariants] = useState({
-    size: product.variants.size.options[0].value,
-    color: product.variants.color.options[0].value,
-    finish: product.variants.finish.options[0].value,
-  });
   const { addToCart } = useCart();
+
+  // Use productDetails if available, otherwise fallback
+  const displayProduct = productDetails || getFallbackProduct(resolvedParams.id);
+  
+  const [selectedVariants, setSelectedVariants] = useState({
+    size: displayProduct.variants.size.options[0]?.value || '',
+    color: displayProduct.variants.color.options[0]?.value || '',
+    finish: displayProduct.variants.finish.options[0]?.value || '',
+  });
+
+  // Update selected variants when product data loads
+  useEffect(() => {
+    if (productDetails) {
+      setSelectedVariants({
+        size: productDetails.variants.size.options[0]?.value || '',
+        color: productDetails.variants.color.options[0]?.value || '',
+        finish: productDetails.variants.finish.options[0]?.value || '',
+      });
+    }
+  }, [productDetails]);
+
+  // Show loading state
+  if (loading) {
+    return (
+      <main className="min-h-screen bg-white flex items-center justify-center">
+        <LoadingSpinner />
+      </main>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <main className="min-h-screen bg-white flex items-center justify-center">
+        <ErrorMessage 
+          message={error} 
+          onRetry={refetch}
+          retryLabel="Try Again"
+        />
+      </main>
+    );
+  }
 
   // Calculate total price including variant modifiers
   const calculateTotalPrice = () => {
-    let totalPrice = product.price;
+    let totalPrice = displayProduct.price;
 
-    const selectedSize = product.variants.size.options.find(
+    const selectedSize = displayProduct.variants.size.options.find(
       (option) => option.value === selectedVariants.size
     );
-    const selectedColor = product.variants.color.options.find(
+    const selectedColor = displayProduct.variants.color.options.find(
       (option) => option.value === selectedVariants.color
     );
-    const selectedFinish = product.variants.finish.options.find(
+    const selectedFinish = displayProduct.variants.finish.options.find(
       (option) => option.value === selectedVariants.finish
     );
 
@@ -180,9 +125,9 @@ export default function ProductPage({ params }: ProductPageProps) {
 
   const breadcrumbs = [
     { name: "Artisan House", href: "/" },
-    { name: "Reclaimed & Reframed", href: "/collections/reclaimed" },
-    { name: "Console Tables", href: "/products?category=console" },
-    { name: product.name, href: "#" },
+    { name: "Products", href: "/products" },
+    { name: displayProduct.category, href: `/products?category=${displayProduct.category.toLowerCase().replace(/\s+/g, '-')}` },
+    { name: displayProduct.name, href: "#" },
   ];
 
   return (
@@ -215,8 +160,8 @@ export default function ProductPage({ params }: ProductPageProps) {
             {/* Main Image */}
             <div className="aspect-[4/3] relative bg-gray-50 border border-gray-200">
               <Image
-                src={product.images[selectedImageIndex]}
-                alt={product.name}
+                src={displayProduct.images[selectedImageIndex] || "/placeholder-image.jpg"}
+                alt={displayProduct.name}
                 fill
                 className="object-cover"
                 sizes="(max-width: 1024px) 100vw, 50vw"
@@ -225,7 +170,7 @@ export default function ProductPage({ params }: ProductPageProps) {
 
             {/* Thumbnail Images */}
             <div className="grid grid-cols-5 gap-2">
-              {product.images.map((image, index) => (
+              {displayProduct.images.map((image, index) => (
                 <button
                   key={index}
                   onClick={() => setSelectedImageIndex(index)}
@@ -237,7 +182,7 @@ export default function ProductPage({ params }: ProductPageProps) {
                 >
                   <Image
                     src={image}
-                    alt={`${product.name} view ${index + 1}`}
+                    alt={`${displayProduct.name} view ${index + 1}`}
                     fill
                     className="object-cover"
                     sizes="20vw"
@@ -250,7 +195,7 @@ export default function ProductPage({ params }: ProductPageProps) {
           {/* Product Details */}
           <div className="space-y-8">
             {/* First Look Badge */}
-            {/* {product.isFirstLook && (
+            {/* {displayProduct.isFirstLook && (
               <div className="inline-block">
                 <span className="text-xs font-medium text-gray-600 bg-gray-100 px-3 py-1 rounded-full">
                   First Look
@@ -261,124 +206,130 @@ export default function ProductPage({ params }: ProductPageProps) {
             {/* Product Title */}
             <div>
               <h1 className="text-3xl font-light text-gray-900 mb-2">
-                {product.name}
+                {displayProduct.name}
               </h1>
-              <p className="text-sm text-gray-500">SKU {product.sku}</p>
+              <p className="text-sm text-gray-500">SKU {displayProduct.sku}</p>
             </div>
 
             {/* Status */}
             {/* <div>
               <span className="text-lg font-medium text-gray-900">
-                {product.availability === "on-order" && "On Order"}
-                {product.availability === "in-stock" && "In Stock"}
-                {product.availability === "out-of-stock" && "Out of Stock"}
+                {displayProduct.availability === "on-order" && "On Order"}
+                {displayProduct.availability === "in-stock" && "In Stock"}
+                {displayProduct.availability === "out-of-stock" && "Out of Stock"}
               </span>
             </div> */}
 
             {/* Variant Selection */}
             <div className="space-y-6">
               {/* Size Selection */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">
-                  {product.variants.size.name}
-                </label>
-                <div className="grid grid-cols-1 gap-2">
-                  {product.variants.size.options.map((option) => (
-                    <button
-                      key={option.value}
-                      onClick={() => handleVariantChange("size", option.value)}
-                      className={`text-left p-3 border border-gray-300 hover:border-gray-400 transition-all ${
-                        selectedVariants.size === option.value
-                          ? "border-gray-900 bg-gray-50"
-                          : ""
-                      }`}
-                    >
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-gray-900">
-                          {option.label}
-                        </span>
-                        {option.priceModifier && option.priceModifier > 0 && (
-                          <span className="text-sm text-green-600">
-                            +${option.priceModifier}
-                          </span>
-                        )}
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Color Selection */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">
-                  {product.variants.color.name}
-                </label>
-                <div className="grid grid-cols-1 gap-2">
-                  {product.variants.color.options.map((option) => (
-                    <button
-                      key={option.value}
-                      onClick={() => handleVariantChange("color", option.value)}
-                      className={`text-left p-3 border border-gray-300 hover:border-gray-400 transition-all ${
-                        selectedVariants.color === option.value
-                          ? "border-gray-900 bg-gray-50"
-                          : ""
-                      }`}
-                    >
-                      <div className="flex justify-between items-center">
-                        <div className="flex items-center space-x-3">
-                          {option.colorCode && (
-                            <div
-                              className="w-4 h-4 rounded-full border border-gray-300"
-                              style={{ backgroundColor: option.colorCode }}
-                            />
-                          )}
+              {displayProduct.variants.size.options.length > 0 && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                    {displayProduct.variants.size.name}
+                  </label>
+                  <div className="grid grid-cols-1 gap-2">
+                    {displayProduct.variants.size.options.map((option) => (
+                      <button
+                        key={option.value}
+                        onClick={() => handleVariantChange("size", option.value)}
+                        className={`text-left p-3 border border-gray-300 hover:border-gray-400 transition-all ${
+                          selectedVariants.size === option.value
+                            ? "border-gray-900 bg-gray-50"
+                            : ""
+                        }`}
+                      >
+                        <div className="flex justify-between items-center">
                           <span className="text-sm text-gray-900">
                             {option.label}
                           </span>
+                          {option.priceModifier && option.priceModifier > 0 && (
+                            <span className="text-sm text-green-600">
+                              +${option.priceModifier}
+                            </span>
+                          )}
                         </div>
-                        {option.priceModifier && option.priceModifier > 0 && (
-                          <span className="text-sm text-green-600">
-                            +${option.priceModifier}
-                          </span>
-                        )}
-                      </div>
-                    </button>
-                  ))}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
 
-              {/* Finish Selection */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">
-                  {product.variants.finish.name}
-                </label>
-                <div className="grid grid-cols-1 gap-2">
-                  {product.variants.finish.options.map((option) => (
-                    <button
-                      key={option.value}
-                      onClick={() =>
-                        handleVariantChange("finish", option.value)
-                      }
-                      className={`text-left p-3 border border-gray-300 hover:border-gray-400 transition-all ${
-                        selectedVariants.finish === option.value
-                          ? "border-gray-900 bg-gray-50"
-                          : ""
-                      }`}
-                    >
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-gray-900">
-                          {option.label}
-                        </span>
-                        {option.priceModifier && option.priceModifier > 0 && (
-                          <span className="text-sm text-green-600">
-                            +${option.priceModifier}
-                          </span>
-                        )}
-                      </div>
-                    </button>
-                  ))}
+              {/* Color Selection */}
+              {displayProduct.variants.color.options.length > 0 && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                    {displayProduct.variants.color.name}
+                  </label>
+                  <div className="grid grid-cols-1 gap-2">
+                    {displayProduct.variants.color.options.map((option) => (
+                      <button
+                        key={option.value}
+                        onClick={() => handleVariantChange("color", option.value)}
+                        className={`text-left p-3 border border-gray-300 hover:border-gray-400 transition-all ${
+                          selectedVariants.color === option.value
+                            ? "border-gray-900 bg-gray-50"
+                            : ""
+                        }`}
+                      >
+                        <div className="flex justify-between items-center">
+                          <div className="flex items-center space-x-3">
+                            {option.colorCode && (
+                              <div
+                                className="w-4 h-4 rounded-full border border-gray-300"
+                                style={{ backgroundColor: option.colorCode }}
+                              />
+                            )}
+                            <span className="text-sm text-gray-900">
+                              {option.label}
+                            </span>
+                          </div>
+                          {option.priceModifier && option.priceModifier > 0 && (
+                            <span className="text-sm text-green-600">
+                              +${option.priceModifier}
+                            </span>
+                          )}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
+
+              {/* Material Selection (renamed from Finish) */}
+              {displayProduct.variants.finish.options.length > 0 && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                    {displayProduct.variants.finish.name}
+                  </label>
+                  <div className="grid grid-cols-1 gap-2">
+                    {displayProduct.variants.finish.options.map((option) => (
+                      <button
+                        key={option.value}
+                        onClick={() =>
+                          handleVariantChange("finish", option.value)
+                        }
+                        className={`text-left p-3 border border-gray-300 hover:border-gray-400 transition-all ${
+                          selectedVariants.finish === option.value
+                            ? "border-gray-900 bg-gray-50"
+                            : ""
+                        }`}
+                      >
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-gray-900">
+                            {option.label}
+                          </span>
+                          {option.priceModifier && option.priceModifier > 0 && (
+                            <span className="text-sm text-green-600">
+                              +${option.priceModifier}
+                            </span>
+                          )}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Stock Information Table */}
@@ -398,7 +349,7 @@ export default function ProductPage({ params }: ProductPageProps) {
                   </tr>
                 </thead>
                 <tbody className="bg-white">
-                  {product.stockInfo.map((info, index) => (
+                  {displayProduct.stockInfo.map((info, index) => (
                     <tr key={index} className="border-t border-gray-200">
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {info.location}
@@ -444,14 +395,14 @@ export default function ProductPage({ params }: ProductPageProps) {
             <button
               onClick={() => {
                 // Get selected variant details for display
-                const selectedSizeOption = product.variants.size.options.find(
+                const selectedSizeOption = displayProduct.variants.size.options.find(
                   (option) => option.value === selectedVariants.size
                 );
-                const selectedColorOption = product.variants.color.options.find(
+                const selectedColorOption = displayProduct.variants.color.options.find(
                   (option) => option.value === selectedVariants.color
                 );
                 const selectedFinishOption =
-                  product.variants.finish.options.find(
+                  displayProduct.variants.finish.options.find(
                     (option) => option.value === selectedVariants.finish
                   );
 
@@ -459,17 +410,17 @@ export default function ProductPage({ params }: ProductPageProps) {
                   selectedSizeOption?.label,
                   selectedColorOption?.label,
                   selectedFinishOption?.label,
-                ].join(", ");
+                ].filter(Boolean).join(", ");
 
                 addToCart(
                   {
-                    id: `${product.id}-${selectedVariants.size}-${selectedVariants.color}-${selectedVariants.finish}`,
-                    name: `${product.name} (${variantDescription})`,
-                    image: product.images[0],
+                    id: `${displayProduct.id}-${selectedVariants.size}-${selectedVariants.color}-${selectedVariants.finish}`,
+                    name: `${displayProduct.name}${variantDescription ? ` (${variantDescription})` : ''}`,
+                    image: displayProduct.images[0] || "/placeholder-image.jpg",
                     price: calculateTotalPrice(),
-                    sku: product.sku,
-                    category: product.category,
-                    // availability: product.availability, // availability not available in backend
+                    sku: displayProduct.sku,
+                    category: displayProduct.category,
+                    availability: displayProduct.availability, // Required for CartItem compatibility
                   },
                   quantity
                 );
@@ -477,9 +428,9 @@ export default function ProductPage({ params }: ProductPageProps) {
                 setTimeout(() => setShowAddedMessage(false), 3000);
               }}
               className="w-full bg-gray-900 text-white py-4 px-8 font-medium tracking-wider hover:bg-gray-800 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
-              // disabled={product.availability === "out-of-stock"} // availability not available in backend
+              // disabled={displayProduct.availability === "out-of-stock"} // availability not available in backend
             >
-              {/* {product.availability === "out-of-stock"
+              {/* {displayProduct.availability === "out-of-stock"
                 ? "Out of Stock"
                 : "Add to Cart"} */}
               Add to Cart
@@ -497,9 +448,9 @@ export default function ProductPage({ params }: ProductPageProps) {
               <div className="text-2xl font-light text-gray-900">
                 ${calculateTotalPrice().toLocaleString()}
               </div>
-              {calculateTotalPrice() !== product.price && (
+              {calculateTotalPrice() !== displayProduct.price && (
                 <div className="text-sm text-gray-500 mt-1">
-                  Base price: ${product.price.toLocaleString()}
+                  Base price: ${displayProduct.price.toLocaleString()}
                 </div>
               )}
               <p className="text-sm text-gray-500 mt-1">
@@ -507,11 +458,21 @@ export default function ProductPage({ params }: ProductPageProps) {
               </p>
             </div>
 
+            {/* Product Description */}
+            {displayProduct.description && (
+              <div className="border-t border-gray-200 pt-8">
+                <h3 className="text-lg font-medium text-gray-900 mb-3">Description</h3>
+                <p className="text-sm text-gray-600 leading-relaxed">
+                  {displayProduct.description}
+                </p>
+              </div>
+            )}
+
             {/* Product Note */}
-            {/* {product.note && (
+            {/* {displayProduct.note && (
               <div className="border-t border-gray-200 pt-8">
                 <p className="text-sm text-gray-600 leading-relaxed">
-                  <strong>Note:</strong> {product.note}
+                  <strong>Note:</strong> {displayProduct.note}
                 </p>
               </div>
             )} */}
