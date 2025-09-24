@@ -71,11 +71,11 @@ function ProductsPageContent() {
     let filtered = [...products];
 
     // Apply availability filter (client-side)
-    if (filters.availability.length > 0) {
-      filtered = filtered.filter((product) =>
-        filters.availability.includes(product.availability)
-      );
-    }
+    // if (filters.availability.length > 0) {
+    //   filtered = filtered.filter((product) =>
+    //     filters.availability.includes(product.availability)
+    //   );
+    // }
 
     // Features and shape filters commented out - not in product model
     // if (filters.features.length > 0) {

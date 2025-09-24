@@ -121,7 +121,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
         </div>
         
         {/* Features Preview */}
-        {product.features.length > 0 && (
+        {/* {product.features.length > 0 && (
           <div className="flex flex-wrap gap-1">
             {product.features.slice(0, 2).map((feature) => (
               <span 
@@ -137,7 +137,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
               </span>
             )}
           </div>
-        )}
+        )} */}
       </div>
     </Link>
   );

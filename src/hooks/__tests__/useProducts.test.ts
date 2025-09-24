@@ -2,14 +2,14 @@ import React from 'react'
 import { renderHook, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useProductsForDisplay } from '../useProducts'
-import * as productService from '../../services/product.service'
+import * as ProductService from '../../services/product.service'
 
 // Mock the product service
 jest.mock('../../services/product.service', () => ({
   getProductsForDisplay: jest.fn(),
 }))
 
-const mockProductService = productService as jest.Mocked<typeof productService>
+const mockProductService = ProductService as jest.Mocked<typeof ProductService>
 
 // Create a test wrapper with QueryClient
 const createWrapper = () => {

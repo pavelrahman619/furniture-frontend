@@ -9,13 +9,9 @@ export const mockProducts: DisplayProduct[] = [
   {
     id: "mock-1",
     name: "Ezra Reclaimed Wood 3Dwr Console Table",
-    image: "https://images.unsplash.com/photo-1506439773649-6e0eb8cfb237?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-    category: "console",
-    availability: "in-stock",
-    features: ["reclaimed-wood", "handcrafted", "brown", "wood"],
-    shape: "rectangular",
+    category_id: "console",
     price: 1299,
-    isFirstLook: true,
+    featured: true,
     sku: "EZR-001",
     description: "Beautiful reclaimed wood console table with 3 drawers. Handcrafted with attention to detail.",
     variants: [
@@ -41,13 +37,9 @@ export const mockProducts: DisplayProduct[] = [
   {
     id: "mock-2",
     name: "Mattai Reclaimed Wood 4Dwr Console",
-    image: "https://images.unsplash.com/photo-1494947665470-20322015e3a8?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-    category: "console",
-    availability: "in-stock",
-    features: ["reclaimed-wood", "four-drawer", "brown", "wood"],
-    shape: "rectangular",
+    category_id: "console",
     price: 1599,
-    isFirstLook: true,
+    featured: true,
     sku: "MAT-001",
     description: "Spacious reclaimed wood console with 4 drawers for ample storage.",
     variants: [
@@ -73,13 +65,9 @@ export const mockProducts: DisplayProduct[] = [
   {
     id: "mock-3",
     name: "Itsa Reclaimed Wood Bench",
-    image: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-    category: "bench",
-    availability: "in-stock",
-    features: ["reclaimed-wood", "dining", "natural", "wood"],
-    shape: "linear",
+    category_id: "bench",
     price: 799,
-    isFirstLook: true,
+    featured: true,
     sku: "ITS-001",
     description: "Elegant reclaimed wood bench perfect for dining or entryway use.",
     variants: [
@@ -105,13 +93,9 @@ export const mockProducts: DisplayProduct[] = [
   {
     id: "mock-4",
     name: "Rustic Oak Dining Table",
-    image: "https://images.unsplash.com/photo-1549497538-303791108f95?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-    category: "table",
-    availability: "in-stock",
-    features: ["solid-wood", "dining", "brown", "wood"],
-    shape: "rectangular",
+    category_id: "table",
     price: 2199,
-    isFirstLook: false,
+    featured: false,
     sku: "OAK-001",
     description: "Solid oak dining table that seats 6-8 people comfortably.",
     variants: [
@@ -137,13 +121,9 @@ export const mockProducts: DisplayProduct[] = [
   {
     id: "mock-5",
     name: "Modern Leather Armchair",
-    image: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-    category: "chair",
-    availability: "out-of-stock",
-    features: ["leather", "modern", "black", "leather"],
-    shape: "curved",
+    category_id: "chair",
     price: 1299,
-    isFirstLook: false,
+    featured: false,
     sku: "ARM-001",
     description: "Comfortable modern armchair upholstered in premium leather.",
     variants: [
@@ -169,13 +149,9 @@ export const mockProducts: DisplayProduct[] = [
   {
     id: "mock-6",
     name: "Industrial Metal Bookshelf",
-    image: "https://images.unsplash.com/photo-1449247709967-d4461a6a6103?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-    category: "storage",
-    availability: "pre-order",
-    features: ["metal", "industrial", "black", "metal"],
-    shape: "rectangular",
+    category_id: "storage",
     price: 899,
-    isFirstLook: false,
+    featured: false,
     sku: "IND-001",
     description: "Industrial-style metal bookshelf with 5 adjustable shelves.",
     variants: [
@@ -211,46 +187,38 @@ export const shouldUseMockData = (): boolean => {
  * Get mock products with filtering
  */
 export const getMockProducts = (filters?: {
-  category?: string;
-  availability?: string[];
-  features?: string[];
+  category_id?: string;
   colors?: string[];
   materials?: string[];
   price_min?: number;
   price_max?: number;
   search?: string;
+  featured?: boolean;
 }): DisplayProduct[] => {
   let filtered = [...mockProducts];
 
   if (filters) {
     // Category filter
-    if (filters.category) {
-      filtered = filtered.filter(p => p.category === filters.category);
+    if (filters.category_id) {
+      filtered = filtered.filter(p => p.category_id === filters.category_id);
     }
 
-    // Availability filter
-    if (filters.availability && filters.availability.length > 0) {
-      filtered = filtered.filter(p => filters.availability!.includes(p.availability));
-    }
-
-    // Features filter
-    if (filters.features && filters.features.length > 0) {
-      filtered = filtered.filter(p => 
-        filters.features!.some(feature => p.features.includes(feature))
-      );
+    // Featured filter
+    if (filters.featured !== undefined) {
+      filtered = filtered.filter(p => p.featured === filters.featured);
     }
 
     // Colors filter
     if (filters.colors && filters.colors.length > 0) {
       filtered = filtered.filter(p => 
-        filters.colors!.some(color => p.features.includes(color))
+        p.variants.some(variant => filters.colors!.includes(variant.color || ''))
       );
     }
 
     // Materials filter
     if (filters.materials && filters.materials.length > 0) {
       filtered = filtered.filter(p => 
-        filters.materials!.some(material => p.features.includes(material))
+        p.variants.some(variant => filters.materials!.includes(variant.material || ''))
       );
     }
 
@@ -268,7 +236,7 @@ export const getMockProducts = (filters?: {
       filtered = filtered.filter(p => 
         p.name.toLowerCase().includes(searchTerm) ||
         p.description?.toLowerCase().includes(searchTerm) ||
-        p.category.toLowerCase().includes(searchTerm)
+        p.category_id.toLowerCase().includes(searchTerm)
       );
     }
   }

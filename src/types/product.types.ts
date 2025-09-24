@@ -116,13 +116,9 @@ export interface StockResponse {
 export interface DisplayProduct {
   id: string;
   name: string;
-  image: string;
-  category: string;
-  availability: "in-stock" | "out-of-stock" | "pre-order";
-  // features: string[]; // Commented out - not available in backend
-  // shape: string; // Commented out - not available in backend
+  category_id: string;
   price: number;
-  isFirstLook?: boolean;
+  featured: boolean;
   sku: string;
   description?: string;
   variants: ProductVariant[];

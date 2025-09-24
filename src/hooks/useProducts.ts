@@ -1,10 +1,9 @@
 "use client";
 
 import { useQuery, useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
-import { productService } from '@/services/product.service';
+import { ProductService } from '@/services/product.service';
 import {
   ProductsQueryParams,
-  DisplayProduct
 } from '@/types/product.types';
 
 /**
@@ -27,9 +26,9 @@ export const productKeys = {
 export function useProducts(params?: ProductsQueryParams) {
   return useQuery({
     queryKey: productKeys.list(params),
-    queryFn: () => productService.getProducts(params),
+    queryFn: () => ProductService.getProducts(params),
     staleTime: 1000 * 60 * 5, // 5 minutes
-    select: (data) => data.data, // Extract the data from ApiResponse
+    select: (data) => data, // Extract the data from ApiResponse
   });
 }
 
@@ -39,7 +38,7 @@ export function useProducts(params?: ProductsQueryParams) {
 export function useProductsForDisplay(params?: ProductsQueryParams) {
   return useQuery({
     queryKey: [...productKeys.list(params), 'display'],
-    queryFn: () => productService.getProductsForDisplay(params),
+    queryFn: () => ProductService.getProductsForDisplay(params),
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 }
@@ -47,20 +46,20 @@ export function useProductsForDisplay(params?: ProductsQueryParams) {
 /**
  * Hook to fetch infinite products (for pagination)
  */
-export function useInfiniteProducts(baseParams?: Omit<ProductsQueryParams, 'page'>) {
-  return useInfiniteQuery({
-    queryKey: [...productKeys.lists(), 'infinite', baseParams],
-    queryFn: ({ pageParam = 1 }) =>
-      productService.getProducts({ ...baseParams, page: pageParam }),
-    getNextPageParam: (lastPage) => {
-      if (!lastPage.success || !lastPage.data) return undefined;
-      const { pagination } = lastPage.data;
-      return pagination.has_next ? pagination.current_page + 1 : undefined;
-    },
-    initialPageParam: 1,
-    staleTime: 1000 * 60 * 5, // 5 minutes
-  });
-}
+// export function useInfiniteProducts(baseParams?: Omit<ProductsQueryParams, 'page'>) {
+//   return useInfiniteQuery({
+//     queryKey: [...productKeys.lists(), 'infinite', baseParams],
+//     queryFn: ({ pageParam = 1 }) =>
+//       ProductService.getProducts({ ...baseParams, page: pageParam }),
+//     getNextPageParam: (lastPage) => {
+//       if (!lastPage.success || !lastPage.data) return undefined;
+//       const { pagination } = lastPage.data;
+//       return pagination.has_next ? pagination.current_page + 1 : undefined;
+//     },
+//     initialPageParam: 1,
+//     staleTime: 1000 * 60 * 5, // 5 minutes
+//   });
+// }
 
 /**
  * Hook to fetch a single product
@@ -68,10 +67,10 @@ export function useInfiniteProducts(baseParams?: Omit<ProductsQueryParams, 'page
 export function useProduct(id: string, enabled = true) {
   return useQuery({
     queryKey: productKeys.detail(id),
-    queryFn: () => productService.getProduct(id),
+    queryFn: () => ProductService.getProduct(id),
     enabled: enabled && !!id,
     staleTime: 1000 * 60 * 10, // 10 minutes for individual products
-    select: (data) => data.data, // Extract the data from ApiResponse
+    select: (data) => data, // Extract the data from ApiResponse
   });
 }
 
@@ -85,10 +84,10 @@ export function useProductSearch(
 ) {
   return useQuery({
     queryKey: productKeys.search(query, filters),
-    queryFn: () => productService.searchProducts(query, filters),
+    queryFn: () => ProductService.searchProducts(query, filters),
     enabled: enabled && !!query.trim(),
     staleTime: 1000 * 60 * 2, // 2 minutes for search results
-    select: (data) => data.data, // Extract the data from ApiResponse
+    select: (data) => data, // Extract the data from ApiResponse
   });
 }
 
@@ -98,10 +97,10 @@ export function useProductSearch(
 export function useProductStock(id: string, enabled = true) {
   return useQuery({
     queryKey: productKeys.stock(id),
-    queryFn: () => productService.getProductStock(id),
+    queryFn: () => ProductService.getProductStock(id),
     enabled: enabled && !!id,
     staleTime: 1000 * 30, // 30 seconds for stock info
-    select: (data) => data.data, // Extract the data from ApiResponse
+    select: (data) => data, // Extract the data from ApiResponse
   });
 }
 
@@ -114,7 +113,7 @@ export function usePrefetchProduct() {
   return (id: string) => {
     queryClient.prefetchQuery({
       queryKey: productKeys.detail(id),
-      queryFn: () => productService.getProduct(id),
+      queryFn: () => ProductService.getProduct(id),
       staleTime: 1000 * 60 * 10, // 10 minutes
     });
   };

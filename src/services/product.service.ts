@@ -4,7 +4,9 @@ import {
   SingleProductResponse, 
   ProductsResponse, 
   ProductsQueryParams,
-  StockResponse 
+  StockResponse,
+  DisplayProduct,
+  Category,
 } from '@/types/product.types';
 
 /**
@@ -59,13 +61,60 @@ export class ProductService {
   }
 
   /**
+   * Get products transformed for UI display
+   */
+  static async getProductsForDisplay(params?: ProductsQueryParams): Promise<DisplayProduct[]> {
+    const { products } = await this.getProducts(params);
+
+    const toDisplayProduct = (product: Product): DisplayProduct => {
+      const images = product.images || [];
+      const primaryImage = images.find((img) => img.is_primary) || images[0];
+
+      const categoryField = product.category_id as string | Category;
+      const categoryName = typeof categoryField === 'object' && categoryField !== null
+        ? categoryField.name
+        : '';
+
+      const totalStock = typeof product.stock === 'number' && !Number.isNaN(product.stock)
+        ? product.stock
+        : (product.variants || []).reduce((sum, variant) => sum + (variant.stock || 0), 0);
+
+      const availability: DisplayProduct['availability'] = totalStock > 0
+        ? 'in-stock'
+        : 'out-of-stock';
+
+      return {
+        id: product._id,
+        name: product.name,
+        image: primaryImage?.url || '',
+        category: categoryName,
+        availability,
+        features: [],
+        price: product.price,
+        isFirstLook: product.featured ?? false,
+        sku: product.sku,
+        description: product.description,
+        variants: product.variants || [],
+        images: images,
+        stock: totalStock,
+      } as DisplayProduct;
+    };
+
+    return products.map(toDisplayProduct);
+  }
+
+  /**
    * Search products
    */
-  static async searchProducts(query: string, category?: string): Promise<Product[]> {
+  static async searchProducts(query: string, filters?: Partial<ProductsQueryParams>): Promise<Product[]> {
     try {
       const queryParams = new URLSearchParams({ q: query });
-      if (category) {
-        queryParams.append('category', category);
+      if (filters) {
+        Object.entries(filters).forEach(([key, value]) => {
+          if (value !== undefined && value !== null) {
+            queryParams.append(key, String(value));
+          }
+        });
       }
 
       const response = await apiService.get<{ products: Product[] }>(`/products/search?${queryParams.toString()}`);
