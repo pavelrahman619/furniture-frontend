@@ -43,7 +43,7 @@ interface ProductPageProps {
 
 export default function ProductPage({ params }: ProductPageProps) {
   const resolvedParams = use(params);
-  const { product, productDetails, loading, error, refetch } = useProduct(resolvedParams.id);
+  const { productDetails, loading, error, refetch } = useProduct(resolvedParams.id);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [showAddedMessage, setShowAddedMessage] = useState(false);

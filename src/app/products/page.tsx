@@ -68,7 +68,7 @@ function ProductsPageContent() {
 
   // Apply client-side filtering for features that don't have backend support
   const filteredProducts = useMemo(() => {
-    let filtered = [...products];
+    const filtered = [...products];
 
     // Apply availability filter (client-side)
     // if (filters.availability.length > 0) {
@@ -91,7 +91,7 @@ function ProductsPageContent() {
     // }
 
     return filtered;
-  }, [products, filters]);
+  }, [products]); // Removed 'filters' from dependencies since it's not used
 
   // Apply sorting
   const sortedProducts = useMemo(() => {

@@ -45,7 +45,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
         {/* Product Image */}
         <div className="aspect-square relative">
           <Image
-            src={product.image}
+            src={product.images[0].url}
             alt={product.name}
             fill
             className={`object-cover transition-all duration-300 ${
@@ -78,8 +78,8 @@ const ProductCard = ({ product }: ProductCardProps) => {
         
         {/* Category & Features */}
         <div className="flex items-center justify-between text-xs text-gray-500">
-          <span className="capitalize">{product.category}</span>
-          {product.isFirstLook && (
+          <span className="capitalize">{product.category_id}</span>
+          {product.featured && (
             <span className="bg-gray-100 px-2 py-1 rounded text-xs font-medium">
               First Look
             </span>
@@ -96,24 +96,18 @@ const ProductCard = ({ product }: ProductCardProps) => {
           <div className="flex items-center">
             <div 
               className={`w-2 h-2 rounded-full mr-2 ${
-                product.availability === 'in-stock' 
+                product.stock > 0 
                   ? 'bg-green-500' 
-                  : product.availability === 'pre-order'
-                  ? 'bg-yellow-500'
                   : 'bg-red-500'
               }`}
             />
             <span className={`text-xs ${
-              product.availability === 'in-stock' 
+              product.stock > 0 
                 ? 'text-green-600' 
-                : product.availability === 'pre-order'
-                ? 'text-yellow-600'
                 : 'text-red-600'
             }`}>
-              {product.availability === 'in-stock' 
+              {product.stock > 0 
                 ? 'In Stock' 
-                : product.availability === 'pre-order'
-                ? 'Pre-Order'
                 : 'Out of Stock'
               }
             </span>

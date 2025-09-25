@@ -1,9 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { ProductService } from '@/services/product.service';
-import { Product, ProductDetails, StockResponse } from '@/types/product.types';
+import { Product, ProductDetails, ProductImage, ProductVariant, StockResponse } from '@/types/product.types';
 
 interface UseProductResult {
-  product: Product | null;
   productDetails: ProductDetails | null;
   loading: boolean;
   error: string | null;
@@ -14,12 +13,11 @@ interface UseProductResult {
  * Custom hook for fetching and managing product data
  */
 export const useProduct = (id: string): UseProductResult => {
-  const [product, setProduct] = useState<Product | null>(null);
   const [productDetails, setProductDetails] = useState<ProductDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchProduct = async () => {
+  const fetchProduct = useCallback(async () => {
     if (!id) return;
 
     try {
@@ -32,14 +30,12 @@ export const useProduct = (id: string): UseProductResult => {
         ProductService.getProductStock(id).catch(() => ({ locations: [] })) // Fallback if stock fails
       ]);
 
-      setProduct(productData);
-
       // Transform backend product to frontend ProductDetails format
       const transformedProduct: ProductDetails = {
         id: productData._id,
         name: productData.name,
         sku: productData.sku,
-        images: productData.images.map(img => img.url),
+        images: productData.images.map((img: ProductImage) => img.url),
         category: typeof productData.category_id === 'object' 
           ? productData.category_id.name 
           : 'Unknown Category',
@@ -48,7 +44,7 @@ export const useProduct = (id: string): UseProductResult => {
         // shape: 'rectangular', // Commented out - not available in backend
         price: productData.price,
         isFirstLook: productData.featured || false,
-        stockInfo: stockData.locations.map(location => ({
+        stockInfo: stockData.locations.map((location: StockResponse['locations'][0]) => ({
           location: location.location,
           stock: location.stock,
           moreArriving: location.more_arriving ? 'Yes' : 'No'
@@ -59,41 +55,41 @@ export const useProduct = (id: string): UseProductResult => {
           size: {
             name: "Size",
             options: productData.variants
-              .filter(v => v.size)
-              .map(v => ({
+              .filter((v: ProductVariant) => v.size)
+              .map((v: ProductVariant) => ({
                 value: v.size || '',
                 label: v.size || '',
                 priceModifier: v.price - productData.price
               }))
-              .filter((v, index, self) => 
-                index === self.findIndex(t => t.value === v.value)
+              .filter((v: { value: string }, index: number, self: { value: string }[]) => 
+                index === self.findIndex((t: { value: string }) => t.value === v.value)
               )
           },
           color: {
             name: "Color",
             options: productData.variants
-              .filter(v => v.color)
-              .map(v => ({
+              .filter((v: ProductVariant) => v.color)
+              .map((v: ProductVariant) => ({
                 value: v.color || '',
                 label: v.color || '',
                 colorCode: getColorCode(v.color || ''),
                 priceModifier: v.price - productData.price
               }))
-              .filter((v, index, self) => 
-                index === self.findIndex(t => t.value === v.value)
+              .filter((v: { value: string }, index: number, self: { value: string }[]) => 
+                index === self.findIndex((t: { value: string }) => t.value === v.value)
               )
           },
           finish: {
             name: "Material",
             options: productData.variants
-              .filter(v => v.material)
-              .map(v => ({
+              .filter((v: ProductVariant) => v.material)
+              .map((v: ProductVariant) => ({
                 value: v.material || '',
                 label: v.material || '',
                 priceModifier: v.price - productData.price
               }))
-              .filter((v, index, self) => 
-                index === self.findIndex(t => t.value === v.value)
+              .filter((v: { value: string }, index: number, self: { value: string }[]) => 
+                index === self.findIndex((t: { value: string }) => t.value === v.value)
               )
           }
         }
@@ -106,14 +102,13 @@ export const useProduct = (id: string): UseProductResult => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
 
   useEffect(() => {
     fetchProduct();
-  }, [id]);
+  }, [fetchProduct]);
 
   return {
-    product,
     productDetails,
     loading,
     error,

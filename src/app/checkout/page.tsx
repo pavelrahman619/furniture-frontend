@@ -20,17 +20,17 @@ interface ShippingInfo {
   country: string;
 }
 
-interface BillingInfo {
-  sameAsShipping: boolean;
-  firstName: string;
-  lastName: string;
-  address: string;
-  apartment: string;
-  city: string;
-  state: string;
-  zipCode: string;
-  country: string;
-}
+// interface BillingInfo {
+//   sameAsShipping: boolean;
+//   firstName: string;
+//   lastName: string;
+//   address: string;
+//   apartment: string;
+//   city: string;
+//   state: string;
+//   zipCode: string;
+//   country: string;
+// }
 
 const CheckoutPage = () => {
   const { cartItems, getTotalPrice } = useCart();

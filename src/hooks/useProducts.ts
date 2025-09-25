@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery, useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ProductService } from '@/services/product.service';
 import {
   ProductsQueryParams,
