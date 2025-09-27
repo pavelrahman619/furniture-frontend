@@ -391,50 +391,61 @@ export default function ProductPage({ params }: ProductPageProps) {
               </div>
             </div>
 
-            {/* Add to Cart Button */}
-            <button
-              onClick={() => {
-                // Get selected variant details for display
-                const selectedSizeOption = displayProduct.variants.size.options.find(
-                  (option) => option.value === selectedVariants.size
-                );
-                const selectedColorOption = displayProduct.variants.color.options.find(
-                  (option) => option.value === selectedVariants.color
-                );
-                const selectedFinishOption =
-                  displayProduct.variants.finish.options.find(
-                    (option) => option.value === selectedVariants.finish
+            {/* Action Buttons */}
+            <div className="flex gap-4">
+              <button
+                onClick={() => {
+                  // Get selected variant details for display
+                  const selectedSizeOption = displayProduct.variants.size.options.find(
+                    (option) => option.value === selectedVariants.size
                   );
+                  const selectedColorOption = displayProduct.variants.color.options.find(
+                    (option) => option.value === selectedVariants.color
+                  );
+                  const selectedFinishOption =
+                    displayProduct.variants.finish.options.find(
+                      (option) => option.value === selectedVariants.finish
+                    );
 
-                const variantDescription = [
-                  selectedSizeOption?.label,
-                  selectedColorOption?.label,
-                  selectedFinishOption?.label,
-                ].filter(Boolean).join(", ");
+                  const variantDescription = [
+                    selectedSizeOption?.label,
+                    selectedColorOption?.label,
+                    selectedFinishOption?.label,
+                  ].filter(Boolean).join(", ");
 
-                addToCart(
-                  {
-                    id: `${displayProduct.id}-${selectedVariants.size}-${selectedVariants.color}-${selectedVariants.finish}`,
-                    name: `${displayProduct.name}${variantDescription ? ` (${variantDescription})` : ''}`,
-                    image: displayProduct.images[0] || "/placeholder-image.jpg",
-                    price: calculateTotalPrice(),
-                    sku: displayProduct.sku,
-                    category: displayProduct.category,
-                    availability: displayProduct.availability, // Required for CartItem compatibility
-                  },
-                  quantity
-                );
-                setShowAddedMessage(true);
-                setTimeout(() => setShowAddedMessage(false), 3000);
-              }}
-              className="w-full bg-gray-900 text-white py-4 px-8 font-medium tracking-wider hover:bg-gray-800 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
-              // disabled={displayProduct.availability === "out-of-stock"} // availability not available in backend
-            >
-              {/* {displayProduct.availability === "out-of-stock"
-                ? "Out of Stock"
-                : "Add to Cart"} */}
-              Add to Cart
-            </button>
+                  addToCart(
+                    {
+                      id: `${displayProduct.id}-${selectedVariants.size}-${selectedVariants.color}-${selectedVariants.finish}`,
+                      name: `${displayProduct.name}${variantDescription ? ` (${variantDescription})` : ''}`,
+                      image: displayProduct.images[0] || "/placeholder-image.jpg",
+                      price: calculateTotalPrice(),
+                      sku: displayProduct.sku,
+                      category: displayProduct.category,
+                      availability: displayProduct.availability, // Required for CartItem compatibility
+                    },
+                    quantity
+                  );
+                  setShowAddedMessage(true);
+                  setTimeout(() => setShowAddedMessage(false), 3000);
+                }}
+                className="flex-1 bg-gray-900 text-white py-4 px-8 font-medium tracking-wider hover:bg-gray-800 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                // disabled={displayProduct.availability === "out-of-stock"} // availability not available in backend
+              >
+                {/* {displayProduct.availability === "out-of-stock"
+                  ? "Out of Stock"
+                  : "Add to Cart"} */}
+                Add to Cart
+              </button>
+              
+              <button
+                onClick={() => {
+                  // Order Now logic can be implemented here
+                }}
+                className="flex-1 bg-white text-gray-900 py-4 px-8 font-medium tracking-wider border-2 border-gray-900 hover:bg-gray-50 transition-colors"
+              >
+                Order Now
+              </button>
+            </div>
 
             {/* Added to Cart Message */}
             {showAddedMessage && (
