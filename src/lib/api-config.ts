@@ -62,11 +62,11 @@ export const API_ENDPOINTS = {
 
   // Orders
   ORDERS: {
-    CREATE: '/order/create',
-    LIST: '/order/list',
-    DETAIL: (id: string) => `/order/${id}`,
-    TRACK: (id: string) => `/order/track/${id}`,
-    CANCEL: (id: string) => `/order/cancel/${id}`,
+    LIST: '/orders',
+    DETAIL: (id: string) => `/orders/${id}`,
+    CREATE: '/orders',
+    UPDATE_STATUS: (id: string) => `/orders/${id}/status`,
+    TRACK: (id: string) => `/orders/${id}/track`,
   },
 
   // Payment

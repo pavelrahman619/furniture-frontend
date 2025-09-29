@@ -1,11 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { CheckCircle, Truck, Calendar, CreditCard } from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import OrderService from "@/services/order.service";
 
-// Mock order data - in a real app, this would come from the backend
+// Order interfaces matching backend types
 interface OrderItem {
   id: string;
   name: string;
@@ -18,7 +20,7 @@ interface OrderItem {
 interface OrderDetails {
   orderNumber: string;
   orderDate: string;
-  estimatedDelivery: string;
+  estimatedDelivery?: string;
   subtotal: number;
   memberSavings: number;
   total: number;
@@ -33,63 +35,108 @@ interface OrderDetails {
   paymentMethod: string;
 }
 
-const OrderSuccessPage = () => {
+const OrderSuccessContent = () => {
   const [orderDetails, setOrderDetails] = useState<OrderDetails | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const searchParams = useSearchParams();
+  const orderId = searchParams.get('orderId');
 
   useEffect(() => {
-    // Mock order data - in real app, get from URL params or API
-    const mockOrder: OrderDetails = {
-      orderNumber: "RH" + Math.random().toString(36).substr(2, 9).toUpperCase(),
-      orderDate: new Date().toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      }),
-      estimatedDelivery: "December 15-20, 2024",
-      subtotal: 3598,
-      memberSavings: 1079,
-      total: 2519,
-      items: [
-        {
-          id: "1",
-          name: "Ezra Reclaimed Wood 3Dwr Console Table",
-          image:
-            "https://images.unsplash.com/photo-1506439773649-6e0eb8cfb237?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-          quantity: 1,
-          price: 1299,
-          sku: "RH-EZ3DWT-001",
-        },
-        {
-          id: "2",
-          name: "Mattai Reclaimed Wood 4Dwr Console",
-          image:
-            "https://images.unsplash.com/photo-1494947665470-20322015e3a8?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-          quantity: 1,
-          price: 1599,
-          sku: "RH-MT4DWC-002",
-        },
-        {
-          id: "3",
-          name: "Itsa Reclaimed Wood Bench",
-          image:
-            "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-          quantity: 1,
-          price: 799,
-          sku: "RH-ITRWB-003",
-        },
-      ],
-      shippingAddress: {
-        name: "John Smith",
-        street: "123 Main Street",
-        city: "San Francisco",
-        state: "CA",
-        zip: "94105",
-      },
-      paymentMethod: "•••• •••• •••• 4242",
+    const fetchOrderDetails = async () => {
+      if (!orderId) {
+        setError('Order ID not found');
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const orderResponse = await OrderService.getOrder(orderId);
+
+        // Check if response has the expected structure
+        if (!orderResponse.order) {
+          throw new Error('Invalid order response structure');
+        }
+
+        const order = orderResponse.order;
+
+        // Transform backend order data to match our interface
+        const transformedOrder: OrderDetails = {
+          orderNumber: order._id || orderId,
+          orderDate: new Date(order.created_at).toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          }),
+          estimatedDelivery: order.estimated_delivery
+            ? new Date(order.estimated_delivery).toLocaleDateString("en-US", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              })
+            : "December 15-20, 2024", // Fallback
+          subtotal: order.subtotal,
+          memberSavings: 0, // Backend doesn't have member savings in the current structure
+          total: order.total,
+          items: order.items ? order.items.map((item) => ({
+            id: item.product_id,
+            name: item.name,
+            image: "https://images.unsplash.com/photo-1506439773649-6e0eb8cfb237?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80", // Default image
+            quantity: item.quantity,
+            price: item.price,
+            sku: `SKU-${item.product_id}`, // Backend doesn't provide SKU in order items
+          })) : [],
+          shippingAddress: {
+            name: "Customer", // Backend doesn't store customer name separately
+            street: order.shipping_address.street,
+            city: order.shipping_address.city,
+            state: order.shipping_address.state,
+            zip: order.shipping_address.zip_code,
+          },
+          paymentMethod: order.payment_method,
+        };
+
+        setOrderDetails(transformedOrder);
+      } catch (error) {
+        console.error('Failed to fetch order details:', error);
+        setError('Failed to load order details');
+      } finally {
+        setLoading(false);
+      }
     };
 
-    setOrderDetails(mockOrder);
-  }, []);
+    fetchOrderDetails();
+  }, [orderId]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading order details...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !orderDetails) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-red-600 text-6xl mb-4">⚠️</div>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Order Not Found</h1>
+          <p className="text-gray-600 mb-6">{error || 'The order could not be loaded.'}</p>
+          <Link
+            href="/products"
+            className="inline-block bg-gray-900 text-white px-8 py-3 font-medium tracking-wider hover:bg-gray-800 transition-colors"
+          >
+            CONTINUE SHOPPING
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
 
   if (!orderDetails) {
     return (
@@ -357,6 +404,21 @@ const OrderSuccessPage = () => {
         </div>
       </div>
     </main>
+  );
+};
+
+const OrderSuccessPage = () => {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    }>
+      <OrderSuccessContent />
+    </Suspense>
   );
 };
 

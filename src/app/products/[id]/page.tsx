@@ -415,13 +415,19 @@ export default function ProductPage({ params }: ProductPageProps) {
 
                   addToCart(
                     {
-                      id: `${displayProduct.id}-${selectedVariants.size}-${selectedVariants.color}-${selectedVariants.finish}`,
+                      id: displayProduct.id, // Original MongoDB ObjectId for backend lookup
+                      cartId: `${displayProduct.id}-${selectedVariants.size}-${selectedVariants.color}-${selectedVariants.finish}`, // Unique cart identifier
                       name: `${displayProduct.name}${variantDescription ? ` (${variantDescription})` : ''}`,
                       image: displayProduct.images[0] || "/placeholder-image.jpg",
                       price: calculateTotalPrice(),
                       sku: displayProduct.sku,
                       category: displayProduct.category,
-                      availability: displayProduct.availability, // Required for CartItem compatibility
+                      availability: displayProduct.availability,
+                      variants: {
+                        size: selectedVariants.size,
+                        color: selectedVariants.color,
+                        finish: selectedVariants.finish,
+                      },
                     },
                     quantity
                   );

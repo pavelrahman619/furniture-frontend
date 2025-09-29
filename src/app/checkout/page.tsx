@@ -6,6 +6,7 @@ import Link from "next/link";
 import { ChevronLeft, CreditCard, Lock } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { useRouter } from "next/navigation";
+import OrderService from "@/services/order.service";
 
 interface ShippingInfo {
   firstName: string;
@@ -63,6 +64,7 @@ const CheckoutPage = () => {
 
   const [errors, setErrors] = useState<Partial<ShippingInfo>>({});
   const [isProcessing, setIsProcessing] = useState(false);
+  const [orderError, setOrderError] = useState<string | null>(null);
 
   // Calculate pricing
   const subtotal = getTotalPrice();
@@ -111,15 +113,64 @@ const CheckoutPage = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleContinueToPayment = () => {
+  const handleContinueToPayment = async () => {
     if (validateForm()) {
       setIsProcessing(true);
-      // Simulate processing delay
-      setTimeout(() => {
-        // In a real app, you would integrate with a payment processor like Stripe
-        // For now, we'll redirect to an order success page
-        router.push("/order-success");
-      }, 2000);
+
+      try {
+        // Prepare order data
+        const orderData = {
+          items: cartItems.map((item) => ({
+            product_id: item.id, // Use the original MongoDB ObjectId
+            quantity: item.quantity,
+            price: item.price,
+            name: item.name,
+          })),
+          shipping_address: {
+            street: shippingInfo.address,
+            city: shippingInfo.city,
+            state: shippingInfo.state,
+            zip_code: shippingInfo.zipCode,
+            country: shippingInfo.country,
+          },
+          billing_address: {
+            street: shippingInfo.address,
+            city: shippingInfo.city,
+            state: shippingInfo.state,
+            zip_code: shippingInfo.zipCode,
+            country: shippingInfo.country,
+          },
+          payment_method: "Credit Card", // You can add payment method selection later
+          customer_email: shippingInfo.email,
+          customer_phone: shippingInfo.phone,
+        };
+
+        // Create order through backend
+        const orderId = await OrderService.createOrder(orderData);
+
+        // Redirect to order success page with order ID
+        router.push(`/order-success?orderId=${orderId}`);
+      } catch (error) {
+        console.error("Failed to create order:", error);
+        setIsProcessing(false);
+
+        // Handle different types of errors
+        let errorMessage = "Failed to place order. Please try again.";
+
+        if (error instanceof Error) {
+          if (error.message.includes('Network error')) {
+            errorMessage = "Network error. Please check your internet connection and try again.";
+          } else if (error.message.includes('400')) {
+            errorMessage = "Invalid order data. Please check your information and try again.";
+          } else if (error.message.includes('500')) {
+            errorMessage = "Server error. Please try again later.";
+          } else {
+            errorMessage = error.message;
+          }
+        }
+
+        setOrderError(errorMessage);
+      }
     }
   };
 
@@ -376,6 +427,18 @@ const CheckoutPage = () => {
                 >
                   {isProcessing ? "PROCESSING..." : "CONTINUE TO PAYMENT"}
                 </button>
+
+                {orderError && (
+                  <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                    <p className="text-red-600 text-sm text-center">{orderError}</p>
+                    <button
+                      onClick={() => setOrderError(null)}
+                      className="mt-2 text-red-600 text-sm underline hover:text-red-800"
+                    >
+                      Dismiss
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </div>

@@ -9,7 +9,8 @@ import {
 } from "react";
 
 export interface CartItem {
-  id: string;
+  id: string; // This should be the original MongoDB ObjectId
+  cartId: string; // Unique identifier for cart item (includes variants)
   name: string;
   image: string;
   price: number;
@@ -17,13 +18,19 @@ export interface CartItem {
   sku: string;
   category: string;
   availability: "in-stock" | "out-of-stock" | "on-order";
+  // Variant information
+  variants?: {
+    size?: string;
+    color?: string;
+    finish?: string;
+  };
 }
 
 interface CartContextType {
   cartItems: CartItem[];
   addToCart: (product: Omit<CartItem, "quantity">, quantity?: number) => void;
-  removeFromCart: (productId: string) => void;
-  updateQuantity: (productId: string, quantity: number) => void;
+  removeFromCart: (cartId: string) => void;
+  updateQuantity: (cartId: string, quantity: number) => void;
   clearCart: () => void;
   getTotalItems: () => number;
   getTotalPrice: () => number;
@@ -65,12 +72,12 @@ export const CartProvider = ({ children }: CartProviderProps) => {
 
   const addToCart = (product: Omit<CartItem, "quantity">, quantity = 1) => {
     setCartItems((prevItems) => {
-      const existingItem = prevItems.find((item) => item.id === product.id);
+      const existingItem = prevItems.find((item) => item.cartId === product.cartId);
 
       if (existingItem) {
         // If item exists, update quantity
         return prevItems.map((item) =>
-          item.id === product.id
+          item.cartId === product.cartId
             ? { ...item, quantity: item.quantity + quantity }
             : item
         );
@@ -81,21 +88,21 @@ export const CartProvider = ({ children }: CartProviderProps) => {
     });
   };
 
-  const removeFromCart = (productId: string) => {
+  const removeFromCart = (cartId: string) => {
     setCartItems((prevItems) =>
-      prevItems.filter((item) => item.id !== productId)
+      prevItems.filter((item) => item.cartId !== cartId)
     );
   };
 
-  const updateQuantity = (productId: string, quantity: number) => {
+  const updateQuantity = (cartId: string, quantity: number) => {
     if (quantity <= 0) {
-      removeFromCart(productId);
+      removeFromCart(cartId);
       return;
     }
 
     setCartItems((prevItems) =>
       prevItems.map((item) =>
-        item.id === productId ? { ...item, quantity } : item
+        item.cartId === cartId ? { ...item, quantity } : item
       )
     );
   };
