@@ -393,6 +393,7 @@ export default function ProductPage({ params }: ProductPageProps) {
 
             {/* Action Buttons */}
             <div className="flex gap-4">
+              {/* Temporarily commented out Add to Cart functionality
               <button
                 onClick={() => {
                   // Get selected variant details for display
@@ -415,8 +416,8 @@ export default function ProductPage({ params }: ProductPageProps) {
 
                   addToCart(
                     {
-                      id: displayProduct.id, // Original MongoDB ObjectId for backend lookup
-                      cartId: `${displayProduct.id}-${selectedVariants.size}-${selectedVariants.color}-${selectedVariants.finish}`, // Unique cart identifier
+                      id: displayProduct.id,
+                      cartId: `${displayProduct.id}-${selectedVariants.size}-${selectedVariants.color}-${selectedVariants.finish}`,
                       name: `${displayProduct.name}${variantDescription ? ` (${variantDescription})` : ''}`,
                       image: displayProduct.images[0] || "/placeholder-image.jpg",
                       price: calculateTotalPrice(),
@@ -435,22 +436,17 @@ export default function ProductPage({ params }: ProductPageProps) {
                   setTimeout(() => setShowAddedMessage(false), 3000);
                 }}
                 className="flex-1 bg-gray-900 text-white py-4 px-8 font-medium tracking-wider hover:bg-gray-800 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
-                // disabled={displayProduct.availability === "out-of-stock"} // availability not available in backend
               >
-                {/* {displayProduct.availability === "out-of-stock"
-                  ? "Out of Stock"
-                  : "Add to Cart"} */}
                 Add to Cart
               </button>
+              */}
               
-              <button
-                onClick={() => {
-                  // Order Now logic can be implemented here
-                }}
-                className="flex-1 bg-white text-gray-900 py-4 px-8 font-medium tracking-wider border-2 border-gray-900 hover:bg-gray-50 transition-colors"
+              <a
+                href="mailto:info@palacioshomeco.com"
+                className="flex-1 bg-gray-900 text-white py-4 px-8 font-medium tracking-wider hover:bg-gray-800 transition-colors text-center"
               >
-                Order Now
-              </button>
+                Contact us to order
+              </a>
             </div>
 
             {/* Added to Cart Message */}
