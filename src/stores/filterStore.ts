@@ -57,7 +57,7 @@ const STATIC_FILTER_OPTIONS = {
   availability: [
     { value: "in-stock", label: "In Stock" },
     { value: "out-of-stock", label: "Out of Stock" },
-    { value: "pre-order", label: "Pre-Order" },
+    // { value: "pre-order", label: "Pre-Order" },
   ],
   
   categories: [
