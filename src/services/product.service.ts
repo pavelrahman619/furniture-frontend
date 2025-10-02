@@ -41,7 +41,12 @@ export class ProductService {
       if (params) {
         Object.entries(params).forEach(([key, value]) => {
           if (value !== undefined && value !== null) {
-            queryParams.append(key, value.toString());
+            // Handle arrays (like categories) by joining them
+            if (Array.isArray(value)) {
+              queryParams.append(key, value.join(','));
+            } else {
+              queryParams.append(key, value.toString());
+            }
           }
         });
       }
@@ -126,7 +131,12 @@ export class ProductService {
       if (filters) {
         Object.entries(filters).forEach(([key, value]) => {
           if (value !== undefined && value !== null) {
-            queryParams.append(key, String(value));
+            // Handle arrays (like categories) by joining them
+            if (Array.isArray(value)) {
+              queryParams.append(key, value.join(','));
+            } else {
+              queryParams.append(key, String(value));
+            }
           }
         });
       }

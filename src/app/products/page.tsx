@@ -31,9 +31,9 @@ function ProductsPageContent() {
       limit: 12,
     };
 
-    // Add category filter
+    // Add category filter - send multiple categories as comma-separated string
     if (filters.category && filters.category.length > 0) {
-      params.category = filters.category[0]; // Backend expects single category ID
+      params.category = filters.category.join(',');
     }
     
     // Add color filter
