@@ -58,6 +58,8 @@ export const API_ENDPOINTS = {
     REMOVE: '/cart/remove',
     CLEAR: '/cart/clear',
     COUNT: '/cart/count',
+    MERGE: '/cart/merge',  // Merge local cart with backend cart
+    SYNC: '/cart/sync',    // Full sync - replace backend cart with local
   },
 
   // Orders
