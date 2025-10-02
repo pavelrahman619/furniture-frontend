@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Heart } from "lucide-react";
+// import { Heart } from "lucide-react";
 import { DisplayProduct } from "@/types/product.types";
 
 interface ProductCardProps {
@@ -32,14 +32,14 @@ const ProductCard = ({ product }: ProductCardProps) => {
           onClick={toggleWishlist}
           className="absolute top-4 right-4 z-10 p-2 bg-transparent hover:bg-gray-100 rounded-full transition-all duration-200"
         >
-          <Heart
+          {/* <Heart
             className={`h-5 w-5 transition-colors ${
               isWishlisted
                 ? "fill-gray-800 text-gray-800"
                 : "text-gray-400 hover:text-gray-800"
             }`}
             strokeWidth={1.5}
-          />
+          /> */}
         </button>
 
         {/* Product Image */}
