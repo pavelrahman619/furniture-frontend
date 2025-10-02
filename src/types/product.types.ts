@@ -124,6 +124,7 @@ export interface DisplayProduct {
   variants: ProductVariant[];
   images: ProductImage[];
   stock: number;
+  availability: "in-stock" | "out-of-stock";
 }
 
 // Extended Product interface for single product page (keeping some frontend-specific features)

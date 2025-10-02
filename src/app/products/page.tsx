@@ -70,14 +70,14 @@ function ProductsPageContent() {
 
   // Apply client-side filtering for features that don't have backend support
   const filteredProducts = useMemo(() => {
-    const filtered = [...products];
+    let filtered = [...products];
 
     // Apply availability filter (client-side)
-    // if (filters.availability.length > 0) {
-    //   filtered = filtered.filter((product) =>
-    //     filters.availability.includes(product.availability)
-    //   );
-    // }
+    if (filters.availability.length > 0) {
+      filtered = filtered.filter((product) =>
+        filters.availability.includes(product.availability)
+      );
+    }
 
     // Features and shape filters commented out - not in product model
     // if (filters.features.length > 0) {
@@ -93,7 +93,7 @@ function ProductsPageContent() {
     // }
 
     return filtered;
-  }, [products]); // Removed 'filters' from dependencies since it's not used
+  }, [products, filters.availability]);
 
   // Apply sorting
   const sortedProducts = useMemo(() => {

@@ -111,6 +111,7 @@ export function useInfiniteProductsForDisplay(baseParams?: Omit<ProductsQueryPar
           variants: product.variants || [],
           images: images,
           stock: totalStock,
+          availability: (totalStock > 0 ? 'in-stock' : 'out-of-stock') as 'in-stock' | 'out-of-stock',
         };
       });
     });
