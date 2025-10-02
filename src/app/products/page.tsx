@@ -6,7 +6,7 @@ import ProductGrid from "@/components/ProductGrid";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import ErrorMessage from "@/components/ErrorMessage";
 import ErrorBoundary from "@/components/ErrorBoundary";
-import { useProductsForDisplay } from "@/hooks/useProducts";
+import { useInfiniteProductsForDisplay } from "@/hooks/useProducts";
 import { useFilters, useSortBy } from "@/stores/filterStore";
 import { ProductsQueryParams } from "@/types/product.types";
 
@@ -24,11 +24,10 @@ function ProductsPageContent() {
     setIsClient(true);
   }, []);
 
-  // Build query parameters for the API
-  const queryParams = useMemo((): ProductsQueryParams => {
-    const params: ProductsQueryParams = {
-      page: 1,
-      limit: 12,
+  // Build query parameters for the API (excluding page since infinite query handles that)
+  const queryParams = useMemo((): Omit<ProductsQueryParams, 'page'> => {
+    const params: Omit<ProductsQueryParams, 'page'> = {
+      limit: 5,
     };
 
     // Add category filter - send multiple categories as comma-separated string
@@ -57,14 +56,17 @@ function ProductsPageContent() {
     return params;
   }, [filters]);
 
-  // Fetch products using TanStack Query
+  // Fetch products using infinite query
   const { 
-    data: products = [], 
+    allProducts: products = [], 
     isLoading, 
     isError, 
     error,
-    refetch 
-  } = useProductsForDisplay(queryParams);
+    refetch,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage
+  } = useInfiniteProductsForDisplay(queryParams);
 
   // Apply client-side filtering for features that don't have backend support
   const filteredProducts = useMemo(() => {
@@ -177,6 +179,26 @@ function ProductsPageContent() {
 
       {/* Product Grid */}
       <ProductGrid products={sortedProducts} />
+      
+      {/* Load More Button */}
+      {hasNextPage && (
+        <div className="flex justify-center mt-12">
+          <button
+            onClick={() => fetchNextPage()}
+            disabled={isFetchingNextPage}
+            className="bg-gray-900 text-white px-8 py-3 rounded-md hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            {isFetchingNextPage ? (
+              <div className="flex items-center gap-2">
+                <LoadingSpinner size="sm" />
+                Loading more...
+              </div>
+            ) : (
+              'Load More Products'
+            )}
+          </button>
+        </div>
+      )}
       
       {/* No products message */}
       {sortedProducts.length === 0 && !isLoading && (

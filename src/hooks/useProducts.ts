@@ -1,6 +1,7 @@
 "use client";
 
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMemo } from 'react';
+import { useQuery, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
 import { ProductService } from '@/services/product.service';
 import {
   ProductsQueryParams,
@@ -46,20 +47,80 @@ export function useProductsForDisplay(params?: ProductsQueryParams) {
 /**
  * Hook to fetch infinite products (for pagination)
  */
-// export function useInfiniteProducts(baseParams?: Omit<ProductsQueryParams, 'page'>) {
-//   return useInfiniteQuery({
-//     queryKey: [...productKeys.lists(), 'infinite', baseParams],
-//     queryFn: ({ pageParam = 1 }) =>
-//       ProductService.getProducts({ ...baseParams, page: pageParam }),
-//     getNextPageParam: (lastPage) => {
-//       if (!lastPage.success || !lastPage.data) return undefined;
-//       const { pagination } = lastPage.data;
-//       return pagination.has_next ? pagination.current_page + 1 : undefined;
-//     },
-//     initialPageParam: 1,
-//     staleTime: 1000 * 60 * 5, // 5 minutes
-//   });
-// }
+export function useInfiniteProducts(baseParams?: Omit<ProductsQueryParams, 'page'>) {
+  return useInfiniteQuery({
+    queryKey: [...productKeys.lists(), 'infinite', baseParams],
+    queryFn: ({ pageParam = 1 }) =>
+      ProductService.getProducts({ ...baseParams, page: pageParam }),
+    getNextPageParam: (lastPage) => {
+      const { pagination } = lastPage;
+      return pagination.has_next ? pagination.current_page + 1 : undefined;
+    },
+    initialPageParam: 1,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+}
+
+/**
+ * Hook to fetch infinite products for display (transformed)
+ */
+export function useInfiniteProductsForDisplay(baseParams?: Omit<ProductsQueryParams, 'page'>) {
+  const query = useInfiniteProducts(baseParams);
+  
+  // Transform the data to flat array of DisplayProducts
+  const allProducts = useMemo(() => {
+    if (!query.data) return [];
+    
+    return query.data.pages.flatMap(page => {
+      const { products, filters_available } = page;
+      
+      // Update filter store with dynamic category data if available (only from first page)
+      if (filters_available?.categories && query.data.pages.indexOf(page) === 0) {
+        try {
+          import('../stores/filterStore').then(({ useFilterStore }) => {
+            const store = useFilterStore.getState();
+            store.updateFilterOptions({
+              categories: filters_available.categories.map(cat => ({
+                value: cat.id,
+                label: cat.name,
+                slug: cat.name.toLowerCase().replace(/\s+/g, '-')
+              }))
+            });
+          });
+        } catch (error) {
+          console.warn('Failed to update filter store with category data:', error);
+        }
+      }
+
+      // Transform products to DisplayProduct format
+      return products.map(product => {
+        const images = product.images || [];
+        const categoryField = product.category_id;
+        const totalStock = typeof product.stock === 'number' && !Number.isNaN(product.stock)
+          ? product.stock
+          : (product.variants || []).reduce((sum, variant) => sum + (variant.stock || 0), 0);
+
+        return {
+          id: product._id,
+          name: product.name,
+          category_id: typeof product.category_id === 'string' ? product.category_id : product.category_id._id,
+          price: product.price,
+          featured: product.featured ?? false,
+          sku: product.sku,
+          description: product.description,
+          variants: product.variants || [],
+          images: images,
+          stock: totalStock,
+        };
+      });
+    });
+  }, [query.data]);
+
+  return {
+    ...query,
+    allProducts,
+  };
+}
 
 /**
  * Hook to fetch a single product
