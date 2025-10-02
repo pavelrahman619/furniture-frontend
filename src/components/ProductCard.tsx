@@ -78,7 +78,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
         
         {/* Category & Features */}
         <div className="flex items-center justify-between text-xs text-gray-500">
-          <span className="capitalize">{product.category_id}</span>
+          <span className="capitalize">{product.category_name || product.category_id}</span>
           {product.featured && (
             <span className="bg-gray-100 px-2 py-1 rounded text-xs font-medium">
               First Look

@@ -103,7 +103,12 @@ export function useInfiniteProductsForDisplay(baseParams?: Omit<ProductsQueryPar
         return {
           id: product._id,
           name: product.name,
-          category_id: typeof product.category_id === 'string' ? product.category_id : product.category_id._id,
+          category_id: typeof product.category_id === 'string' 
+            ? product.category_id 
+            : (product.category_id?._id || ''),
+          category_name: typeof product.category_id === 'object' && product.category_id?.name 
+            ? product.category_id.name 
+            : undefined,
           price: product.price,
           featured: product.featured ?? false,
           sku: product.sku,
