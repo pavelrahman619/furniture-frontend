@@ -1,13 +1,14 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 import { ProductFilters } from '@/types/product.types';
+import { fetchCategories, transformCategoriesToFilterOptions, CategoryResponse } from '@/services/category.service';
 
 // Filter state interface
 interface FilterState {
   // Active filters
   filters: ProductFilters;
   
-  // Filter options (static for now, can be made dynamic later)
+  // Filter options (dynamic from backend)
   filterOptions: {
     availability: Array<{ value: string; label: string }>;
     categories: Array<{ value: string; label: string; slug: string }>;
@@ -23,7 +24,9 @@ interface FilterState {
   
   // Loading states
   isLoading: boolean;
+  isCategoriesLoading: boolean;
   error: string | null;
+  categoriesError: string | null;
 }
 
 // Filter actions interface
@@ -36,6 +39,7 @@ interface FilterActions {
   
   // Filter options management
   updateFilterOptions: (options: Partial<FilterState['filterOptions']>) => void;
+  fetchCategoriesFromBackend: () => Promise<void>;
   
   // UI management
   setShowAllFilters: (show: boolean) => void;
@@ -61,6 +65,7 @@ const STATIC_FILTER_OPTIONS = {
   ],
   
   categories: [
+    // Static fallback categories - will be replaced by backend data
     { value: "console", label: "Console Tables", slug: "console" },
     { value: "table", label: "Dining Tables", slug: "table" },
     { value: "chair", label: "Chairs", slug: "chair" },
@@ -123,7 +128,9 @@ const initialState: FilterState = {
   showAllFilters: false,
   sortBy: "new",
   isLoading: false,
+  isCategoriesLoading: false,
   error: null,
+  categoriesError: null,
 };
 
 // Create the store
@@ -219,6 +226,40 @@ export const useFilterStore = create<FilterStore>()(
           );
         },
         
+        // Fetch categories from backend
+        fetchCategoriesFromBackend: async () => {
+          set({ isCategoriesLoading: true, categoriesError: null }, false, 'fetchCategoriesStart');
+          
+          try {
+            const categories = await fetchCategories();
+            const categoriesOptions = transformCategoriesToFilterOptions(categories);
+            
+            set(
+              (state) => ({
+                filterOptions: {
+                  ...state.filterOptions,
+                  categories: categoriesOptions,
+                },
+                isCategoriesLoading: false,
+                categoriesError: null,
+              }),
+              false,
+              'fetchCategoriesSuccess'
+            );
+          } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Failed to fetch categories';
+            set(
+              {
+                isCategoriesLoading: false,
+                categoriesError: errorMessage,
+              },
+              false,
+              'fetchCategoriesError'
+            );
+            console.error('Failed to fetch categories:', error);
+          }
+        },
+        
         // Utility functions
         hasActiveFilters: () => {
           const { filters } = get();
@@ -275,3 +316,8 @@ export const useHasActiveFilters = () => useFilterStore((state) => state.hasActi
 export const useGetActiveFilterCount = () => useFilterStore((state) => state.getActiveFilterCount);
 export const useIsLoading = () => useFilterStore((state) => state.isLoading);
 export const useError = () => useFilterStore((state) => state.error);
+
+// Categories-specific selectors
+export const useIsCategoriesLoading = () => useFilterStore((state) => state.isCategoriesLoading);
+export const useCategoriesError = () => useFilterStore((state) => state.categoriesError);
+export const useFetchCategoriesFromBackend = () => useFilterStore((state) => state.fetchCategoriesFromBackend);
