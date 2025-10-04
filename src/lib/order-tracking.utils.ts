@@ -278,10 +278,11 @@ export function validateOrderNumber(orderNumber: string): {
  */
 export function createApiError(error: unknown): ApiError {
   if (error instanceof Error) {
+    const errorWithStatus = error as Error & { status?: number; statusCode?: number; code?: string };
     return {
       message: error.message,
-      status: (error as any).status || (error as any).statusCode,
-      code: (error as any).code,
+      status: errorWithStatus.status || errorWithStatus.statusCode,
+      code: errorWithStatus.code,
     };
   }
   

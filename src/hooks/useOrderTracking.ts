@@ -5,7 +5,7 @@
 
 import { useState, useCallback } from 'react';
 import { OrderService } from '@/services/order.service';
-import type { Order, ApiError } from '@/types/order-tracking.types';
+import type { Order } from '@/types/order-tracking.types';
 import { 
   transformOrder, 
   createApiError, 
@@ -96,7 +96,7 @@ export function useOrderTracking(): UseOrderTrackingReturn {
           setError('Authentication required. Please log in to track your order.');
         } else if (apiError.status === 403) {
           setError('Access denied. You can only track your own orders.');
-        } else if (apiError.status >= 500) {
+        } else if (apiError.status && apiError.status >= 500) {
           setError('Server error. Please try again later.');
         } else {
           setError(apiError.message || 'Failed to track order. Please try again.');

@@ -18,7 +18,7 @@ export interface CategoriesListResponse {
 }
 
 export interface CategoryProductsResponse {
-  products: any[];
+  products: unknown[];
   pagination: {
     current_page: number;
     total_pages: number;
@@ -60,7 +60,7 @@ export const fetchCategoryProducts = async (
   options?: {
     page?: number;
     limit?: number;
-    filters?: Record<string, any>;
+    filters?: Record<string, unknown>;
   }
 ): Promise<CategoryProductsResponse> => {
   try {
