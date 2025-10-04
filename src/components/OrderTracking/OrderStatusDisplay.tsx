@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import type { Order } from '@/types/order-tracking.types';
+import type { Order, OrderStatus } from '@/types/order-tracking.types';
 import { STATUS_CONFIG, getOrderProgress, isStatusCompleted } from '@/lib/order-tracking.utils';
 
 interface OrderStatusDisplayProps {
@@ -36,7 +36,7 @@ export function OrderStatusDisplay({ order }: OrderStatusDisplayProps) {
           {Object.entries(STATUS_CONFIG)
             .filter(([key]) => !['cancelled', 'refunded'].includes(key))
             .map(([key, config]) => {
-              const isCompleted = isStatusCompleted(order.status, key as any);
+              const isCompleted = isStatusCompleted(order.status, key as OrderStatus);
               const isCurrent = key === order.status;
 
               return (

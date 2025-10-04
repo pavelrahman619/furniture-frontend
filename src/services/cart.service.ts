@@ -142,7 +142,7 @@ export const cartService = {
    * @param token - Auth token
    * @returns Merged cart from backend
    */
-  mergeCart: async (userId: string, localItems: LocalCartItem[], token: string): Promise<ApiResponse<any>> => {
+  mergeCart: async (userId: string, localItems: LocalCartItem[], token: string): Promise<ApiResponse<Cart>> => {
     // Transform local cart items to backend format
     const backendItems: BackendCartItem[] = localItems.map(item => ({
       product_id: item.id,
@@ -153,7 +153,7 @@ export const cartService = {
       price: item.price,
     }));
 
-    return apiService.post<any>(API_ENDPOINTS.CART.MERGE, {
+    return apiService.post<Cart>(API_ENDPOINTS.CART.MERGE, {
       user_id: userId,
       local_items: backendItems,
     }, token);
@@ -168,7 +168,7 @@ export const cartService = {
    * @param token - Auth token
    * @returns Synced cart from backend
    */
-  syncCart: async (userId: string, localItems: LocalCartItem[], token: string): Promise<ApiResponse<any>> => {
+  syncCart: async (userId: string, localItems: LocalCartItem[], token: string): Promise<ApiResponse<Cart>> => {
     // Transform local cart items to backend format
     const backendItems: BackendCartItem[] = localItems.map(item => ({
       product_id: item.id,
@@ -179,7 +179,7 @@ export const cartService = {
       price: item.price,
     }));
 
-    return apiService.post<any>(API_ENDPOINTS.CART.SYNC, {
+    return apiService.post<Cart>(API_ENDPOINTS.CART.SYNC, {
       user_id: userId,
       items: backendItems,
     }, token);

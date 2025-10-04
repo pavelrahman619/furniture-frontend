@@ -94,12 +94,6 @@ export class ProductService {
       const images = product.images || [];
       // const primaryImage = images.find((img) => img.is_primary) || images[0];
 
-      // Handle category information
-      const categoryField = product.category_id as string | Category;
-      const categoryName = typeof categoryField === 'object' && categoryField !== null
-        ? categoryField.name
-        : '';
-
       // Calculate total stock from variants and base stock
       const totalStock = typeof product.stock === 'number' && !Number.isNaN(product.stock)
         ? product.stock
@@ -116,6 +110,7 @@ export class ProductService {
         variants: product.variants || [],
         images: images,
         stock: totalStock,
+        availability: totalStock > 0 ? "in-stock" : "out-of-stock",
       };
     };
 

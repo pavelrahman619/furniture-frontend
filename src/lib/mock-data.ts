@@ -32,7 +32,8 @@ export const mockProducts: DisplayProduct[] = [
         is_primary: true
       }
     ],
-    stock: 5
+    stock: 5,
+    availability: "in-stock"
   },
   {
     id: "mock-2",
@@ -60,7 +61,8 @@ export const mockProducts: DisplayProduct[] = [
         is_primary: true
       }
     ],
-    stock: 3
+    stock: 3,
+    availability: "in-stock"
   },
   {
     id: "mock-3",
@@ -88,7 +90,8 @@ export const mockProducts: DisplayProduct[] = [
         is_primary: true
       }
     ],
-    stock: 8
+    stock: 8,
+    availability: "in-stock"
   },
   {
     id: "mock-4",
@@ -116,7 +119,8 @@ export const mockProducts: DisplayProduct[] = [
         is_primary: true
       }
     ],
-    stock: 2
+    stock: 2,
+    availability: "in-stock"
   },
   {
     id: "mock-5",
@@ -144,7 +148,8 @@ export const mockProducts: DisplayProduct[] = [
         is_primary: true
       }
     ],
-    stock: 0
+    stock: 0,
+    availability: "out-of-stock"
   },
   {
     id: "mock-6",
@@ -172,7 +177,8 @@ export const mockProducts: DisplayProduct[] = [
         is_primary: true
       }
     ],
-    stock: 0
+    stock: 0,
+    availability: "out-of-stock"
   }
 ];
 
