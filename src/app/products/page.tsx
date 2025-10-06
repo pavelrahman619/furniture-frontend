@@ -27,7 +27,7 @@ function ProductsPageContent() {
   // Build query parameters for the API (excluding page since infinite query handles that)
   const queryParams = useMemo((): Omit<ProductsQueryParams, 'page'> => {
     const params: Omit<ProductsQueryParams, 'page'> = {
-      limit: 5,
+      limit: 10,
     };
 
     // Add category filter - send multiple categories as comma-separated string
