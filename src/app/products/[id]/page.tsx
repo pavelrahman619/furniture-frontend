@@ -457,7 +457,7 @@ export default function ProductPage({ params }: ProductPageProps) {
             )}
 
             {/* Price Display */}
-            <div className="border-t border-gray-200 pt-6">
+            {/* <div className="border-t border-gray-200 pt-6">
               <div className="text-2xl font-light text-gray-900">
                 ${calculateTotalPrice().toLocaleString()}
               </div>
@@ -469,7 +469,7 @@ export default function ProductPage({ params }: ProductPageProps) {
               <p className="text-sm text-gray-500 mt-1">
                 Price shown is per item
               </p>
-            </div>
+            </div> */}
 
             {/* Product Description */}
             {displayProduct.description && (

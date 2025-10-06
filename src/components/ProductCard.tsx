@@ -45,7 +45,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
         {/* Product Image */}
         <div className="aspect-square relative">
           <Image
-            src={product.images[0].url}
+            src={product.images.find(img => img.is_primary)?.url || product.images[0].url}
             alt={product.name}
             fill
             className={`object-cover transition-all duration-300 ${
@@ -88,9 +88,9 @@ const ProductCard = ({ product }: ProductCardProps) => {
         
         {/* Price */}
         <div className="flex items-center justify-between">
-          <span className="text-lg font-medium text-gray-900">
+          {/* <span className="text-lg font-medium text-gray-900">
             ${product.price.toLocaleString()}
-          </span>
+          </span> */}
           
           {/* Stock Status */}
           <div className="flex items-center">
