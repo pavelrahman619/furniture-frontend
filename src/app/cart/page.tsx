@@ -141,7 +141,7 @@ const CartPage = () => {
                       <select
                         value={item.quantity}
                         onChange={(e) =>
-                          updateQuantity(item.id, parseInt(e.target.value))
+                          updateQuantity(item.cartId, parseInt(e.target.value))
                         }
                         className="w-full border border-gray-300 px-4 py-2 bg-white text-gray-900 appearance-none focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent"
                       >
@@ -196,7 +196,7 @@ const CartPage = () => {
                         accepted.
                       </p>
                       <button
-                        onClick={() => removeFromCart(item.id)}
+                        onClick={() => removeFromCart(item.cartId)}
                         className="text-gray-600 underline hover:text-gray-800 transition-colors"
                       >
                         Remove

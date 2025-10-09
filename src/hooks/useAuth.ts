@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { authService, User } from '../services';
+import { useCart } from '@/contexts/CartContext';
 
 export interface AuthState {
   user: User | null;
@@ -12,7 +13,8 @@ export interface AuthState {
 }
 
 /**
- * Custom hook for authentication management
+ * Custom hook for authentication management with cart sync
+ * Automatically syncs local cart with backend when user logs in
  */
 export function useAuth() {
   const [state, setState] = useState<AuthState>({
@@ -22,6 +24,9 @@ export function useAuth() {
     loading: true,
     error: null,
   });
+
+  // Get cart context for syncing
+  const { mergeWithBackend } = useCart();
 
   // Load auth data from localStorage on mount
   useEffect(() => {
@@ -72,6 +77,16 @@ export function useAuth() {
           loading: false,
           error: null,
         });
+
+        // Sync local cart with backend after successful login
+        try {
+          console.log('Syncing cart after login...');
+          await mergeWithBackend(user.id, token);
+          console.log('Cart sync completed');
+        } catch (syncError) {
+          // Log but don't fail login if cart sync fails
+          console.error('Cart sync failed after login:', syncError);
+        }
         
         return true;
       } else {
@@ -92,7 +107,7 @@ export function useAuth() {
       }));
       return false;
     }
-  }, []);
+  }, [mergeWithBackend]);
 
   // Register function
   const register = useCallback(async (userData: {
@@ -120,6 +135,16 @@ export function useAuth() {
           loading: false,
           error: null,
         });
+
+        // Sync local cart with backend after successful registration
+        try {
+          console.log('Syncing cart after registration...');
+          await mergeWithBackend(user.id, token);
+          console.log('Cart sync completed');
+        } catch (syncError) {
+          // Log but don't fail registration if cart sync fails
+          console.error('Cart sync failed after registration:', syncError);
+        }
         
         return true;
       } else {
@@ -140,7 +165,7 @@ export function useAuth() {
       }));
       return false;
     }
-  }, []);
+  }, [mergeWithBackend]);
 
   // Logout function
   const logout = useCallback(async (): Promise<void> => {

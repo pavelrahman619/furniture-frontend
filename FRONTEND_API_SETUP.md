@@ -51,13 +51,13 @@ NEXT_PUBLIC_SOCKET_URL=https://your-backend-domain.com
 #### Basic API Call
 
 ```typescript
-import { productService } from '../services';
+import { ProductService } from '../services';
 
 // Get all products
-const products = await productService.getProducts();
+const products = await ProductService.getProducts();
 
 // Get products with filters
-const filteredProducts = await productService.getProducts({
+const filteredProducts = await ProductService.getProducts({
   category: 'furniture',
   minPrice: 100,
   maxPrice: 1000,
@@ -70,11 +70,11 @@ const filteredProducts = await productService.getProducts({
 
 ```typescript
 import { useApi } from '../hooks/useApi';
-import { productService } from '../services';
+import { ProductService } from '../services';
 
 function ProductsList() {
   const { data: products, loading, error, execute } = useApi(
-    productService.getProducts
+    ProductService.getProducts
   );
 
   useEffect(() => {

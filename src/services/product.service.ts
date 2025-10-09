@@ -1,133 +1,171 @@
-import { apiService, ApiResponse } from '../lib/api-service';
-import { API_ENDPOINTS } from '../lib/api-config';
-
-export interface Product {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  salePrice?: number;
-  images: string[];
-  category: {
-    id: string;
-    name: string;
-  };
-  stock: number;
-  sku: string;
-  weight?: number;
-  dimensions?: {
-    length: number;
-    width: number;
-    height: number;
-  };
-  featured: boolean;
-  onSale: boolean;
-  status: 'active' | 'inactive';
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface ProductListParams {
-  page?: number;
-  limit?: number;
-  category?: string;
-  search?: string;
-  minPrice?: number;
-  maxPrice?: number;
-  featured?: boolean;
-  onSale?: boolean;
-  sortBy?: 'price' | 'name' | 'createdAt';
-  sortOrder?: 'asc' | 'desc';
-}
-
-export interface ProductListResponse {
-  products: Product[];
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-  };
-}
+import { apiService } from '@/lib/api-service';
+import {
+  Product,
+  SingleProductResponse,
+  ProductsResponse,
+  ProductsQueryParams,
+  StockResponse,
+  DisplayProduct,
+  Category,
+} from '@/types/product.types';
 
 /**
- * Product API service
+ * Product service for API interactions
  */
-export const productService = {
+export class ProductService {
   /**
-   * Get products list with optional filters
+   * Get a single product by ID
    */
-  getProducts: async (params?: ProductListParams): Promise<ApiResponse<ProductListResponse>> => {
-    const queryParams = new URLSearchParams();
-    
-    if (params) {
-      Object.entries(params).forEach(([key, value]) => {
-        if (value !== undefined && value !== null) {
-          queryParams.append(key, String(value));
-        }
-      });
+  static async getProduct(id: string): Promise<Product> {
+    try {
+      const response = await apiService.get<SingleProductResponse>(`/products/${id}`);
+
+      if (!response.success || !response.data) {
+        throw new Error('Failed to fetch product');
+      }
+
+      return response.data.product;
+    } catch (error) {
+      console.error('Error fetching product:', error);
+      throw error;
     }
-    
-    const endpoint = `${API_ENDPOINTS.PRODUCTS.LIST}?${queryParams.toString()}`;
-    return apiService.get<ProductListResponse>(endpoint);
-  },
+  }
 
   /**
-   * Get single product by ID
+   * Get products with filtering and pagination
    */
-  getProduct: async (id: string): Promise<ApiResponse<Product>> => {
-    return apiService.get<Product>(API_ENDPOINTS.PRODUCTS.DETAIL(id));
-  },
+  static async getProducts(params?: ProductsQueryParams): Promise<ProductsResponse> {
+    try {
+      const queryParams = new URLSearchParams();
+
+      if (params) {
+        Object.entries(params).forEach(([key, value]) => {
+          if (value !== undefined && value !== null) {
+            // Handle arrays (like categories) by joining them
+            if (Array.isArray(value)) {
+              queryParams.append(key, value.join(','));
+            } else {
+              queryParams.append(key, value.toString());
+            }
+          }
+        });
+      }
+
+      const endpoint = `/products${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+      const response = await apiService.get<ProductsResponse>(endpoint);
+
+      if (!response.success || !response.data) {
+        throw new Error('Failed to fetch products');
+      }
+
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching products:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get products transformed for UI display
+   * Includes filter store updates and enhanced product transformation
+   */
+  static async getProductsForDisplay(params?: ProductsQueryParams): Promise<DisplayProduct[]> {
+    const response = await this.getProducts(params);
+    const { products, filters_available } = response;
+
+    // Update filter store with dynamic category data if available
+    if (filters_available?.categories) {
+      try {
+        const { useFilterStore } = await import('../stores/filterStore');
+        const store = useFilterStore.getState();
+        store.updateFilterOptions({
+          categories: filters_available.categories.map(cat => ({
+            value: cat.id,
+            label: cat.name,
+            slug: cat.name.toLowerCase().replace(/\s+/g, '-')
+          }))
+        });
+      } catch (error) {
+        console.warn('Failed to update filter store with category data:', error);
+      }
+    }
+
+    const toDisplayProduct = (product: Product): DisplayProduct => {
+      const images = product.images || [];
+      // const primaryImage = images.find((img) => img.is_primary) || images[0];
+
+      // Calculate total stock from variants and base stock
+      const totalStock = typeof product.stock === 'number' && !Number.isNaN(product.stock)
+        ? product.stock
+        : (product.variants || []).reduce((sum, variant) => sum + (variant.stock || 0), 0);
+
+      return {
+        id: product._id,
+        name: product.name,
+        category_id: typeof product.category_id === 'string' ? product.category_id : product.category_id._id,
+        price: product.price,
+        featured: product.featured ?? false,
+        sku: product.sku,
+        description: product.description,
+        variants: product.variants || [],
+        images: images,
+        stock: totalStock,
+        availability: totalStock > 0 ? "in-stock" : "out-of-stock",
+      };
+    };
+
+    return products.map(toDisplayProduct);
+  }
 
   /**
    * Search products
    */
-  searchProducts: async (query: string, filters?: Partial<ProductListParams>): Promise<ApiResponse<ProductListResponse>> => {
-    const params = new URLSearchParams({ search: query });
-    
-    if (filters) {
-      Object.entries(filters).forEach(([key, value]) => {
-        if (value !== undefined && value !== null) {
-          params.append(key, String(value));
-        }
-      });
+  static async searchProducts(query: string, filters?: Partial<ProductsQueryParams>): Promise<Product[]> {
+    try {
+      const queryParams = new URLSearchParams({ q: query });
+      if (filters) {
+        Object.entries(filters).forEach(([key, value]) => {
+          if (value !== undefined && value !== null) {
+            // Handle arrays (like categories) by joining them
+            if (Array.isArray(value)) {
+              queryParams.append(key, value.join(','));
+            } else {
+              queryParams.append(key, String(value));
+            }
+          }
+        });
+      }
+
+      const response = await apiService.get<{ products: Product[] }>(`/products/search?${queryParams.toString()}`);
+
+      if (!response.success || !response.data) {
+        throw new Error('Failed to search products');
+      }
+
+      return response.data.products;
+    } catch (error) {
+      console.error('Error searching products:', error);
+      throw error;
     }
-    
-    const endpoint = `${API_ENDPOINTS.PRODUCTS.SEARCH}?${params.toString()}`;
-    return apiService.get<ProductListResponse>(endpoint);
-  },
+  }
 
   /**
-   * Get products by category
+   * Get product stock information
    */
-  getProductsByCategory: async (categoryId: string, params?: Omit<ProductListParams, 'category'>): Promise<ApiResponse<ProductListResponse>> => {
-    const queryParams = new URLSearchParams();
-    
-    if (params) {
-      Object.entries(params).forEach(([key, value]) => {
-        if (value !== undefined && value !== null) {
-          queryParams.append(key, String(value));
-        }
-      });
+  static async getProductStock(id: string): Promise<StockResponse> {
+    try {
+      const response = await apiService.get<StockResponse>(`/products/${id}/stock`);
+
+      if (!response.success || !response.data) {
+        throw new Error('Failed to fetch product stock');
+      }
+
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching product stock:', error);
+      throw error;
     }
-    
-    const endpoint = `${API_ENDPOINTS.PRODUCTS.BY_CATEGORY(categoryId)}?${queryParams.toString()}`;
-    return apiService.get<ProductListResponse>(endpoint);
-  },
+  }
+}
 
-  /**
-   * Get featured products
-   */
-  getFeaturedProducts: async (): Promise<ApiResponse<Product[]>> => {
-    return apiService.get<Product[]>(API_ENDPOINTS.PRODUCTS.FEATURED);
-  },
-
-  /**
-   * Get products on sale
-   */
-  getSaleProducts: async (): Promise<ApiResponse<Product[]>> => {
-    return apiService.get<Product[]>(API_ENDPOINTS.PRODUCTS.ON_SALE);
-  },
-};
-
-export default productService;
+export default ProductService;

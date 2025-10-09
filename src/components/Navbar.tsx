@@ -27,11 +27,19 @@ const Navbar = () => {
   //   { name: "IN STOCK", href: "#" },
   // ];
   const mainNavItems = [
-    { name: "", href: "#" },
+    { name: "ALL PRODUCTS", href: "/products" },
+  //   { name: "SHOP BY CATEGORY", href: "#" },
+  //   { name: "ROOMS", href: "#" },
+  //   { name: "MADE TO ORDER", href: "#" },
+  //   { name: "VILLA TEXTILES & RUGS", href: "#" },
+  //   { name: "IN STOCK", href: "#" },
+  ];
+  // const mainNavItems = [
+    // { name: "", href: "#" },
     // { name: "TEST1", href: "#" },
     // { name: "TEST2", href: "#" },
     // { name: "TEST3", href: "#" },
-  ];
+  // ];
 
   return (
     <nav className="sticky top-0 z-50 w-full bg-white border-b border-gray-200 shadow-sm">

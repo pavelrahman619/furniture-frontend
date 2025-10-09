@@ -1,10 +1,10 @@
 "use client";
 
 import ProductCard from "./ProductCard";
-import { Product } from "@/app/products/page";
+import { DisplayProduct } from "@/types/product.types";
 
 interface ProductGridProps {
-  products: Product[];
+  products: DisplayProduct[];
 }
 
 const ProductGrid = ({ products }: ProductGridProps) => {

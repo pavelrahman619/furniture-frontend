@@ -1,144 +1,105 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import ProductFilter from "@/components/ProductFilter";
 import ProductGrid from "@/components/ProductGrid";
+import LoadingSpinner from "@/components/LoadingSpinner";
+import ErrorMessage from "@/components/ErrorMessage";
+import ErrorBoundary from "@/components/ErrorBoundary";
+import { useInfiniteProductsForDisplay } from "@/hooks/useProducts";
+import { useFilters, useSortBy } from "@/stores/filterStore";
+import { ProductsQueryParams } from "@/types/product.types";
 
-export interface Product {
-  id: string;
-  name: string;
-  image: string;
-  category: string;
-  availability: "in-stock" | "out-of-stock" | "pre-order";
-  features: string[];
-  shape: string;
-  price: number;
-  isFirstLook?: boolean;
-}
+// Using DisplayProduct from types instead of local interface
 
-// Sample product data
-const sampleProducts: Product[] = [
-  {
-    id: "1",
-    name: "Luxury Living Room Sofa",
-    image:
-      "https://images.unsplash.com/photo-1506439773649-6e0eb8cfb237?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-    category: "living-room",
-    availability: "in-stock",
-    features: ["luxury", "handcrafted"],
-    shape: "rectangular",
-    price: 3299,
-    isFirstLook: true,
-  },
-  {
-    id: "2",
-    name: "Elegant Dining Table Set",
-    image:
-      "https://images.unsplash.com/photo-1494947665470-20322015e3a8?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-    category: "dining-room",
-    availability: "in-stock",
-    features: ["elegant", "solid-wood"],
-    shape: "rectangular",
-    price: 2599,
-    isFirstLook: true,
-  },
-  {
-    id: "3",
-    name: "Master Bedroom Headboard",
-    image:
-      "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-    category: "bedroom",
-    availability: "in-stock",
-    features: ["luxury", "handcrafted"],
-    shape: "rectangular",
-    price: 1899,
-    isFirstLook: true,
-  },
-  {
-    id: "4",
-    name: "Executive Office Desk",
-    image:
-      "https://images.unsplash.com/photo-1549497538-303791108f95?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-    category: "office",
-    availability: "in-stock",
-    features: ["executive", "solid-wood"],
-    shape: "rectangular",
-    price: 2199,
-  },
-  {
-    id: "5",
-    name: "Entryway Console Table",
-    image:
-      "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-    category: "entry-and-decor",
-    availability: "out-of-stock",
-    features: ["elegant", "modern"],
-    shape: "curved",
-    price: 1299,
-  },
-  {
-    id: "6",
-    name: "Living Room Coffee Table",
-    image:
-      "https://images.unsplash.com/photo-1449247709967-d4461a6a6103?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-    category: "living-room",
-    availability: "pre-order",
-    features: ["modern", "sophisticated"],
-    shape: "rectangular",
-    price: 1599,
-  },
-];
+function ProductsPageContent() {
+  const [isClient, setIsClient] = useState(false);
+  
+  // Get filters and sort from Zustand store
+  const filters = useFilters();
+  const sortBy = useSortBy();
 
-export default function ProductsPage() {
-  const [products,] = useState<Product[]>(sampleProducts);
-  const [filteredProducts, setFilteredProducts] =
-    useState<Product[]>(sampleProducts);
-  const [sortBy, setSortBy] = useState<string>("new");
+  // Ensure we're on the client side
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
-  const handleFilterChange = (filters: {
-    availability: string[];
-    category: string[];
-    features: string[];
-    shape: string[];
-  }) => {
+  // Build query parameters for the API (excluding page since infinite query handles that)
+  const queryParams = useMemo((): Omit<ProductsQueryParams, 'page'> => {
+    const params: Omit<ProductsQueryParams, 'page'> = {
+      limit: 10,
+    };
+
+    // Add category filter - send multiple categories as comma-separated string
+    if (filters.category && filters.category.length > 0) {
+      params.category = filters.category.join(',');
+    }
+    
+    // Add color filter
+    if (filters.colors && filters.colors.length > 0) {
+      params.color = filters.colors[0]; // Backend expects single color
+    }
+
+    // Add material filter
+    if (filters.materials && filters.materials.length > 0) {
+      params.material = filters.materials[0]; // Backend expects single material
+    }
+
+    // Add price range if available
+    if (filters.price_min) {
+      params.price_min = filters.price_min;
+    }
+    if (filters.price_max) {
+      params.price_max = filters.price_max;
+    }
+
+    return params;
+  }, [filters]);
+
+  // Fetch products using infinite query
+  const { 
+    allProducts: products = [], 
+    isLoading, 
+    isError, 
+    error,
+    refetch,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage
+  } = useInfiniteProductsForDisplay(queryParams);
+
+  // Apply client-side filtering for features that don't have backend support
+  const filteredProducts = useMemo(() => {
     let filtered = [...products];
 
-    // Apply availability filter
+    // Apply availability filter (client-side)
     if (filters.availability.length > 0) {
       filtered = filtered.filter((product) =>
         filters.availability.includes(product.availability)
       );
     }
 
-    // Apply category filter
-    if (filters.category.length > 0) {
-      filtered = filtered.filter((product) =>
-        filters.category.includes(product.category)
-      );
-    }
+    // Features and shape filters commented out - not in product model
+    // if (filters.features.length > 0) {
+    //   filtered = filtered.filter((product) =>
+    //     filters.features.some((feature) => product.features.includes(feature))
+    //   );
+    // }
 
-    // Apply features filter
-    if (filters.features.length > 0) {
-      filtered = filtered.filter((product) =>
-        filters.features.some((feature) => product.features.includes(feature))
-      );
-    }
+    // if (filters.shape.length > 0) {
+    //   filtered = filtered.filter((product) =>
+    //     filters.shape.includes(product.shape)
+    //   );
+    // }
 
-    // Apply shape filter
-    if (filters.shape.length > 0) {
-      filtered = filtered.filter((product) =>
-        filters.shape.includes(product.shape)
-      );
-    }
+    return filtered;
+  }, [products, filters.availability]);
 
-    setFilteredProducts(filtered);
-  };
-
-  const handleSortChange = (sortOption: string) => {
-    setSortBy(sortOption);
+  // Apply sorting
+  const sortedProducts = useMemo(() => {
     const sorted = [...filteredProducts];
 
-    switch (sortOption) {
+    switch (sortBy) {
       case "price-low":
         sorted.sort((a, b) => a.price - b.price);
         break;
@@ -154,13 +115,117 @@ export default function ProductsPage() {
         break;
     }
 
-    setFilteredProducts(sorted);
-  };
+    return sorted;
+  }, [filteredProducts, sortBy]);
 
+
+  // Show loading state during SSR
+  if (!isClient) {
+    return (
+      <div className="mb-8">
+        <div className="animate-pulse">
+          <div className="h-16 bg-gray-200 rounded mb-8"></div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {Array.from({ length: 12 }).map((_, i) => (
+              <div key={i} className="bg-gray-200 h-80 rounded"></div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="mb-8">
+        {/* Loading skeleton */}
+        <div className="animate-pulse">
+          <div className="h-16 bg-gray-200 rounded mb-8"></div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {Array.from({ length: 12 }).map((_, i) => (
+              <div key={i} className="bg-gray-200 h-80 rounded"></div>
+            ))}
+          </div>
+        </div>
+        
+        {/* Loading spinner for better UX */}
+        <div className="flex justify-center mt-8">
+          <LoadingSpinner size="lg" />
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (isError) {
+    return (
+      <div className="mb-8">
+        {/* Error message */}
+        <ErrorMessage
+          title="Unable to Load Products"
+          message={error instanceof Error ? error.message : 'Something went wrong while loading products.'}
+          onRetry={() => refetch()}
+          retryLabel="Try Again"
+        />
+      </div>
+    );
+  }
+
+  return (
+    <>
+      {/* Filter Component */}
+      <ProductFilter productCount={sortedProducts.length} />
+
+      {/* Product Grid */}
+      <ProductGrid products={sortedProducts} />
+      
+      {/* Load More Button */}
+      {hasNextPage && (
+        <div className="flex justify-center mt-12">
+          <button
+            onClick={() => fetchNextPage()}
+            disabled={isFetchingNextPage}
+            className="bg-gray-900 text-white px-8 py-3 rounded-md hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            {isFetchingNextPage ? (
+              <div className="flex items-center gap-2">
+                <LoadingSpinner size="sm" />
+                Loading more...
+              </div>
+            ) : (
+              'Load More Products'
+            )}
+          </button>
+        </div>
+      )}
+      
+      {/* No products message */}
+      {sortedProducts.length === 0 && !isLoading && (
+        <div className="text-center py-12">
+          <p className="text-gray-500 text-lg">
+            No products found matching your criteria.
+          </p>
+          <button
+            onClick={() => {
+              // This will be handled by the ProductFilter component's clear button
+              window.location.reload();
+            }}
+            className="mt-4 text-blue-600 hover:text-blue-800 underline"
+          >
+            Clear all filters
+          </button>
+        </div>
+      )}
+    </>
+  );
+}
+
+export default function ProductsPage() {
   return (
     <main className="min-h-screen bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Page Header */}
+        {/* Page Header - shown once for all states */}
         <div className="mb-8">
           <h1 className="text-3xl md:text-4xl font-light tracking-[0.2em] text-gray-900 mb-4">
             ALL PRODUCTS
@@ -170,16 +235,19 @@ export default function ProductsPage() {
           </p>
         </div>
 
-        {/* Filter Component */}
-        <ProductFilter
-          onFilterChange={handleFilterChange}
-          onSortChange={handleSortChange}
-          productCount={filteredProducts.length}
-          sortBy={sortBy}
-        />
-
-        {/* Product Grid */}
-        <ProductGrid products={filteredProducts} />
+        {/* Content with Error Boundary */}
+        <ErrorBoundary
+          fallback={
+            <ErrorMessage
+              title="Application Error"
+              message="Something went wrong with the products page. Please refresh the page to try again."
+              onRetry={() => window.location.reload()}
+              retryLabel="Reload Page"
+            />
+          }
+        >
+          <ProductsPageContent />
+        </ErrorBoundary>
       </div>
     </main>
   );
