@@ -10,6 +10,8 @@ import {
   ImageIcon,
   Type,
   MousePointer,
+  Package,
+  ClipboardList,
 } from "lucide-react";
 
 // Content interfaces for type safety
@@ -131,43 +133,66 @@ export default function ContentManagementPage() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <Link
-                href="/admin/products"
-                className="flex items-center text-gray-600 hover:text-gray-900 transition-colors"
-              >
-                <ArrowLeft className="h-5 w-5 mr-2" />
-                Back to Admin
-              </Link>
-              <div className="h-6 w-px bg-gray-300" />
-              <h1 className="text-2xl font-bold text-gray-900">
-                Content Management
-              </h1>
+          <div className="flex flex-col space-y-4">
+            {/* Admin Navigation */}
+            <div className="flex items-center justify-center bg-gray-50 rounded-lg p-4 border border-gray-200">
+              <nav className="flex items-center space-x-8">
+                <Link
+                  href="/admin/products"
+                  className="flex items-center px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 bg-white text-gray-700 hover:text-gray-900 hover:bg-gray-100 shadow-sm border border-gray-200"
+                >
+                  <Package className="h-4 w-4 mr-2" />
+                  Products
+                </Link>
+                <Link
+                  href="/admin/orders"
+                  className="flex items-center px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 bg-white text-gray-700 hover:text-gray-900 hover:bg-gray-100 shadow-sm border border-gray-200"
+                >
+                  <ClipboardList className="h-4 w-4 mr-2" />
+                  Orders
+                </Link>
+              </nav>
             </div>
-            <div className="flex items-center space-x-3">
-              <button
-                type="button"
-                onClick={() => setShowPreview(!showPreview)}
-                className="flex items-center px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors"
-              >
-                <Eye className="h-4 w-4 mr-2" />
-                {showPreview ? "Edit" : "Preview"}
-              </button>
-              <button
-                onClick={handleReset}
-                className="flex items-center px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors"
-              >
-                Reset to Default
-              </button>
-              <button
-                onClick={handleSave}
-                disabled={isSaving}
-                className="flex items-center px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <Save className="h-4 w-4 mr-2" />
-                {isSaving ? "Saving..." : "Save Changes"}
-              </button>
+
+            {/* Page Title and Actions */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <Link
+                  href="/admin/products"
+                  className="flex items-center text-gray-600 hover:text-gray-900 transition-colors"
+                >
+                  <ArrowLeft className="h-5 w-5 mr-2" />
+                  Back to Products
+                </Link>
+                <div className="h-6 w-px bg-gray-300" />
+                <h1 className="text-2xl font-bold text-gray-900">
+                  Content Management
+                </h1>
+              </div>
+              <div className="flex items-center space-x-3">
+                <button
+                  type="button"
+                  onClick={() => setShowPreview(!showPreview)}
+                  className="flex items-center px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors"
+                >
+                  <Eye className="h-4 w-4 mr-2" />
+                  {showPreview ? "Edit" : "Preview"}
+                </button>
+                <button
+                  onClick={handleReset}
+                  className="flex items-center px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors"
+                >
+                  Reset to Default
+                </button>
+                <button
+                  onClick={handleSave}
+                  disabled={isSaving}
+                  className="flex items-center px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Save className="h-4 w-4 mr-2" />
+                  {isSaving ? "Saving..." : "Save Changes"}
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -265,7 +290,7 @@ export default function ContentManagementPage() {
                         fill
                         sizes="(max-width: 768px) 100vw, 33vw"
                         className="object-cover"
-                        onError={() => {}}
+                        onError={() => { }}
                       />
                     )}
                     <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
@@ -378,7 +403,7 @@ export default function ContentManagementPage() {
                         fill
                         sizes="(max-width: 768px) 100vw, 33vw"
                         className="object-cover"
-                        onError={() => {}}
+                        onError={() => { }}
                       />
                     )}
                     <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
@@ -414,7 +439,7 @@ export default function ContentManagementPage() {
                     fill
                     sizes="(max-width: 768px) 100vw, 33vw"
                     className="object-cover"
-                    onError={() => {}}
+                    onError={() => { }}
                   />
                 )}
                 <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
@@ -444,7 +469,7 @@ export default function ContentManagementPage() {
                     alt="Sale section background preview"
                     fill
                     className="object-cover"
-                    onError={() => {}}
+                    onError={() => { }}
                   />
                 )}
                 <div className="absolute inset-0 bg-black/20 flex items-center justify-center">

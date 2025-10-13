@@ -71,13 +71,13 @@ const Navbar = () => {
           {/* Right Side Actions */}
           <div className="flex items-center space-x-6">
             {/* Admin Panel */}
-            {/* <Link
+            <Link
               href="/admin/content"
               className="flex items-center text-sm text-gray-700 hover:text-gray-900 transition-colors"
             >
               <Settings className="h-4 w-4 mr-1" />
               Admin
-            </Link> */}
+            </Link>
             {/* <Link 
               href="#"
               className="flex items-center text-sm text-gray-700 hover:text-gray-900 transition-colors"
