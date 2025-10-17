@@ -7,6 +7,7 @@ import { ChevronLeft, CreditCard, Lock } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { useRouter } from "next/navigation";
 import OrderService from "@/services/order.service";
+import DeliveryService, { AddressData } from "@/services/delivery.service";
 
 interface ShippingInfo {
   firstName: string;
@@ -44,8 +45,8 @@ const CheckoutPage = () => {
     phone: "",
     address: "",
     apartment: "",
-    city: "",
-    state: "",
+    city: "Los Angeles",
+    state: "CA",
     zipCode: "",
     country: "United States",
   });
@@ -65,6 +66,8 @@ const CheckoutPage = () => {
   const [errors, setErrors] = useState<Partial<ShippingInfo>>({});
   const [isProcessing, setIsProcessing] = useState(false);
   const [orderError, setOrderError] = useState<string | null>(null);
+  const [isValidatingAddress, setIsValidatingAddress] = useState(false);
+  const [validationSuccess, setValidationSuccess] = useState<string | null>(null);
 
   // Calculate pricing
   const subtotal = getTotalPrice();
@@ -104,8 +107,6 @@ const CheckoutPage = () => {
     if (!shippingInfo.phone.trim())
       newErrors.phone = "Phone number is required";
     if (!shippingInfo.address.trim()) newErrors.address = "Address is required";
-    if (!shippingInfo.city.trim()) newErrors.city = "City is required";
-    if (!shippingInfo.state.trim()) newErrors.state = "State is required";
     if (!shippingInfo.zipCode.trim())
       newErrors.zipCode = "ZIP code is required";
 
@@ -115,9 +116,36 @@ const CheckoutPage = () => {
 
   const handleContinueToPayment = async () => {
     if (validateForm()) {
-      setIsProcessing(true);
+      setIsValidatingAddress(true);
+      setOrderError(null);
+      setValidationSuccess(null);
 
       try {
+        // First validate the delivery address
+        const addressData: AddressData = {
+          street: shippingInfo.address,
+          city: shippingInfo.city,
+          state: shippingInfo.state,
+          zip_code: shippingInfo.zipCode,
+          country: shippingInfo.country,
+        };
+
+        const validationResult = await DeliveryService.validateAddress(addressData);
+
+        if (!validationResult.within_delivery_zone) {
+          setOrderError("Sorry, we don't deliver to this address yet. Please check that your address is in Los Angeles, CA.");
+          setIsValidatingAddress(false);
+          return;
+        }
+
+        // Address is valid, show success message with distance
+        setValidationSuccess(`✓ Address validated! Your location is ${validationResult.distance_miles.toFixed(1)} miles from our warehouse.`);
+
+        // Proceed with order processing
+        setIsValidatingAddress(false);
+        setIsProcessing(true);
+
+        try {
         // Prepare order data
         const orderData = {
           items: cartItems.map((item) => ({
@@ -148,24 +176,43 @@ const CheckoutPage = () => {
         // Create order through backend
         const orderId = await OrderService.createOrder(orderData);
 
-        // Redirect to order success page with order ID
-        router.push(`/order-success?orderId=${orderId}`);
-      } catch (error) {
-        console.error("Failed to create order:", error);
-        setIsProcessing(false);
+          // Redirect to order success page with order ID
+          router.push(`/order-success?orderId=${orderId}`);
+        } catch (orderError) {
+          console.error("Failed to create order:", orderError);
+          setIsProcessing(false);
 
-        // Handle different types of errors
-        let errorMessage = "Failed to place order. Please try again.";
+          // Handle different types of order creation errors
+          let errorMessage = "Failed to place order. Please try again.";
 
-        if (error instanceof Error) {
-          if (error.message.includes('Network error')) {
+          if (orderError instanceof Error) {
+            if (orderError.message.includes('Network error')) {
+              errorMessage = "Network error. Please check your internet connection and try again.";
+            } else if (orderError.message.includes('400')) {
+              errorMessage = "Invalid order data. Please check your information and try again.";
+            } else if (orderError.message.includes('500')) {
+              errorMessage = "Server error. Please try again later.";
+            } else {
+              errorMessage = orderError.message;
+            }
+          }
+
+          setOrderError(errorMessage);
+        }
+      } catch (validationError) {
+        console.error("Address validation failed:", validationError);
+        setIsValidatingAddress(false);
+
+        // Handle validation errors
+        let errorMessage = "Unable to validate your delivery address. Please try again.";
+
+        if (validationError instanceof Error) {
+          if (validationError.message.includes('Network error') || validationError.message.includes('fetch')) {
             errorMessage = "Network error. Please check your internet connection and try again.";
-          } else if (error.message.includes('400')) {
-            errorMessage = "Invalid order data. Please check your information and try again.";
-          } else if (error.message.includes('500')) {
+          } else if (validationError.message.includes('500')) {
             errorMessage = "Server error. Please try again later.";
           } else {
-            errorMessage = error.message;
+            errorMessage = validationError.message;
           }
         }
 
@@ -342,7 +389,7 @@ const CheckoutPage = () => {
                     </p>
                   )}
                 </div>
-                <div>
+                {/* <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Apartment, suite, etc. (optional)
                   </label>
@@ -354,7 +401,7 @@ const CheckoutPage = () => {
                     }
                     className="w-full border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent"
                   />
-                </div>
+                </div> */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -363,16 +410,9 @@ const CheckoutPage = () => {
                     <input
                       type="text"
                       value={shippingInfo.city}
-                      onChange={(e) =>
-                        handleShippingChange("city", e.target.value)
-                      }
-                      className={`w-full border ${
-                        errors.city ? "border-red-500" : "border-gray-300"
-                      } px-4 py-3 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent`}
+                      disabled
+                      className="w-full border border-gray-300 bg-gray-50 text-gray-500 px-4 py-3 cursor-not-allowed"
                     />
-                    {errors.city && (
-                      <p className="text-red-500 text-sm mt-1">{errors.city}</p>
-                    )}
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -381,18 +421,9 @@ const CheckoutPage = () => {
                     <input
                       type="text"
                       value={shippingInfo.state}
-                      onChange={(e) =>
-                        handleShippingChange("state", e.target.value)
-                      }
-                      className={`w-full border ${
-                        errors.state ? "border-red-500" : "border-gray-300"
-                      } px-4 py-3 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent`}
+                      disabled
+                      className="w-full border border-gray-300 bg-gray-50 text-gray-500 px-4 py-3 cursor-not-allowed"
                     />
-                    {errors.state && (
-                      <p className="text-red-500 text-sm mt-1">
-                        {errors.state}
-                      </p>
-                    )}
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -437,15 +468,25 @@ const CheckoutPage = () => {
                 </p>
                 <button
                   onClick={handleContinueToPayment}
-                  disabled={isProcessing}
+                  disabled={isProcessing || isValidatingAddress}
                   className={`w-full ${
-                    isProcessing
+                    isProcessing || isValidatingAddress
                       ? "bg-gray-400 cursor-not-allowed"
                       : "bg-gray-900 hover:bg-gray-800"
                   } text-white py-4 px-8 font-medium tracking-wider transition-colors`}
                 >
-                  {isProcessing ? "PROCESSING..." : "CONTINUE TO PAYMENT"}
+                  {isValidatingAddress
+                    ? "VALIDATING ADDRESS..."
+                    : isProcessing
+                    ? "PROCESSING..."
+                    : "CONTINUE TO PAYMENT"}
                 </button>
+
+                {validationSuccess && (
+                  <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+                    <p className="text-green-600 text-sm text-center">{validationSuccess}</p>
+                  </div>
+                )}
 
                 {orderError && (
                   <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">

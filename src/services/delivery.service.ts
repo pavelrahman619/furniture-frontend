@@ -34,16 +34,26 @@ const DEFAULT_RETRY_COUNT = 2;
 export class DeliveryService {
   static async validateAddress(address: AddressData, retry = DEFAULT_RETRY_COUNT): Promise<ValidationResponse> {
     try {
-      const response = await apiService.post<ValidationResponse>(API_ENDPOINTS.TEST.HEALTH.replace('/test/health', '/delivery/validate-address'), address);
+      const payload = { address };
+      const response = await apiService.post<{ is_valid: boolean; distance_miles: number; message?: string; is_in_zone: boolean }>(
+        API_ENDPOINTS.TEST.HEALTH.replace('/test/health', '/delivery/validate-address'),
+        payload
+      );
 
       if (!response.success || !response.data) {
         throw new Error(response.message || 'Address validation failed');
       }
 
-      return response.data;
+      // Map backend response field to frontend interface
+      return {
+        isValid: response.data.is_valid,
+        distance_miles: response.data.distance_miles,
+        message: response.data.message,
+        within_delivery_zone: response.data.is_in_zone
+      };
     } catch (err) {
       // Retry logic for network / transient errors
-      const status = err && typeof err === 'object' && 'status' in err ? (err as any).status : undefined;
+      const status = err instanceof ApiException ? err.status : undefined;
       const isTransient = err instanceof ApiException || status === 0 || (typeof status === 'number' && status >= 500);
 
       if (retry > 0 && isTransient) {
@@ -66,7 +76,7 @@ export class DeliveryService {
 
       return response.data;
     } catch (err) {
-      const status = err && typeof err === 'object' && 'status' in err ? (err as any).status : undefined;
+      const status = err instanceof ApiException ? err.status : undefined;
       const isTransient = err instanceof ApiException || status === 0 || (typeof status === 'number' && status >= 500);
 
       if (retry > 0 && isTransient) {

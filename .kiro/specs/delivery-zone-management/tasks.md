@@ -21,7 +21,7 @@
   - Ensure responsive design for mobile devices
   - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5_
 
-- [ ] 3. Implement checkout address validation
+- [x] 3. Implement checkout address validation
   - Modify `handleContinueToPayment` function in checkout page
   - Call DeliveryService.validateAddress when form is submitted
   - Show loading state on submit button during validation
