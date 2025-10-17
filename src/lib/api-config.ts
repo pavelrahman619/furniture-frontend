@@ -98,6 +98,12 @@ export const API_ENDPOINTS = {
     CONTENT: '/admin/content',
   },
 
+  // Delivery
+  DELIVERY: {
+    VALIDATE_ADDRESS: '/delivery/validate-address',
+    CALCULATE_COST: '/delivery/calculate-cost',
+  },
+
   // Test/Health
   TEST: {
     HEALTH: '/test/health',

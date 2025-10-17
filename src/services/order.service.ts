@@ -28,6 +28,9 @@ export interface CreateOrderData {
   customer_id?: string;
   customer_email?: string;
   customer_phone?: string;
+  delivery_cost?: number;
+  distance_miles?: number;
+  delivery_zone_validated?: boolean;
 }
 
 export interface OrderResponse {

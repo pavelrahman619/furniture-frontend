@@ -30,7 +30,7 @@
   - Prevent order submission if address validation fails
   - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5_
 
-- [ ] 4. Add dynamic delivery cost calculation
+- [x] 4. Add dynamic delivery cost calculation
   - Update checkout page to call DeliveryService.calculateDeliveryCost after successful validation
   - Replace hardcoded `shipping = 0` with dynamic delivery cost
   - Update order summary sidebar to show calculated delivery cost
@@ -38,6 +38,15 @@
   - Update total calculation to include delivery cost
   - Show updated order summary before proceeding to payment
   - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5_
+
+- [x] 4.1 Add real-time shipping estimation to checkout (pre-submit)
+  - Calculate shipping estimate when ZIP code is entered (primary trigger)
+  - Show estimated shipping in order summary before submission
+  - Update estimate when ZIP code changes (debounced to limit API calls)
+  - Display "Free Delivery! Your order qualifies" when applicable
+  - Show "Delivery not available for this location" for invalid ZIP codes
+  - Show fallback estimate only for network/API errors (not location errors)
+  - _Notes_: UX enhancement beyond validation-on-submit
 
 - [ ] 5. Create cart delivery estimator
   - Update `src/app/cart/page.tsx` to add "Check Delivery" section

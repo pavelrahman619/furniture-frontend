@@ -36,7 +36,7 @@ export class DeliveryService {
     try {
       const payload = { address };
       const response = await apiService.post<{ is_valid: boolean; distance_miles: number; message?: string; is_in_zone: boolean }>(
-        API_ENDPOINTS.TEST.HEALTH.replace('/test/health', '/delivery/validate-address'),
+        API_ENDPOINTS.DELIVERY.VALIDATE_ADDRESS,
         payload
       );
 
@@ -68,13 +68,29 @@ export class DeliveryService {
   static async calculateDeliveryCost(address: AddressData, orderTotal: number, retry = DEFAULT_RETRY_COUNT): Promise<CostCalculationResponse> {
     try {
       const payload = { address, order_total: orderTotal };
-      const response = await apiService.post<CostCalculationResponse>(API_ENDPOINTS.TEST.HEALTH.replace('/test/health', '/delivery/calculate-cost'), payload);
+
+      const response = await apiService.post<{
+        address: any;
+        order_total: number;
+        distance_miles: number;
+        delivery_cost: number;
+        is_free: boolean;
+        reason: string;
+        tier: string;
+      }>(API_ENDPOINTS.DELIVERY.CALCULATE_COST, payload);
 
       if (!response.success || !response.data) {
         throw new Error(response.message || 'Delivery cost calculation failed');
       }
 
-      return response.data;
+      const backendData = response.data;
+
+      return {
+        delivery_cost: backendData.delivery_cost,
+        is_free_delivery: backendData.is_free,
+        distance_miles: backendData.distance_miles,
+        message: backendData.reason,
+      };
     } catch (err) {
       const status = err instanceof ApiException ? err.status : undefined;
       const isTransient = err instanceof ApiException || status === 0 || (typeof status === 'number' && status >= 500);
