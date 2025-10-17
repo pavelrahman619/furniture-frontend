@@ -1,8 +1,6 @@
 # Implementation Plan
 
-- [ ] 1. Create delivery service layer
-
-
+- [x] 1. Create delivery service layer
   - Create `src/services/delivery.service.ts` with DeliveryService class
   - Implement `validateAddress()` method calling `/delivery/validate-address` endpoint
   - Implement `calculateDeliveryCost()` method calling `/delivery/calculate-cost` endpoint
@@ -10,15 +8,12 @@
   - Include error handling with retry logic for network failures
   - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5_
 
-- [ ] 1.1 Write basic service tests
-
-
-
+- [x] 1.1 Write basic service tests
   - Create simple test for DeliveryService.validateAddress method
   - Mock API responses and verify correct data transformation
   - _Requirements: 6.1, 6.2_
 
-- [ ] 2. Add delivery zone notice to checkout page
+- [x] 2. Add delivery zone notice to checkout page
   - Update `src/app/checkout/page.tsx` to include delivery notice banner
   - Add prominent notice "🚚 We currently deliver only to Los Angeles, CA"
   - Include "Free delivery for orders over $1,000 within 5-10 miles" message
