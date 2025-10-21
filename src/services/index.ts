@@ -33,3 +33,7 @@ export type {
   AddToCartRequest, 
   UpdateCartItemRequest 
 } from './cart.service';
+
+// Delivery service
+export { default as DeliveryService } from './delivery.service';
+export type { AddressData, ValidationResponse, CostCalculationResponse } from './delivery.service';
