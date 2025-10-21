@@ -197,6 +197,7 @@ const CheckoutPage = () => {
     }
 
     estimateShipping(addressForEstimation);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shippingInfo.zipCode, estimateShipping]);
 
   // Cleanup debounce timer on unmount
@@ -717,14 +718,16 @@ const CheckoutPage = () => {
                   <span className={`text-gray-900 ${isErrorState ? 'text-red-600 font-medium' : currentShippingInfo?.isFree ? 'text-green-600 font-medium' : ''}`}>
                     {isErrorState
                       ? "Delivery not available for this location"
-                      : currentShippingInfo
-                        ? currentShippingInfo.isFree
-                          ? shippingEstimate?.isEstimate
-                            ? "FREE DELIVERY! (estimated)"
-                            : "FREE DELIVERY!"
-                          : `$${currentShippingInfo.cost.toLocaleString()}${shippingEstimate?.isEstimate ? ' (estimated)' : ''}`
-                        : (shippingEstimate as any)?.loading
-                          ? "ESTIMATING..."
+                      : deliveryInfo
+                        ? deliveryInfo.isFree
+                          ? "FREE DELIVERY!"
+                          : `$${deliveryInfo.cost.toLocaleString()}`
+                        : shippingEstimate
+                          ? shippingEstimate.loading
+                            ? "ESTIMATING..."
+                            : shippingEstimate.isFree
+                              ? `FREE DELIVERY!${shippingEstimate.isEstimate ? ' (estimated)' : ''}`
+                              : `$${shippingEstimate.cost.toLocaleString()}${shippingEstimate.isEstimate ? ' (estimated)' : ''}`
                           : "Enter ZIP code for shipping estimate"}
                   </span>
                 </div>

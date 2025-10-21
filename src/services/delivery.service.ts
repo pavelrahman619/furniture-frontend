@@ -70,7 +70,7 @@ export class DeliveryService {
       const payload = { address, order_total: orderTotal };
 
       const response = await apiService.post<{
-        address: any;
+        address: AddressData;
         order_total: number;
         distance_miles: number;
         delivery_cost: number;

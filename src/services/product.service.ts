@@ -6,7 +6,6 @@ import {
   ProductsQueryParams,
   StockResponse,
   DisplayProduct,
-  Category,
 } from '@/types/product.types';
 
 /**

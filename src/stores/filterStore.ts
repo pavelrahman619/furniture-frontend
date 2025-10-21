@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 import { ProductFilters } from '@/types/product.types';
-import { fetchCategories, transformCategoriesToFilterOptions, CategoryResponse } from '@/services/category.service';
+import { fetchCategories, transformCategoriesToFilterOptions } from '@/services/category.service';
 
 // Filter state interface
 interface FilterState {

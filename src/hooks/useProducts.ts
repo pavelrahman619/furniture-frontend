@@ -95,7 +95,7 @@ export function useInfiniteProductsForDisplay(baseParams?: Omit<ProductsQueryPar
       // Transform products to DisplayProduct format
       return products.map(product => {
         const images = product.images || [];
-        const categoryField = product.category_id;
+        // const categoryField = product.category_id;
         const totalStock = typeof product.stock === 'number' && !Number.isNaN(product.stock)
           ? product.stock
           : (product.variants || []).reduce((sum, variant) => sum + (variant.stock || 0), 0);
