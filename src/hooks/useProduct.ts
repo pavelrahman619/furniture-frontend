@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { ProductService } from '@/services/product.service';
-import { Product, ProductDetails, ProductImage, ProductVariant, StockResponse } from '@/types/product.types';
+import { ProductDetails, ProductImage, ProductVariant, StockResponse } from '@/types/product.types';
 
 interface UseProductResult {
   productDetails: ProductDetails | null;
