@@ -393,7 +393,6 @@ export default function ProductPage({ params }: ProductPageProps) {
 
             {/* Action Buttons */}
             <div className="flex gap-4">
-              {/* Temporarily commented out Add to Cart functionality
               <button
                 onClick={() => {
                   // Get selected variant details for display
@@ -439,7 +438,7 @@ export default function ProductPage({ params }: ProductPageProps) {
               >
                 Add to Cart
               </button>
-              */}
+             
               
               <a
                 href="mailto:info@palacioshomeco.com"

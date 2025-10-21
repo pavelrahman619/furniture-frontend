@@ -111,7 +111,7 @@ const Navbar = () => {
             </Link> */}
 
             {/* Cart */}
-            {/* <Link
+            <Link
               href="/cart"
               className="flex items-center text-sm text-gray-700 hover:text-gray-900 transition-colors relative"
             >
@@ -122,7 +122,7 @@ const Navbar = () => {
                   {cartItemCount > 99 ? "99+" : cartItemCount}
                 </span>
               )}
-            </Link> */}
+            </Link>
           </div>
         </div>
       </div>
