@@ -125,6 +125,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
 
         {currentImage ? (
           <div className="relative">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={currentImage}
               alt="Uploaded content"

@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { ImageUpload } from './ImageUpload';
-import { CLOUDINARY_FOLDERS } from '@/lib/cloudinary-config';
+// import { CLOUDINARY_FOLDERS } from '@/lib/cloudinary-config';
 
 /**
  * Example component showing how to use ImageUpload in admin content management
