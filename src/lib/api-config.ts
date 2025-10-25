@@ -82,6 +82,8 @@ export const API_ENDPOINTS = {
   CONTENT: {
     LIST: '/content/list',
     DETAIL: (id: string) => `/content/${id}`,
+    BANNER: '/content/banner',
+    SALE_SECTION: '/content/sale-section',
   },
 
   // Uploads

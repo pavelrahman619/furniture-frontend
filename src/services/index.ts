@@ -37,3 +37,23 @@ export type {
 // Delivery service
 export { default as DeliveryService } from './delivery.service';
 export type { AddressData, ValidationResponse, CostCalculationResponse } from './delivery.service';
+
+// Content service
+export { default as ContentService } from './content.service';
+export type { 
+  HeroContent, 
+  SaleSectionContent, 
+  BannerContent, 
+  SaleSection,
+  BannerApiRequest,
+  SaleSectionApiRequest,
+  BannerApiResponse,
+  SaleSectionApiResponse
+} from './content.service';
+export { 
+  validateCloudinaryUrl,
+  transformBannerToHero,
+  transformHeroToBanner,
+  transformSaleSectionToLocal,
+  transformLocalToSaleSection
+} from './content.service';
