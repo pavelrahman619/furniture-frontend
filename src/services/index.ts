@@ -39,7 +39,7 @@ export { default as DeliveryService } from './delivery.service';
 export type { AddressData, ValidationResponse, CostCalculationResponse } from './delivery.service';
 
 // Content service
-export { default as ContentService } from './content.service';
+export { default as ContentService, ContentServiceError } from './content.service';
 export type { 
   HeroContent, 
   SaleSectionContent, 

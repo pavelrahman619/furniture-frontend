@@ -63,7 +63,10 @@
   - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5_
 
 
-- [ ] 6. Add content service to services index
+- [x] 6. Add content service to services index
+
+
+
 
   - Export content service and types from `src/services/index.ts`
   - Ensure proper TypeScript type exports for content interfaces
