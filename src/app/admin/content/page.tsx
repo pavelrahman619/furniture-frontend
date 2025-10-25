@@ -16,6 +16,7 @@ import type { HeroContent, SaleSectionContent } from "@/services/content.service
 import LoadingSpinner from "@/components/LoadingSpinner";
 import ErrorMessage from "@/components/ErrorMessage";
 import { ToastProvider, useToast } from "@/components/ToastProvider";
+import { ImageUpload } from "@/components/ImageUpload";
 
 // Content interfaces for type safety
 interface ContentData {
@@ -45,7 +46,7 @@ function ContentManagementPageContent() {
   const [isLoading, setIsLoading] = useState(true);
   const [showPreview, setShowPreview] = useState(false);
   const [error, setError] = useState<ContentServiceError | null>(null);
-  
+
   // Granular loading states
   const [loadingStates, setLoadingStates] = useState({
     hero: { saving: false },
@@ -58,7 +59,7 @@ function ContentManagementPageContent() {
   // Load content from API on component mount
   useEffect(() => {
     loadContent();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadContent = async () => {
@@ -66,27 +67,27 @@ function ContentManagementPageContent() {
       setIsLoading(true);
       setLoadingStates(prev => ({ ...prev, initial: true }));
       setError(null);
-      
+
       // Get auth token from localStorage if available
       const token = localStorage.getItem("auth-token");
-      
+
       const contentData = await ContentService.getAllContent(token || undefined);
       setContent(contentData);
-      
+
       showSuccess("Content loaded successfully");
     } catch (error) {
       console.error("Error loading content:", error);
-      
-      const serviceError = error instanceof ContentServiceError 
-        ? error 
+
+      const serviceError = error instanceof ContentServiceError
+        ? error
         : new ContentServiceError("Failed to load content. Using default values.");
-      
+
       setError(serviceError);
       setContent(defaultContent);
-      
+
       if (serviceError.retryable) {
         showError(
-          "Failed to load content", 
+          "Failed to load content",
           `${serviceError.message} Click retry to try again.`
         );
       } else {
@@ -121,11 +122,11 @@ function ContentManagementPageContent() {
       saleSection: { saving: true },
     }));
     setError(null);
-    
+
     try {
       // Get auth token from localStorage if available
       const token = localStorage.getItem("auth-token");
-      
+
       // Update both hero and sale section content with individual error handling
       const results = await Promise.allSettled([
         ContentService.updateHeroContent(content.hero, "#", token || undefined),
@@ -140,22 +141,22 @@ function ContentManagementPageContent() {
       // Check results and handle partial failures
       const heroResult = results[0];
       const saleResult = results[1];
-      
+
       let hasErrors = false;
       const errorMessages: string[] = [];
 
       if (heroResult.status === 'rejected') {
         hasErrors = true;
-        const error = heroResult.reason instanceof ContentServiceError 
-          ? heroResult.reason 
+        const error = heroResult.reason instanceof ContentServiceError
+          ? heroResult.reason
           : new ContentServiceError("Failed to update hero content");
         errorMessages.push(`Hero section: ${error.message}`);
       }
 
       if (saleResult.status === 'rejected') {
         hasErrors = true;
-        const error = saleResult.reason instanceof ContentServiceError 
-          ? saleResult.reason 
+        const error = saleResult.reason instanceof ContentServiceError
+          ? saleResult.reason
           : new ContentServiceError("Failed to update sale section content");
         errorMessages.push(`Sale section: ${error.message}`);
       }
@@ -185,11 +186,11 @@ function ContentManagementPageContent() {
       }
     } catch (error) {
       console.error("Error saving content:", error);
-      
-      const serviceError = error instanceof ContentServiceError 
-        ? error 
+
+      const serviceError = error instanceof ContentServiceError
+        ? error
         : new ContentServiceError("Error saving content. Please try again.");
-      
+
       setError(serviceError);
       showError("Save failed", serviceError.message);
     } finally {
@@ -207,7 +208,7 @@ function ContentManagementPageContent() {
       ...prev,
       hero: { saving: true },
     }));
-    
+
     try {
       const token = localStorage.getItem("auth-token");
       const updatedHeroContent = await ContentService.updateHeroContent(content.hero, "#", token || undefined);
@@ -227,11 +228,11 @@ function ContentManagementPageContent() {
       );
     } catch (error) {
       console.error("Error saving hero content:", error);
-      
-      const serviceError = error instanceof ContentServiceError 
-        ? error 
+
+      const serviceError = error instanceof ContentServiceError
+        ? error
         : new ContentServiceError("Failed to save hero content");
-      
+
       showError("Hero save failed", serviceError.message);
     } finally {
       setLoadingStates(prev => ({
@@ -246,7 +247,7 @@ function ContentManagementPageContent() {
       ...prev,
       saleSection: { saving: true },
     }));
-    
+
     try {
       const token = localStorage.getItem("auth-token");
       const updatedSaleSectionContent = await ContentService.updateSaleSectionContentLocal(
@@ -271,11 +272,11 @@ function ContentManagementPageContent() {
       );
     } catch (error) {
       console.error("Error saving sale section content:", error);
-      
-      const serviceError = error instanceof ContentServiceError 
-        ? error 
+
+      const serviceError = error instanceof ContentServiceError
+        ? error
         : new ContentServiceError("Failed to save sale section content");
-      
+
       showError("Sale section save failed", serviceError.message);
     } finally {
       setLoadingStates(prev => ({
@@ -366,7 +367,7 @@ function ContentManagementPageContent() {
               </button>
             </div>
           </div>
-          
+
           {/* Error Message */}
           {error && (
             <div className="mt-4">
@@ -423,20 +424,19 @@ function ContentManagementPageContent() {
                   <div>
                     <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
                       <ImageIcon className="h-4 w-4 mr-2" />
-                      Background Image URL
+                      Background Image
                     </label>
-                    <input
-                      type="url"
-                      value={content.hero.backgroundImage}
-                      onChange={(e) =>
-                        handleContentChange(
-                          "hero",
-                          "backgroundImage",
-                          e.target.value
-                        )
-                      }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="Enter image URL"
+                    <ImageUpload
+                      currentImage={content.hero.backgroundImage}
+                      onImageChange={(url) => handleContentChange("hero", "backgroundImage", url)}
+                      onImageRemove={() => handleContentChange("hero", "backgroundImage", "")}
+                      uploadOptions={{
+                        folder: 'HERO_IMAGES',
+                        transformation: 'HERO_BANNER',
+                        tags: ['hero', 'content'],
+                      }}
+                      placeholder="Upload hero background image"
+                      disabled={loadingStates.hero.saving}
                     />
                   </div>
 
@@ -492,7 +492,7 @@ function ContentManagementPageContent() {
                         fill
                         sizes="(max-width: 768px) 100vw, 33vw"
                         className="object-cover"
-                        onError={() => {}}
+                        onError={() => { }}
                       />
                     )}
                     <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
@@ -551,20 +551,19 @@ function ContentManagementPageContent() {
                   <div>
                     <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
                       <ImageIcon className="h-4 w-4 mr-2" />
-                      Background Image URL
+                      Background Image
                     </label>
-                    <input
-                      type="url"
-                      value={content.saleSection.backgroundImage}
-                      onChange={(e) =>
-                        handleContentChange(
-                          "saleSection",
-                          "backgroundImage",
-                          e.target.value
-                        )
-                      }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="Enter image URL"
+                    <ImageUpload
+                      currentImage={content.saleSection.backgroundImage}
+                      onImageChange={(url) => handleContentChange("saleSection", "backgroundImage", url)}
+                      onImageRemove={() => handleContentChange("saleSection", "backgroundImage", "")}
+                      uploadOptions={{
+                        folder: 'SALE_IMAGES',
+                        transformation: 'SALE_BANNER',
+                        tags: ['sale', 'content'],
+                      }}
+                      placeholder="Upload sale section background image"
+                      disabled={loadingStates.saleSection.saving}
                     />
                   </div>
 
@@ -624,7 +623,7 @@ function ContentManagementPageContent() {
                         fill
                         sizes="(max-width: 768px) 100vw, 33vw"
                         className="object-cover"
-                        onError={() => {}}
+                        onError={() => { }}
                       />
                     )}
                     <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
@@ -660,7 +659,7 @@ function ContentManagementPageContent() {
                     fill
                     sizes="(max-width: 768px) 100vw, 33vw"
                     className="object-cover"
-                    onError={() => {}}
+                    onError={() => { }}
                   />
                 )}
                 <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
@@ -690,7 +689,7 @@ function ContentManagementPageContent() {
                     alt="Sale section background preview"
                     fill
                     className="object-cover"
-                    onError={() => {}}
+                    onError={() => { }}
                   />
                 )}
                 <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
