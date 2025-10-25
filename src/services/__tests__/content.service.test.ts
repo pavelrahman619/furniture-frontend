@@ -161,6 +161,7 @@ describe('Data transformation functions', () => {
   describe('transformSaleSectionToLocal', () => {
     it('transforms sale section data to local format', () => {
       const saleSection: SaleSection = {
+        image_url: 'https://example.com/bg.jpg',
         title: 'Big Sale',
         description: 'Save money',
         discount_text: '50% OFF',
@@ -170,7 +171,7 @@ describe('Data transformation functions', () => {
       const result = transformSaleSectionToLocal(saleSection);
 
       expect(result).toEqual({
-        backgroundImage: '',
+        backgroundImage: 'https://example.com/bg.jpg',
         title: 'Big Sale',
         buttonText: '50% OFF'
       });
@@ -188,6 +189,7 @@ describe('Data transformation functions', () => {
       const result = transformLocalToSaleSection(local, 'Description', ['prod1', 'prod2']);
 
       expect(result).toEqual({
+        image_url: 'https://example.com/bg.jpg',
         title: 'Local Sale',
         description: 'Description',
         discount_text: '30% OFF',

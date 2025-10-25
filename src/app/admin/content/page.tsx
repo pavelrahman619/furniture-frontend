@@ -170,11 +170,14 @@ function ContentManagementPageContent() {
         setError(combinedError);
         showError("Partial save failure", combinedError.message);
       } else {
+        // Save content to localStorage for immediate availability
+        localStorage.setItem("landing-page-content", JSON.stringify(content));
+
         // Dispatch a custom event to notify other components of the content change
         window.dispatchEvent(
           new CustomEvent("contentUpdated", { detail: content })
         );
-        
+
         showSuccess(
           "Content saved successfully!",
           "Changes will be visible on the landing page."
@@ -207,13 +210,20 @@ function ContentManagementPageContent() {
     
     try {
       const token = localStorage.getItem("auth-token");
-      await ContentService.updateHeroContent(content.hero, "#", token || undefined);
-      
+      const updatedHeroContent = await ContentService.updateHeroContent(content.hero, "#", token || undefined);
+
       showSuccess("Hero section saved successfully!");
-      
+
+      // Update local state with the response
+      setContent(prev => ({ ...prev, hero: updatedHeroContent }));
+
+      // Save updated content to localStorage
+      const updatedContent = { ...content, hero: updatedHeroContent };
+      localStorage.setItem("landing-page-content", JSON.stringify(updatedContent));
+
       // Dispatch event for this section
       window.dispatchEvent(
-        new CustomEvent("contentUpdated", { detail: { hero: content.hero } })
+        new CustomEvent("contentUpdated", { detail: { hero: updatedHeroContent } })
       );
     } catch (error) {
       console.error("Error saving hero content:", error);
@@ -239,18 +249,25 @@ function ContentManagementPageContent() {
     
     try {
       const token = localStorage.getItem("auth-token");
-      await ContentService.updateSaleSectionContentLocal(
+      const updatedSaleSectionContent = await ContentService.updateSaleSectionContentLocal(
         content.saleSection,
         "",
         [],
         token || undefined
       );
-      
+
       showSuccess("Sale section saved successfully!");
-      
+
+      // Update local state with the response
+      setContent(prev => ({ ...prev, saleSection: updatedSaleSectionContent }));
+
+      // Save updated content to localStorage
+      const updatedContent = { ...content, saleSection: updatedSaleSectionContent };
+      localStorage.setItem("landing-page-content", JSON.stringify(updatedContent));
+
       // Dispatch event for this section
       window.dispatchEvent(
-        new CustomEvent("contentUpdated", { detail: { saleSection: content.saleSection } })
+        new CustomEvent("contentUpdated", { detail: { saleSection: updatedSaleSectionContent } })
       );
     } catch (error) {
       console.error("Error saving sale section content:", error);

@@ -26,6 +26,7 @@ export interface BannerContent {
 }
 
 export interface SaleSection {
+  image_url?: string;
   title: string;
   description: string;
   discount_text: string;
@@ -43,6 +44,7 @@ export interface BannerApiRequest {
 }
 
 export interface SaleSectionApiRequest {
+  image_url?: string;
   title: string;
   description: string;
   discount_text: string;
@@ -96,7 +98,7 @@ export const transformHeroToBanner = (hero: HeroContent, buttonLink: string = '#
 
 export const transformSaleSectionToLocal = (saleSection: SaleSection): SaleSectionContent => {
   return {
-    backgroundImage: '', // Sale section doesn't have background image in API
+    backgroundImage: saleSection.image_url || '',
     title: saleSection.title || '',
     buttonText: saleSection.discount_text || '',
   };
@@ -108,6 +110,7 @@ export const transformLocalToSaleSection = (
   products: string[] = []
 ): SaleSection => {
   return {
+    image_url: local.backgroundImage || '',
     title: local.title || '',
     description: description,
     discount_text: local.buttonText || '',
