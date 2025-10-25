@@ -44,6 +44,7 @@ export const CLOUDINARY_FOLDERS = {
   HERO_IMAGES: 'furniture-ecom/hero',
   SALE_IMAGES: 'furniture-ecom/sale',
   CONTENT_IMAGES: 'furniture-ecom/content',
+  PRODUCT_IMAGES: 'furniture-ecom/products',
 } as const;
 
 // Image transformation presets
