@@ -15,9 +15,15 @@ import {
   ChevronUp,
   ArrowUpDown,
   Loader2,
+  RefreshCw,
 } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { useAdminProducts, useUpdateProductStock, useDeleteProduct } from "@/hooks/useAdminProducts";
+import { ProductTableSkeleton } from "@/components/ProductTableSkeleton";
+import { ProductsError } from "@/components/ProductsError";
+import { Product as ApiProduct, ProductsQueryParams } from "@/types/product.types";
 
-// Product interface for table display
+// Product interface for table display (transformed from API data)
 interface Product {
   id: string;
   name: string;
@@ -31,255 +37,32 @@ interface Product {
   createdAt: string;
 }
 
-// Sample products data
-const sampleProducts: Product[] = [
-  {
-    id: "59972101",
-    name: "Mattai Reclaimed Wood 4Dwr Console",
-    sku: "59972101",
-    category: "Console Tables",
-    price: 1599,
-    availability: "on-order",
-    totalStock: 0,
-    image:
-      "https://images.unsplash.com/photo-1494947665470-20322015e3a8?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-    isFirstLook: true,
-    createdAt: "2024-01-15",
-  },
-  {
-    id: "59972102",
-    name: "Modern Oak Dining Table",
-    sku: "59972102",
-    category: "Dining Tables",
-    price: 2299,
-    availability: "in-stock",
-    totalStock: 5,
-    image:
-      "https://images.unsplash.com/photo-1549497538-303791108f95?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-    isFirstLook: false,
-    createdAt: "2024-01-10",
-  },
-  {
-    id: "59972103",
-    name: "Rustic Pine Coffee Table",
-    sku: "59972103",
-    category: "Coffee Tables",
-    price: 899,
-    availability: "in-stock",
-    totalStock: 12,
-    image:
-      "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-    isFirstLook: false,
-    createdAt: "2024-01-08",
-  },
-  {
-    id: "59972104",
-    name: "Vintage Leather Armchair",
-    sku: "59972104",
-    category: "Chairs",
-    price: 1299,
-    availability: "out-of-stock",
-    totalStock: 0,
-    image:
-      "https://images.unsplash.com/photo-1506439773649-6e0eb8cfb237?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-    isFirstLook: false,
-    createdAt: "2024-01-05",
-  },
-  {
-    id: "59972105",
-    name: "Industrial Metal Bookshelf",
-    sku: "59972105",
-    category: "Storage",
-    price: 699,
-    availability: "in-stock",
-    totalStock: 8,
-    image:
-      "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-    isFirstLook: true,
-    createdAt: "2024-01-03",
-  },
-  {
-    id: "59972106",
-    name: "Scandinavian Nightstand",
-    sku: "59972106",
-    category: "Storage",
-    price: 349,
-    availability: "in-stock",
-    totalStock: 15,
-    image:
-      "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-    isFirstLook: false,
-    createdAt: "2024-01-01",
-  },
-  // Additional sample products for better infinite scroll demonstration
-  {
-    id: "59972107",
-    name: "Mid-Century Modern Sofa",
-    sku: "59972107",
-    category: "Chairs",
-    price: 2199,
-    availability: "in-stock",
-    totalStock: 3,
-    image:
-      "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-    isFirstLook: false,
-    createdAt: "2023-12-28",
-  },
-  {
-    id: "59972108",
-    name: "Rustic Wooden Desk",
-    sku: "59972108",
-    category: "Console Tables",
-    price: 899,
-    availability: "in-stock",
-    totalStock: 7,
-    image:
-      "https://images.unsplash.com/photo-1494947665470-20322015e3a8?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-    isFirstLook: true,
-    createdAt: "2023-12-25",
-  },
-  {
-    id: "59972109",
-    name: "Glass Top Side Table",
-    sku: "59972109",
-    category: "Coffee Tables",
-    price: 449,
-    availability: "on-order",
-    totalStock: 0,
-    image:
-      "https://images.unsplash.com/photo-1549497538-303791108f95?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-    isFirstLook: false,
-    createdAt: "2023-12-20",
-  },
-  {
-    id: "59972110",
-    name: "Velvet Ottoman",
-    sku: "59972110",
-    category: "Chairs",
-    price: 299,
-    availability: "in-stock",
-    totalStock: 20,
-    image:
-      "https://images.unsplash.com/photo-1506439773649-6e0eb8cfb237?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-    isFirstLook: false,
-    createdAt: "2023-12-18",
-  },
-  {
-    id: "59972111",
-    name: "Industrial Bar Stools Set",
-    sku: "59972111",
-    category: "Chairs",
-    price: 599,
-    availability: "in-stock",
-    totalStock: 12,
-    image:
-      "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-    isFirstLook: false,
-    createdAt: "2023-12-15",
-  },
-  {
-    id: "59972112",
-    name: "Farmhouse Dining Set",
-    sku: "59972112",
-    category: "Dining Tables",
-    price: 1899,
-    availability: "in-stock",
-    totalStock: 2,
-    image:
-      "https://images.unsplash.com/photo-1549497538-303791108f95?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-    isFirstLook: true,
-    createdAt: "2023-12-12",
-  },
-  {
-    id: "59972113",
-    name: "Floating Wall Shelf",
-    sku: "59972113",
-    category: "Storage",
-    price: 149,
-    availability: "in-stock",
-    totalStock: 25,
-    image:
-      "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-    isFirstLook: false,
-    createdAt: "2023-12-10",
-  },
-  {
-    id: "59972114",
-    name: "Marble Top Console",
-    sku: "59972114",
-    category: "Console Tables",
-    price: 1299,
-    availability: "out-of-stock",
-    totalStock: 0,
-    image:
-      "https://images.unsplash.com/photo-1494947665470-20322015e3a8?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-    isFirstLook: false,
-    createdAt: "2023-12-08",
-  },
-  {
-    id: "59972115",
-    name: "Leather Executive Chair",
-    sku: "59972115",
-    category: "Chairs",
-    price: 799,
-    availability: "in-stock",
-    totalStock: 6,
-    image:
-      "https://images.unsplash.com/photo-1506439773649-6e0eb8cfb237?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-    isFirstLook: false,
-    createdAt: "2023-12-05",
-  },
-  {
-    id: "59972116",
-    name: "Round Pedestal Table",
-    sku: "59972116",
-    category: "Dining Tables",
-    price: 1099,
-    availability: "in-stock",
-    totalStock: 4,
-    image:
-      "https://images.unsplash.com/photo-1549497538-303791108f95?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-    isFirstLook: true,
-    createdAt: "2023-12-03",
-  },
-  {
-    id: "59972117",
-    name: "Storage Bench",
-    sku: "59972117",
-    category: "Storage",
-    price: 399,
-    availability: "in-stock",
-    totalStock: 18,
-    image:
-      "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-    isFirstLook: false,
-    createdAt: "2023-12-01",
-  },
-  {
-    id: "59972118",
-    name: "Live Edge Coffee Table",
-    sku: "59972118",
-    category: "Coffee Tables",
-    price: 1599,
-    availability: "on-order",
-    totalStock: 0,
-    image:
-      "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-    isFirstLook: true,
-    createdAt: "2023-11-28",
-  },
-];
+// Transform API product to display product
+const transformApiProduct = (apiProduct: ApiProduct): Product => {
+  const totalStock = typeof apiProduct.stock === 'number' && !Number.isNaN(apiProduct.stock)
+    ? apiProduct.stock
+    : (apiProduct.variants || []).reduce((sum, variant) => sum + (variant.stock || 0), 0);
 
-// Duplicate sample products to create more data for infinite scroll demonstration
-const extendedSampleProducts = [
-  ...sampleProducts,
-  ...sampleProducts.map((product, index) => ({
-    ...product,
-    id: `${product.id}_${index + 100}`,
-    sku: `${product.sku}_${index + 100}`,
-    name: `${product.name} - Variant ${index + 1}`,
-  })),
-];
+  const primaryImage = apiProduct.images?.find(img => img.is_primary) || apiProduct.images?.[0];
+  const imageUrl = primaryImage?.url || "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80";
+
+  const categoryName = typeof apiProduct.category_id === 'object' && apiProduct.category_id?.name
+    ? apiProduct.category_id.name
+    : 'Uncategorized';
+
+  return {
+    id: apiProduct._id,
+    name: apiProduct.name,
+    sku: apiProduct.sku,
+    category: categoryName,
+    price: apiProduct.price,
+    availability: totalStock > 0 ? "in-stock" : "out-of-stock",
+    totalStock,
+    image: imageUrl,
+    isFirstLook: apiProduct.featured || false,
+    createdAt: apiProduct.created_at || new Date().toISOString(),
+  };
+};
 
 type SortField = keyof Product;
 type SortDirection = "asc" | "desc";
@@ -288,7 +71,10 @@ const PRODUCTS_PER_BATCH = 10;
 const TABLE_HEIGHT = "calc(100vh - 400px)"; // Adjust based on header/filter heights
 
 export default function ProductsPage() {
-  const [products, setProducts] = useState<Product[]>(extendedSampleProducts);
+  // Authentication
+  const { token, isAuthenticated } = useAuth();
+  
+  // Local state for filters and UI
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
   const [availabilityFilter, setAvailabilityFilter] = useState("");
@@ -300,24 +86,102 @@ export default function ProductsPage() {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
+  // Build query parameters for API
+  const queryParams = useMemo((): ProductsQueryParams => {
+    const params: ProductsQueryParams = {
+      limit: 100, // Get more products for client-side filtering/sorting
+    };
+
+    if (searchTerm.trim()) {
+      params.search = searchTerm.trim();
+    }
+
+    if (categoryFilter) {
+      params.category = categoryFilter;
+    }
+
+    if (priceRange.min) {
+      params.price_min = Number(priceRange.min);
+    }
+
+    if (priceRange.max) {
+      params.price_max = Number(priceRange.max);
+    }
+
+    return params;
+  }, [searchTerm, categoryFilter, priceRange]);
+
+  // Fetch products from API
+  const {
+    data: apiResponse,
+    isLoading,
+    error,
+    refetch,
+    isRefetching,
+  } = useAdminProducts(queryParams, token);
+
+  // Mutations for product operations
+  const updateStockMutation = useUpdateProductStock();
+  const deleteProductMutation = useDeleteProduct();
+
+  // Transform API products to display format
+  const products = useMemo(() => {
+    if (!apiResponse?.products) return [];
+    return apiResponse.products.map(transformApiProduct);
+  }, [apiResponse]);
+
   // Get unique categories for filter
-  const categories = Array.from(new Set(products.map((p) => p.category)));
+  const categories = useMemo(() => {
+    if (apiResponse?.filters_available?.categories) {
+      return apiResponse.filters_available.categories.map(cat => cat.name);
+    }
+    return Array.from(new Set(products.map((p) => p.category)));
+  }, [apiResponse, products]);
 
   // Handle stock changes
-  const updateStock = (productId: string, change: number) => {
-    setProducts((prev) =>
-      prev.map((product) =>
-        product.id === productId
-          ? {
-              ...product,
-              totalStock: Math.max(0, product.totalStock + change),
-              availability:
-                product.totalStock + change > 0 ? "in-stock" : "out-of-stock",
-            }
-          : product
-      )
+  const updateStock = useCallback(async (productId: string, change: number) => {
+    if (!token) return;
+
+    const product = products.find(p => p.id === productId);
+    if (!product) return;
+
+    const newStock = Math.max(0, product.totalStock + change);
+
+    try {
+      await updateStockMutation.mutateAsync({
+        id: productId,
+        stockData: { stock: newStock },
+        token,
+      });
+    } catch (error) {
+      console.error('Failed to update stock:', error);
+      // Error handling is done by the mutation hook
+    }
+  }, [products, token, updateStockMutation]);
+
+  // Handle product deletion
+  const handleDeleteProduct = useCallback(async (productId: string) => {
+    if (!token) return;
+
+    const product = products.find(p => p.id === productId);
+    if (!product) return;
+
+    const confirmed = window.confirm(
+      `Are you sure you want to delete "${product.name}"? This action cannot be undone.`
     );
-  };
+
+    if (confirmed) {
+      try {
+        await deleteProductMutation.mutateAsync({
+          id: productId,
+          token,
+        });
+      } catch (error) {
+        console.error('Failed to delete product:', error);
+        // Error handling is done by the mutation hook
+      }
+    }
+  }, [products, token, deleteProductMutation]);
 
   // Handle sorting
   const handleSort = (field: SortField) => {
@@ -431,6 +295,98 @@ export default function ProductsPage() {
     setDisplayedCount(PRODUCTS_PER_BATCH);
   };
 
+  // Show loading skeleton while fetching data
+  if (isLoading) {
+    return (
+      <main className="min-h-screen bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* Header */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">Products</h1>
+                <p className="text-gray-600 mt-1">
+                  Manage your product inventory and stock levels
+                </p>
+              </div>
+              <Link
+                href="/admin/products/create"
+                className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add Product
+              </Link>
+            </div>
+          </div>
+
+          {/* Loading skeleton */}
+          <ProductTableSkeleton />
+        </div>
+      </main>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <main className="min-h-screen bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* Header */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">Products</h1>
+                <p className="text-gray-600 mt-1">
+                  Manage your product inventory and stock levels
+                </p>
+              </div>
+              <Link
+                href="/admin/products/create"
+                className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add Product
+              </Link>
+            </div>
+          </div>
+
+          {/* Error component */}
+          <ProductsError 
+            error={error} 
+            onRetry={refetch} 
+            isRetrying={isRefetching}
+          />
+        </div>
+      </main>
+    );
+  }
+
+  // Show authentication required message
+  if (!isAuthenticated) {
+    return (
+      <main className="min-h-screen bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12">
+            <div className="text-center">
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                Authentication Required
+              </h3>
+              <p className="text-gray-600 mb-6">
+                Please log in to access the admin products page.
+              </p>
+              <Link
+                href="/login"
+                className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+              >
+                Go to Login
+              </Link>
+            </div>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -438,18 +394,33 @@ export default function ProductsPage() {
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Products</h1>
+              <div className="flex items-center">
+                <h1 className="text-2xl font-bold text-gray-900">Products</h1>
+                {isRefetching && (
+                  <Loader2 className="h-5 w-5 animate-spin text-blue-600 ml-3" />
+                )}
+              </div>
               <p className="text-gray-600 mt-1">
                 Manage your product inventory and stock levels
               </p>
             </div>
-            <Link
-              href="/admin/products/create"
-              className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add Product
-            </Link>
+            <div className="flex items-center space-x-3">
+              <button
+                onClick={() => refetch()}
+                disabled={isRefetching}
+                className="flex items-center px-3 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                title="Refresh products"
+              >
+                <RefreshCw className={`h-4 w-4 ${isRefetching ? 'animate-spin' : ''}`} />
+              </button>
+              <Link
+                href="/admin/products/create"
+                className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add Product
+              </Link>
+            </div>
           </div>
         </div>
 
@@ -694,16 +665,25 @@ export default function ProductsPage() {
                         <div className="flex items-center space-x-2">
                           <button
                             onClick={() => updateStock(product.id, -1)}
-                            disabled={product.totalStock === 0}
+                            disabled={product.totalStock === 0 || updateStockMutation.isPending}
                             className="p-1 rounded-md text-red-600 hover:bg-red-50 disabled:text-gray-300 disabled:hover:bg-transparent transition-colors"
                           >
-                            <Minus className="h-4 w-4" />
+                            {updateStockMutation.isPending && updateStockMutation.variables?.id === product.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Minus className="h-4 w-4" />
+                            )}
                           </button>
                           <button
                             onClick={() => updateStock(product.id, 1)}
-                            className="p-1 rounded-md text-green-600 hover:bg-green-50 transition-colors"
+                            disabled={updateStockMutation.isPending}
+                            className="p-1 rounded-md text-green-600 hover:bg-green-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                           >
-                            <Plus className="h-4 w-4" />
+                            {updateStockMutation.isPending && updateStockMutation.variables?.id === product.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Plus className="h-4 w-4" />
+                            )}
                           </button>
                         </div>
                       </td>
@@ -723,10 +703,16 @@ export default function ProductsPage() {
                             <Edit className="h-4 w-4" />
                           </button>
                           <button
-                            className="p-1 rounded-md text-red-600 hover:bg-red-50 transition-colors"
+                            onClick={() => handleDeleteProduct(product.id)}
+                            disabled={deleteProductMutation.isPending}
+                            className="p-1 rounded-md text-red-600 hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                             title="Delete Product"
                           >
-                            <Trash2 className="h-4 w-4" />
+                            {deleteProductMutation.isPending && deleteProductMutation.variables?.id === product.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Trash2 className="h-4 w-4" />
+                            )}
                           </button>
                         </div>
                       </td>
