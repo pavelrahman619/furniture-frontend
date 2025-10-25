@@ -1,5 +1,4 @@
 import { apiService } from '@/lib/api-service';
-import type { ApiResponse } from '@/lib/api-service';
 
 /**
  * Frontend interfaces (current structure used in admin content page)
@@ -117,94 +116,410 @@ export const transformLocalToSaleSection = (
 };
 
 /**
+ * Retry configuration
+ */
+interface RetryConfig {
+  maxRetries: number;
+  delay: number;
+  backoffMultiplier: number;
+}
+
+const DEFAULT_RETRY_CONFIG: RetryConfig = {
+  maxRetries: 3,
+  delay: 1000,
+  backoffMultiplier: 2,
+};
+
+/**
+ * Enhanced error types
+ */
+export class ContentServiceError extends Error {
+  constructor(
+    message: string,
+    public code?: string,
+    public statusCode?: number,
+    public retryable: boolean = true
+  ) {
+    super(message);
+    this.name = 'ContentServiceError';
+  }
+}
+
+/**
+ * Retry utility function
+ */
+const withRetry = async <T>(
+  operation: () => Promise<T>,
+  config: RetryConfig = DEFAULT_RETRY_CONFIG
+): Promise<T> => {
+  let lastError: Error = new Error('Unknown error');
+  
+  for (let attempt = 0; attempt <= config.maxRetries; attempt++) {
+    try {
+      return await operation();
+    } catch (error) {
+      lastError = error as Error;
+      
+      // Don't retry on the last attempt or if error is not retryable
+      if (attempt === config.maxRetries || 
+          (error instanceof ContentServiceError && !error.retryable)) {
+        break;
+      }
+      
+      // Wait before retrying with exponential backoff
+      const delay = config.delay * Math.pow(config.backoffMultiplier, attempt);
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+  }
+  
+  throw lastError;
+};
+
+/**
  * Content Service Class
  */
 export class ContentService {
   /**
-   * Get banner/hero content from API
+   * Get banner/hero content from API with retry logic
    */
   static async getBannerContent(token?: string): Promise<BannerContent> {
-    try {
-      const response = await apiService.get<BannerContent>('/content/banner', token);
+    return withRetry(async () => {
+      try {
+        const response = await apiService.get<BannerContent>('/content/banner', token);
 
-      if (!response.success || !response.data) {
-        throw new Error('Failed to fetch banner content');
+        if (!response.success || !response.data) {
+          throw new ContentServiceError(
+            'Failed to fetch banner content - invalid response',
+            'INVALID_RESPONSE',
+            undefined,
+            true
+          );
+        }
+
+        return response.data;
+      } catch (error) {
+        console.error('Error fetching banner content:', error);
+        
+        if (error instanceof ContentServiceError) {
+          throw error;
+        }
+        
+        // Handle different error types
+        if (error instanceof Error) {
+          if (error.message.includes('Network Error') || error.message.includes('fetch')) {
+            throw new ContentServiceError(
+              'Network error while fetching banner content. Please check your connection.',
+              'NETWORK_ERROR',
+              undefined,
+              true
+            );
+          }
+          
+          if (error.message.includes('401') || error.message.includes('Unauthorized')) {
+            throw new ContentServiceError(
+              'Authentication failed. Please log in again.',
+              'AUTH_ERROR',
+              401,
+              false
+            );
+          }
+          
+          if (error.message.includes('403') || error.message.includes('Forbidden')) {
+            throw new ContentServiceError(
+              'You do not have permission to access this content.',
+              'PERMISSION_ERROR',
+              403,
+              false
+            );
+          }
+          
+          if (error.message.includes('404')) {
+            throw new ContentServiceError(
+              'Banner content not found.',
+              'NOT_FOUND',
+              404,
+              false
+            );
+          }
+          
+          if (error.message.includes('500')) {
+            throw new ContentServiceError(
+              'Server error while fetching banner content. Please try again later.',
+              'SERVER_ERROR',
+              500,
+              true
+            );
+          }
+        }
+        
+        throw new ContentServiceError(
+          'An unexpected error occurred while fetching banner content.',
+          'UNKNOWN_ERROR',
+          undefined,
+          true
+        );
       }
-
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching banner content:', error);
-      throw error;
-    }
+    });
   }
 
   /**
-   * Update banner/hero content via API
+   * Update banner/hero content via API with retry logic
    */
   static async updateBannerContent(
     content: BannerApiRequest,
     token?: string
   ): Promise<BannerContent> {
-    try {
-      // Validate Cloudinary URL if provided
-      if (content.image_url && !validateCloudinaryUrl(content.image_url)) {
-        throw new Error('Invalid image URL format. Please use a valid Cloudinary URL.');
+    return withRetry(async () => {
+      try {
+        // Validate Cloudinary URL if provided
+        if (content.image_url && !validateCloudinaryUrl(content.image_url)) {
+          throw new ContentServiceError(
+            'Invalid image URL format. Please use a valid Cloudinary URL.',
+            'VALIDATION_ERROR',
+            400,
+            false
+          );
+        }
+
+        const response = await apiService.put<BannerContent>('/content/banner', content, token);
+
+        if (!response.success || !response.data) {
+          throw new ContentServiceError(
+            'Failed to update banner content - invalid response',
+            'INVALID_RESPONSE',
+            undefined,
+            true
+          );
+        }
+
+        return response.data;
+      } catch (error) {
+        console.error('Error updating banner content:', error);
+        
+        if (error instanceof ContentServiceError) {
+          throw error;
+        }
+        
+        // Handle different error types
+        if (error instanceof Error) {
+          if (error.message.includes('Network Error') || error.message.includes('fetch')) {
+            throw new ContentServiceError(
+              'Network error while updating banner content. Please check your connection.',
+              'NETWORK_ERROR',
+              undefined,
+              true
+            );
+          }
+          
+          if (error.message.includes('401') || error.message.includes('Unauthorized')) {
+            throw new ContentServiceError(
+              'Authentication failed. Please log in again.',
+              'AUTH_ERROR',
+              401,
+              false
+            );
+          }
+          
+          if (error.message.includes('403') || error.message.includes('Forbidden')) {
+            throw new ContentServiceError(
+              'You do not have permission to update this content.',
+              'PERMISSION_ERROR',
+              403,
+              false
+            );
+          }
+          
+          if (error.message.includes('400') || error.message.includes('Bad Request')) {
+            throw new ContentServiceError(
+              'Invalid content data. Please check your inputs.',
+              'VALIDATION_ERROR',
+              400,
+              false
+            );
+          }
+          
+          if (error.message.includes('500')) {
+            throw new ContentServiceError(
+              'Server error while updating banner content. Please try again later.',
+              'SERVER_ERROR',
+              500,
+              true
+            );
+          }
+        }
+        
+        throw new ContentServiceError(
+          'An unexpected error occurred while updating banner content.',
+          'UNKNOWN_ERROR',
+          undefined,
+          true
+        );
       }
-
-      const response = await apiService.put<BannerContent>('/content/banner', content, token);
-
-      if (!response.success || !response.data) {
-        throw new Error('Failed to update banner content');
-      }
-
-      return response.data;
-    } catch (error) {
-      console.error('Error updating banner content:', error);
-      throw error;
-    }
+    });
   }
 
   /**
-   * Get sale section content from API
+   * Get sale section content from API with retry logic
    */
   static async getSaleSectionContent(token?: string): Promise<SaleSection> {
-    try {
-      const response = await apiService.get<SaleSection>('/content/sale-section', token);
+    return withRetry(async () => {
+      try {
+        const response = await apiService.get<SaleSection>('/content/sale-section', token);
 
-      if (!response.success || !response.data) {
-        throw new Error('Failed to fetch sale section content');
+        if (!response.success || !response.data) {
+          throw new ContentServiceError(
+            'Failed to fetch sale section content - invalid response',
+            'INVALID_RESPONSE',
+            undefined,
+            true
+          );
+        }
+
+        return response.data;
+      } catch (error) {
+        console.error('Error fetching sale section content:', error);
+        
+        if (error instanceof ContentServiceError) {
+          throw error;
+        }
+        
+        // Handle different error types
+        if (error instanceof Error) {
+          if (error.message.includes('Network Error') || error.message.includes('fetch')) {
+            throw new ContentServiceError(
+              'Network error while fetching sale section content. Please check your connection.',
+              'NETWORK_ERROR',
+              undefined,
+              true
+            );
+          }
+          
+          if (error.message.includes('401') || error.message.includes('Unauthorized')) {
+            throw new ContentServiceError(
+              'Authentication failed. Please log in again.',
+              'AUTH_ERROR',
+              401,
+              false
+            );
+          }
+          
+          if (error.message.includes('404')) {
+            throw new ContentServiceError(
+              'Sale section content not found.',
+              'NOT_FOUND',
+              404,
+              false
+            );
+          }
+          
+          if (error.message.includes('500')) {
+            throw new ContentServiceError(
+              'Server error while fetching sale section content. Please try again later.',
+              'SERVER_ERROR',
+              500,
+              true
+            );
+          }
+        }
+        
+        throw new ContentServiceError(
+          'An unexpected error occurred while fetching sale section content.',
+          'UNKNOWN_ERROR',
+          undefined,
+          true
+        );
       }
-
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching sale section content:', error);
-      throw error;
-    }
+    });
   }
 
   /**
-   * Update sale section content via API
+   * Update sale section content via API with retry logic
    */
   static async updateSaleSectionContent(
     content: SaleSectionApiRequest,
     token?: string
   ): Promise<SaleSection> {
-    try {
-      const response = await apiService.put<SaleSection>('/content/sale-section', content, token);
+    return withRetry(async () => {
+      try {
+        const response = await apiService.put<SaleSection>('/content/sale-section', content, token);
 
-      if (!response.success || !response.data) {
-        throw new Error('Failed to update sale section content');
+        if (!response.success || !response.data) {
+          throw new ContentServiceError(
+            'Failed to update sale section content - invalid response',
+            'INVALID_RESPONSE',
+            undefined,
+            true
+          );
+        }
+
+        return response.data;
+      } catch (error) {
+        console.error('Error updating sale section content:', error);
+        
+        if (error instanceof ContentServiceError) {
+          throw error;
+        }
+        
+        // Handle different error types
+        if (error instanceof Error) {
+          if (error.message.includes('Network Error') || error.message.includes('fetch')) {
+            throw new ContentServiceError(
+              'Network error while updating sale section content. Please check your connection.',
+              'NETWORK_ERROR',
+              undefined,
+              true
+            );
+          }
+          
+          if (error.message.includes('401') || error.message.includes('Unauthorized')) {
+            throw new ContentServiceError(
+              'Authentication failed. Please log in again.',
+              'AUTH_ERROR',
+              401,
+              false
+            );
+          }
+          
+          if (error.message.includes('403') || error.message.includes('Forbidden')) {
+            throw new ContentServiceError(
+              'You do not have permission to update this content.',
+              'PERMISSION_ERROR',
+              403,
+              false
+            );
+          }
+          
+          if (error.message.includes('400') || error.message.includes('Bad Request')) {
+            throw new ContentServiceError(
+              'Invalid content data. Please check your inputs.',
+              'VALIDATION_ERROR',
+              400,
+              false
+            );
+          }
+          
+          if (error.message.includes('500')) {
+            throw new ContentServiceError(
+              'Server error while updating sale section content. Please try again later.',
+              'SERVER_ERROR',
+              500,
+              true
+            );
+          }
+        }
+        
+        throw new ContentServiceError(
+          'An unexpected error occurred while updating sale section content.',
+          'UNKNOWN_ERROR',
+          undefined,
+          true
+        );
       }
-
-      return response.data;
-    } catch (error) {
-      console.error('Error updating sale section content:', error);
-      throw error;
-    }
+    });
   }
 
   /**
-   * Get all content (convenience method)
+   * Get all content (convenience method) with enhanced error handling
    */
   static async getAllContent(token?: string): Promise<{
     hero: HeroContent;
@@ -222,12 +537,22 @@ export class ContentService {
       };
     } catch (error) {
       console.error('Error fetching all content:', error);
-      throw error;
+      
+      if (error instanceof ContentServiceError) {
+        throw error;
+      }
+      
+      throw new ContentServiceError(
+        'Failed to load content. Please try again.',
+        'FETCH_ALL_ERROR',
+        undefined,
+        true
+      );
     }
   }
 
   /**
-   * Update hero content (convenience method with transformation)
+   * Update hero content (convenience method with transformation) with enhanced error handling
    */
   static async updateHeroContent(
     heroContent: HeroContent,
@@ -240,12 +565,22 @@ export class ContentService {
       return transformBannerToHero(updatedBanner);
     } catch (error) {
       console.error('Error updating hero content:', error);
-      throw error;
+      
+      if (error instanceof ContentServiceError) {
+        throw error;
+      }
+      
+      throw new ContentServiceError(
+        'Failed to update hero content. Please try again.',
+        'UPDATE_HERO_ERROR',
+        undefined,
+        true
+      );
     }
   }
 
   /**
-   * Update sale section content (convenience method with transformation)
+   * Update sale section content (convenience method with transformation) with enhanced error handling
    */
   static async updateSaleSectionContentLocal(
     saleSectionContent: SaleSectionContent,
@@ -259,7 +594,17 @@ export class ContentService {
       return transformSaleSectionToLocal(updatedSaleSection);
     } catch (error) {
       console.error('Error updating sale section content:', error);
-      throw error;
+      
+      if (error instanceof ContentServiceError) {
+        throw error;
+      }
+      
+      throw new ContentServiceError(
+        'Failed to update sale section content. Please try again.',
+        'UPDATE_SALE_SECTION_ERROR',
+        undefined,
+        true
+      );
     }
   }
 }

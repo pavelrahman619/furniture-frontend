@@ -26,12 +26,22 @@
   - Add image upload component for background image selection in admin panel
   - _Requirements: 1.1, 1.2_
 
-- [ ] 3. Update API configuration for content endpoints
+- [x] 3. Update API configuration for content endpoints
+
+
+
+
+
   - Add content endpoints to `src/lib/api-config.ts` API_ENDPOINTS configuration
   - Ensure proper endpoint paths match Postman collection (`/api/content/banner`, `/api/content/sale-section`)
   - _Requirements: 1.1, 1.2_
 
-- [ ] 4. Replace localStorage with API calls in admin content page
+- [x] 4. Replace localStorage with API calls in admin content page
+
+
+
+
+
   - Update `src/app/admin/content/page.tsx` to use content service instead of localStorage
   - Replace `useEffect` localStorage loading with API fetch calls
   - Replace `handleSave` localStorage operations with API PUT calls
@@ -39,14 +49,22 @@
   - Ensure Cloudinary image URLs are properly handled in image inputs
   - _Requirements: 1.1, 1.2, 1.3_
 
-- [ ] 5. Add loading states and error handling
+- [x] 5. Add loading states and error handling
+
+
+
+
+
   - Implement loading indicators for initial content fetch and save operations
   - Add error state management with user-friendly error messages
   - Implement retry mechanisms for failed API operations
   - Add success notifications for completed operations
+  - Skip if they are done
   - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5_
 
+
 - [ ] 6. Add content service to services index
+
   - Export content service and types from `src/services/index.ts`
   - Ensure proper TypeScript type exports for content interfaces
   - _Requirements: 1.1_
