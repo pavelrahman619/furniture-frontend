@@ -167,3 +167,48 @@ export interface ProductDetails {
     };
   };
 }
+
+// Admin-specific types for product management
+export interface CreateProductRequest {
+  name: string;
+  sku: string;
+  category_id: string;
+  price: number;
+  description?: string;
+  variants?: ProductVariant[];
+  images?: ProductImage[];
+  featured?: boolean;
+  stock?: number;
+}
+
+export type UpdateProductRequest = Partial<CreateProductRequest>;
+
+export interface StockInfo {
+  productId: string;
+  currentStock: number;
+  reservedStock?: number;
+  availableStock: number;
+  locations?: StockLocation[];
+}
+
+export interface UpdateStockRequest {
+  stock: number;
+  location?: string;
+}
+
+// Error types for better error handling
+export interface ProductError {
+  field?: string;
+  message: string;
+  code?: string;
+}
+
+export interface ProductValidationError {
+  errors: ProductError[];
+  message: string;
+}
+
+// Admin product list response (may differ from public product list)
+export interface AdminProductsResponse extends ProductsResponse {
+  products: Product[];
+}

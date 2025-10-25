@@ -5,6 +5,17 @@ export { default as API_CONFIG, API_ENDPOINTS, buildApiUrl, getApiHeaders } from
 export { default as apiService, ApiException } from '../lib/api-service';
 export type { ApiResponse, ApiError, RequestOptions } from '../lib/api-service';
 
+// Error utilities
+export { 
+  transformApiError, 
+  getUserFriendlyErrorMessage, 
+  extractValidationErrors, 
+  isRetryableError,
+  ProductServiceException,
+  ProductErrorCode
+} from '../lib/error-utils';
+export type { ProductError } from '../lib/error-utils';
+
 // Service modules
 export { default as authService } from './auth.service';
 export type { 
@@ -23,7 +34,11 @@ export type {
   SingleProductResponse,
   ProductSearchResponse,
   StockResponse,
-  DisplayProduct
+  DisplayProduct,
+  CreateProductRequest,
+  UpdateProductRequest,
+  StockInfo,
+  ProductValidationError
 } from '../types/product.types';
 
 export { default as cartService } from './cart.service';
