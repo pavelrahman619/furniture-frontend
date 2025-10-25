@@ -13,7 +13,10 @@
   - Add Cloudinary URL validation for image fields
   - _Requirements: 1.1, 1.2_
 
-- [-] 2. Configure and integrate Cloudinary into the project
+- [x] 2. Configure and integrate Cloudinary into the project
+
+
+
 
 
   - Install Cloudinary SDK (`npm install cloudinary @cloudinary/react @cloudinary/url-gen`)
