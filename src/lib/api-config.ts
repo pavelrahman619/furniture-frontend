@@ -35,13 +35,16 @@ export const API_ENDPOINTS = {
     DELETE_ADDRESS: '/user/delete-address',
   },
 
-  // Products - matching backend routes
+  // Products - matching backend routes (/api/products/*)
   PRODUCTS: {
     LIST: '/products',
     DETAIL: (id: string) => `/products/${id}`,
     SEARCH: '/products/search',
     STOCK: (id: string) => `/products/${id}/stock`,
     UPDATE_STOCK: (id: string) => `/products/${id}/stock`,
+    CREATE: '/products',
+    UPDATE: (id: string) => `/products/${id}`,
+    DELETE: (id: string) => `/products/${id}`,
   },
 
   // Categories
