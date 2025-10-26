@@ -95,7 +95,9 @@
   - git add and commit with message
   - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5, 6.1, 6.2, 6.5_
 
-- [-] 7. Implement stock management functionality
+- [x] 7. Implement stock management functionality
+
+
 
 
 
@@ -111,8 +113,11 @@
   - git add and commit with message
 
   - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 6.1, 6.5_
+-
 
-- [ ] 8. Add product service to services index
+- [-] 8. Add product service to services index
+
+
 
 
   - Export ProductService and related types from `src/services/index.ts`
