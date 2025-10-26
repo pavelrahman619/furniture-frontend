@@ -5,6 +5,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { CartProvider } from "@/contexts/CartContext";
 import { QueryProvider } from "@/providers/QueryProvider";
+import { ToastProvider } from "@/contexts/ToastContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -34,9 +35,11 @@ export default function RootLayout({
       >
         <QueryProvider>
           <CartProvider>
-            <Navbar />
-            {children}
-            <Footer />
+            <ToastProvider>
+              <Navbar />
+              {children}
+              <Footer />
+            </ToastProvider>
           </CartProvider>
         </QueryProvider>
       </body>

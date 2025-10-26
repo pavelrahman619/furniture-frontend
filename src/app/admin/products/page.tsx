@@ -21,6 +21,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useAdminProducts, useUpdateProductStock, useDeleteProduct } from "@/hooks/useAdminProducts";
 import { ProductTableSkeleton } from "@/components/ProductTableSkeleton";
 import { ProductsError } from "@/components/ProductsError";
+import { DeleteProductDialog } from "@/components/DeleteProductDialog";
+import { useToast } from "@/contexts/ToastContext";
 import { Product as ApiProduct, ProductsQueryParams } from "@/types/product.types";
 
 // Product interface for table display (transformed from API data)
@@ -74,6 +76,9 @@ export default function ProductsPage() {
   // Authentication
   const { token, isAuthenticated } = useAuth();
   
+  // Toast notifications
+  const { success, error } = useToast();
+  
   // Local state for filters and UI
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
@@ -84,6 +89,8 @@ export default function ProductsPage() {
   const [showFilters, setShowFilters] = useState(false);
   const [displayedCount, setDisplayedCount] = useState(PRODUCTS_PER_BATCH);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [productToDelete, setProductToDelete] = useState<Product | null>(null);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   // Build query parameters for API
@@ -160,28 +167,42 @@ export default function ProductsPage() {
   }, [products, token, updateStockMutation]);
 
   // Handle product deletion
-  const handleDeleteProduct = useCallback(async (productId: string) => {
-    if (!token) return;
-
+  const handleDeleteProduct = useCallback((productId: string) => {
     const product = products.find(p => p.id === productId);
     if (!product) return;
 
-    const confirmed = window.confirm(
-      `Are you sure you want to delete "${product.name}"? This action cannot be undone.`
-    );
+    setProductToDelete(product);
+    setShowDeleteDialog(true);
+  }, [products]);
 
-    if (confirmed) {
-      try {
-        await deleteProductMutation.mutateAsync({
-          id: productId,
-          token,
-        });
-      } catch (error) {
-        console.error('Failed to delete product:', error);
-        // Error handling is done by the mutation hook
-      }
+  // Confirm product deletion
+  const confirmDeleteProduct = useCallback(async (productId: string) => {
+    if (!token) return;
+
+    const product = products.find(p => p.id === productId);
+    const productName = product?.name || "Product";
+
+    try {
+      await deleteProductMutation.mutateAsync({
+        id: productId,
+        token,
+      });
+      setShowDeleteDialog(false);
+      setProductToDelete(null);
+      success("Product deleted successfully", `${productName} has been removed from your inventory.`);
+    } catch (err) {
+      console.error('Failed to delete product:', err);
+      error("Failed to delete product", "An error occurred while deleting the product. Please try again.");
     }
-  }, [products, token, deleteProductMutation]);
+  }, [token, deleteProductMutation, products, success, error]);
+
+  // Close delete dialog
+  const closeDeleteDialog = useCallback(() => {
+    if (!deleteProductMutation.isPending) {
+      setShowDeleteDialog(false);
+      setProductToDelete(null);
+    }
+  }, [deleteProductMutation.isPending]);
 
   // Handle sorting
   const handleSort = (field: SortField) => {
@@ -770,6 +791,15 @@ export default function ProductsPage() {
             </div>
           )}
         </div>
+
+        {/* Delete Product Dialog */}
+        <DeleteProductDialog
+          product={productToDelete}
+          isOpen={showDeleteDialog}
+          isDeleting={deleteProductMutation.isPending}
+          onClose={closeDeleteDialog}
+          onConfirm={confirmDeleteProduct}
+        />
       </div>
     </main>
   );
