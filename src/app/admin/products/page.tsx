@@ -696,12 +696,13 @@ export default function ProductsPage() {
                           >
                             <Eye className="h-4 w-4" />
                           </Link>
-                          <button
+                          <Link
+                            href={`/admin/products/${product.id}/edit`}
                             className="p-1 rounded-md text-gray-600 hover:bg-gray-50 transition-colors"
                             title="Edit Product"
                           >
                             <Edit className="h-4 w-4" />
-                          </button>
+                          </Link>
                           <button
                             onClick={() => handleDeleteProduct(product.id)}
                             disabled={deleteProductMutation.isPending}
