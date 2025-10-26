@@ -95,7 +95,10 @@
   - git add and commit with message
   - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5, 6.1, 6.2, 6.5_
 
-- [ ] 7. Implement stock management functionality
+- [-] 7. Implement stock management functionality
+
+
+
 
 
   - Add stock display to product list showing current inventory levels

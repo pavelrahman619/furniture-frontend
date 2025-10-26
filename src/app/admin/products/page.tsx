@@ -39,6 +39,115 @@ interface Product {
   createdAt: string;
 }
 
+// Stock Management Component
+interface StockManagementProps {
+  product: Product;
+  onUpdateStock: (productId: string, change: number) => void;
+  isUpdating: boolean;
+}
+
+function StockManagement({ product, onUpdateStock, isUpdating }: StockManagementProps) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [stockValue, setStockValue] = useState(product.totalStock.toString());
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Update local state when product stock changes
+  useEffect(() => {
+    setStockValue(product.totalStock.toString());
+  }, [product.totalStock]);
+
+  const handleDirectStockUpdate = useCallback(async () => {
+    const newStock = parseInt(stockValue, 10);
+    
+    // Validate input
+    if (isNaN(newStock) || newStock < 0) {
+      setStockValue(product.totalStock.toString());
+      setIsEditing(false);
+      return;
+    }
+
+    const change = newStock - product.totalStock;
+    if (change !== 0) {
+      await onUpdateStock(product.id, change);
+    }
+    
+    setIsEditing(false);
+  }, [stockValue, product.totalStock, product.id, onUpdateStock]);
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleDirectStockUpdate();
+    } else if (e.key === 'Escape') {
+      setStockValue(product.totalStock.toString());
+      setIsEditing(false);
+    }
+  };
+
+  const handleStockInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    // Only allow non-negative integers
+    if (value === '' || (/^\d+$/.test(value) && parseInt(value, 10) >= 0)) {
+      setStockValue(value);
+    }
+  };
+
+  return (
+    <div className="flex items-center space-x-2">
+      <button
+        onClick={() => onUpdateStock(product.id, -1)}
+        disabled={product.totalStock === 0 || isUpdating}
+        className="p-1 rounded-md text-red-600 hover:bg-red-50 disabled:text-gray-300 disabled:hover:bg-transparent transition-colors"
+        title="Decrease stock by 1"
+      >
+        {isUpdating ? (
+          <Loader2 className="h-4 w-4 animate-spin" />
+        ) : (
+          <Minus className="h-4 w-4" />
+        )}
+      </button>
+
+      {isEditing ? (
+        <input
+          ref={inputRef}
+          type="text"
+          value={stockValue}
+          onChange={handleStockInputChange}
+          onBlur={handleDirectStockUpdate}
+          onKeyDown={handleKeyPress}
+          className="w-16 px-2 py-1 text-sm text-center border border-blue-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          autoFocus
+          disabled={isUpdating}
+        />
+      ) : (
+        <button
+          onClick={() => {
+            setIsEditing(true);
+            setTimeout(() => inputRef.current?.select(), 0);
+          }}
+          disabled={isUpdating}
+          className="w-16 px-2 py-1 text-sm text-center border border-gray-300 rounded hover:border-blue-300 hover:bg-blue-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          title="Click to edit stock directly"
+        >
+          {product.totalStock}
+        </button>
+      )}
+
+      <button
+        onClick={() => onUpdateStock(product.id, 1)}
+        disabled={isUpdating}
+        className="p-1 rounded-md text-green-600 hover:bg-green-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        title="Increase stock by 1"
+      >
+        {isUpdating ? (
+          <Loader2 className="h-4 w-4 animate-spin" />
+        ) : (
+          <Plus className="h-4 w-4" />
+        )}
+      </button>
+    </div>
+  );
+}
+
 // Transform API product to display product
 const transformApiProduct = (apiProduct: ApiProduct): Product => {
   const totalStock = typeof apiProduct.stock === 'number' && !Number.isNaN(apiProduct.stock)
@@ -153,6 +262,7 @@ export default function ProductsPage() {
     if (!product) return;
 
     const newStock = Math.max(0, product.totalStock + change);
+    const productName = product.name;
 
     try {
       await updateStockMutation.mutateAsync({
@@ -160,11 +270,21 @@ export default function ProductsPage() {
         stockData: { stock: newStock },
         token,
       });
+      
+      // Show success notification
+      success(
+        "Stock updated successfully", 
+        `${productName} stock updated to ${newStock} units`
+      );
     } catch (error) {
       console.error('Failed to update stock:', error);
-      // Error handling is done by the mutation hook
+      // Show error notification
+      error(
+        "Failed to update stock", 
+        `Could not update stock for ${productName}. Please try again.`
+      );
     }
-  }, [products, token, updateStockMutation]);
+  }, [products, token, updateStockMutation, success, error]);
 
   // Handle product deletion
   const handleDeleteProduct = useCallback((productId: string) => {
@@ -683,30 +803,11 @@ export default function ProductsPage() {
                         {product.totalStock}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center space-x-2">
-                          <button
-                            onClick={() => updateStock(product.id, -1)}
-                            disabled={product.totalStock === 0 || updateStockMutation.isPending}
-                            className="p-1 rounded-md text-red-600 hover:bg-red-50 disabled:text-gray-300 disabled:hover:bg-transparent transition-colors"
-                          >
-                            {updateStockMutation.isPending && updateStockMutation.variables?.id === product.id ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                              <Minus className="h-4 w-4" />
-                            )}
-                          </button>
-                          <button
-                            onClick={() => updateStock(product.id, 1)}
-                            disabled={updateStockMutation.isPending}
-                            className="p-1 rounded-md text-green-600 hover:bg-green-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                          >
-                            {updateStockMutation.isPending && updateStockMutation.variables?.id === product.id ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                              <Plus className="h-4 w-4" />
-                            )}
-                          </button>
-                        </div>
+                        <StockManagement
+                          product={product}
+                          onUpdateStock={updateStock}
+                          isUpdating={updateStockMutation.isPending && updateStockMutation.variables?.id === product.id}
+                        />
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         <div className="flex items-center space-x-2">
