@@ -664,16 +664,16 @@ export default function ProductsPage() {
 
         {/* Products Table */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-          <div className="overflow-x-auto">
+          <div className="overflow-x-hidden">
             {/* Fixed Header */}
             <table className="w-full">
               <thead className="bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">
                     Product
                   </th>
                   <th
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 bg-gray-50"
+                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 bg-gray-50"
                     onClick={() => handleSort("category")}
                   >
                     <div className="flex items-center">
@@ -682,7 +682,7 @@ export default function ProductsPage() {
                     </div>
                   </th>
                   <th
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 bg-gray-50"
+                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 bg-gray-50"
                     onClick={() => handleSort("price")}
                   >
                     <div className="flex items-center">
@@ -691,7 +691,7 @@ export default function ProductsPage() {
                     </div>
                   </th>
                   <th
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 bg-gray-50"
+                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 bg-gray-50"
                     onClick={() => handleSort("availability")}
                   >
                     <div className="flex items-center">
@@ -700,7 +700,7 @@ export default function ProductsPage() {
                     </div>
                   </th>
                   <th
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 bg-gray-50"
+                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 bg-gray-50"
                     onClick={() => handleSort("totalStock")}
                   >
                     <div className="flex items-center">
@@ -708,10 +708,10 @@ export default function ProductsPage() {
                       <ArrowUpDown className="h-3 w-3 ml-1" />
                     </div>
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">
                     Stock Actions
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">
                     Actions
                   </th>
                 </tr>
@@ -729,19 +729,19 @@ export default function ProductsPage() {
                 <tbody className="bg-white divide-y divide-gray-200">
                   {displayedProducts.map((product) => (
                     <tr key={product.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div className="flex-shrink-0 h-16 w-16">
+                      <td className="px-4 py-3 align-top">
+                        <div className="flex items-start">
+                          <div className="flex-shrink-0 h-12 w-12">
                             <Image
                               src={product.image}
                               alt={product.name}
-                              width={64}
-                              height={64}
-                              className="h-16 w-16 rounded-lg object-cover"
+                              width={48}
+                              height={48}
+                              className="h-12 w-12 rounded-lg object-cover"
                             />
                           </div>
-                          <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900">
+                          <div className="ml-3">
+                            <div className="text-sm font-medium text-gray-900 break-words max-w-[20rem]">
                               {product.name}
                               {product.isFirstLook && (
                                 <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
@@ -749,19 +749,19 @@ export default function ProductsPage() {
                                 </span>
                               )}
                             </div>
-                            <div className="text-sm text-gray-500">
+                            <div className="text-sm text-gray-500 break-words">
                               SKU: {product.sku}
                             </div>
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <td className="px-4 py-3 text-sm text-gray-900 break-words">
                         {product.category}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <td className="px-4 py-3 text-sm text-gray-900">
                         ${product.price.toLocaleString()}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-4 py-3">
                         <span
                           className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                             product.availability === "in-stock"
@@ -777,17 +777,17 @@ export default function ProductsPage() {
                           {product.availability === "on-order" && "On Order"}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
+                      <td className="px-4 py-3 text-sm text-gray-900 font-medium">
                         {product.totalStock}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-4 py-3">
                         <StockManagement
                           product={product}
                           onUpdateStock={updateStock}
                           isUpdating={updateStockMutation.isPending && updateStockMutation.variables?.id === product.id}
                         />
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="px-4 py-3 text-sm text-gray-500">
                         <div className="flex items-center space-x-2">
                           <Link
                             href={`/products/${product.id}`}
