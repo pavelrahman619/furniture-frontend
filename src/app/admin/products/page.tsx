@@ -231,10 +231,10 @@ export default function ProductsPage() {
   const {
     data: apiResponse,
     isLoading,
-    error,
+    error: productsError,
     refetch,
     isRefetching,
-  } = useAdminProducts(queryParams, token);
+  } = useAdminProducts(queryParams, token || undefined);
 
   // Mutations for product operations
   const updateStockMutation = useUpdateProductStock();
@@ -276,11 +276,11 @@ export default function ProductsPage() {
         "Stock updated successfully", 
         `${productName} stock updated to ${newStock} units`
       );
-    } catch (error) {
-      console.error('Failed to update stock:', error);
+    } catch (err) {
+      console.error('Failed to update stock:', err);
       // Show error notification
       error(
-        "Failed to update stock", 
+        "Failed to update stock",
         `Could not update stock for ${productName}. Please try again.`
       );
     }
@@ -468,7 +468,7 @@ export default function ProductsPage() {
   }
 
   // Show error state
-  if (error) {
+  if (productsError) {
     return (
       <main className="min-h-screen bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -492,9 +492,9 @@ export default function ProductsPage() {
           </div>
 
           {/* Error component */}
-          <ProductsError 
-            error={error} 
-            onRetry={refetch} 
+          <ProductsError
+            error={productsError}
+            onRetry={refetch}
             isRetrying={isRefetching}
           />
         </div>

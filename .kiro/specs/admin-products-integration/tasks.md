@@ -115,7 +115,9 @@
   - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 6.1, 6.5_
 -
 
-- [-] 8. Add product service to services index
+- [x] 8. Add product service to services index
+
+
 
 
 
