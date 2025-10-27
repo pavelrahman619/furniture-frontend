@@ -27,6 +27,15 @@ export type {
   ResetPasswordRequest 
 } from './auth.service';
 
+export { default as AdminService, tokenStorage } from './admin.service';
+export type {
+  AdminLoginRequest,
+  AdminLoginResponse,
+  AdminUser,
+  AdminSession,
+  AdminTokenResponse
+} from './admin.service';
+
 export { default as ProductService } from './product.service';
 export type { 
   ProductsQueryParams,
@@ -38,7 +47,8 @@ export type {
   CreateProductRequest,
   UpdateProductRequest,
   StockInfo,
-  ProductValidationError
+  ProductValidationError,
+  AdminProductsResponse
 } from '../types/product.types';
 
 export { default as cartService } from './cart.service';

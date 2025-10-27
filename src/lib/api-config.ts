@@ -95,12 +95,17 @@ export const API_ENDPOINTS = {
     MULTIPLE: '/upload/multiple',
   },
 
-  // Admin (if needed)
+  // Admin Authentication
   ADMIN: {
-    PRODUCTS: '/admin/products',
-    ORDERS: '/admin/orders',
-    USERS: '/admin/users',
-    CONTENT: '/admin/content',
+    LOGIN: '/auth/login',
+    LOGOUT: '/auth/logout',
+    REFRESH: '/auth/refresh', // Note: Backend doesn't support refresh tokens
+    PROFILE: '/admin/profile',
+    VERIFY: '/auth/verify',
+    PRODUCTS: '/products',
+    ORDERS: '/orders',
+    USERS: '/users',
+    CONTENT: '/content',
   },
 
   // Delivery

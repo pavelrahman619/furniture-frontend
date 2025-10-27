@@ -5,8 +5,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
 import { Plus, X, Save, ArrowLeft, Upload, Loader2 } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
+import { useAdmin } from "@/contexts/AdminContext";
 import { useUpdateProduct } from "@/hooks/useAdminProducts";
+import AdminGuard from "@/components/AdminGuard";
 import { ProductService } from "@/services/product.service";
 import { uploadImageToCloudinary, validateImageFile } from "@/lib/cloudinary-utils";
 import { UpdateProductRequest, ProductImage, Product } from "@/types/product.types";
@@ -40,7 +41,8 @@ export default function EditProductPage() {
   const router = useRouter();
   const params = useParams();
   const productId = params.id as string;
-  const { token, isAuthenticated } = useAuth();
+  const { getToken, isAuthenticated } = useAdmin();
+  const token = getToken();
   const updateProductMutation = useUpdateProduct();
   const { showSuccess, showError } = useToast();
   
@@ -282,32 +284,6 @@ export default function EditProductPage() {
     }
   };
 
-  // Show authentication required message
-  if (!isAuthenticated) {
-    return (
-      <main className="min-h-screen bg-gray-50">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12">
-            <div className="text-center">
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                Authentication Required
-              </h3>
-              <p className="text-gray-600 mb-6">
-                Please log in to access the product edit page.
-              </p>
-              <Link
-                href="/login"
-                className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-              >
-                Go to Login
-              </Link>
-            </div>
-          </div>
-        </div>
-      </main>
-    );
-  }
-
   // Show loading state
   if (isLoading) {
     return (
@@ -364,6 +340,7 @@ export default function EditProductPage() {
   }
 
   return (
+    <AdminGuard>
     <main className="min-h-screen bg-gray-50">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
@@ -646,5 +623,6 @@ export default function EditProductPage() {
         </form>
       </div>
     </main>
+    </AdminGuard>
   );
 }

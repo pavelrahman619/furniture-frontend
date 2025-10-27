@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useParams } from "next/navigation";
+import AdminGuard from "@/components/AdminGuard";
 import {
   ArrowLeft,
   Package,
@@ -252,6 +253,7 @@ export default function OrderDetailsPage() {
   const StatusIcon = statusConfig[order.status].icon;
 
   return (
+    <AdminGuard>
     <main className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
@@ -697,5 +699,6 @@ export default function OrderDetailsPage() {
         </div>
       </div>
     </main>
+    </AdminGuard>
   );
 }

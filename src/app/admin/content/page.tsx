@@ -17,6 +17,7 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 import ErrorMessage from "@/components/ErrorMessage";
 import { ToastProvider, useToast } from "@/components/ToastProvider";
 import { ImageUpload } from "@/components/ImageUpload";
+import AdminGuard from "@/components/AdminGuard";
 
 // Content interfaces for type safety
 interface ContentData {
@@ -315,407 +316,411 @@ function ContentManagementPageContent() {
   }
 
   return (
-    <main className="min-h-screen bg-gray-50">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <Link
-                href="/admin/products"
-                className="flex items-center text-gray-600 hover:text-gray-900 transition-colors"
-              >
-                <ArrowLeft className="h-5 w-5 mr-2" />
-                Back to Admin
-              </Link>
-              <div className="h-6 w-px bg-gray-300" />
-              <h1 className="text-2xl font-bold text-gray-900">
-                Content Management
-              </h1>
+    <AdminGuard>
+      <main className="min-h-screen bg-gray-50">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* Header */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <Link
+                  href="/admin/products"
+                  className="flex items-center text-gray-600 hover:text-gray-900 transition-colors"
+                >
+                  <ArrowLeft className="h-5 w-5 mr-2" />
+                  Back to Admin
+                </Link>
+                <div className="h-6 w-px bg-gray-300" />
+                <h1 className="text-2xl font-bold text-gray-900">
+                  Content Management
+                </h1>
+              </div>
+              <div className="flex items-center space-x-3">
+                <button
+                  type="button"
+                  onClick={() => setShowPreview(!showPreview)}
+                  className="flex items-center px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors"
+                >
+                  <Eye className="h-4 w-4 mr-2" />
+                  {showPreview ? "Edit" : "Preview"}
+                </button>
+                <button
+                  onClick={handleReset}
+                  className="flex items-center px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors"
+                >
+                  Reset to Default
+                </button>
+                <button
+                  onClick={handleSave}
+                  disabled={loadingStates.hero.saving || loadingStates.saleSection.saving}
+                  className="flex items-center px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {(loadingStates.hero.saving || loadingStates.saleSection.saving) ? (
+                    <>
+                      <LoadingSpinner size="sm" color="gray" className="mr-2" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="h-4 w-4 mr-2" />
+                      Save Changes
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
-            <div className="flex items-center space-x-3">
-              <button
-                type="button"
-                onClick={() => setShowPreview(!showPreview)}
-                className="flex items-center px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors"
-              >
-                <Eye className="h-4 w-4 mr-2" />
-                {showPreview ? "Edit" : "Preview"}
-              </button>
-              <button
-                onClick={handleReset}
-                className="flex items-center px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors"
-              >
-                Reset to Default
-              </button>
-              <button
-                onClick={handleSave}
-                disabled={loadingStates.hero.saving || loadingStates.saleSection.saving}
-                className="flex items-center px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {(loadingStates.hero.saving || loadingStates.saleSection.saving) ? (
-                  <>
-                    <LoadingSpinner size="sm" color="gray" className="mr-2" />
-                    Saving...
-                  </>
-                ) : (
-                  <>
-                    <Save className="h-4 w-4 mr-2" />
-                    Save Changes
-                  </>
-                )}
-              </button>
-            </div>
+
+            {/* Error Message */}
+            {error && (
+              <div className="mt-4">
+                <ErrorMessage
+                  title="Content Management Error"
+                  message={error.message}
+                  onRetry={error.retryable ? handleRetry : undefined}
+                  retryLabel="Retry Loading"
+                />
+              </div>
+            )}
           </div>
 
-          {/* Error Message */}
-          {error && (
-            <div className="mt-4">
-              <ErrorMessage
-                title="Content Management Error"
-                message={error.message}
-                onRetry={error.retryable ? handleRetry : undefined}
-                retryLabel="Retry Loading"
-              />
+          {!showPreview ? (
+            <div className="space-y-8">
+              {/* Hero Section Content */}
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center">
+                    <div className="bg-blue-100 p-2 rounded-lg mr-3">
+                      <ImageIcon className="h-6 w-6 text-blue-600" />
+                    </div>
+                    <div>
+                      <h2 className="text-lg font-semibold text-gray-900">
+                        Hero Section
+                      </h2>
+                      <p className="text-sm text-gray-600">
+                        Main banner content displayed at the top of the landing page
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={handleSaveHero}
+                    disabled={loadingStates.hero.saving}
+                    className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                  >
+                    {loadingStates.hero.saving ? (
+                      <>
+                        <LoadingSpinner size="sm" color="gray" className="mr-2" />
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="h-4 w-4 mr-2" />
+                        Save Hero
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div className="space-y-6">
+                    {/* Background Image */}
+                    <div>
+                      <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                        <ImageIcon className="h-4 w-4 mr-2" />
+                        Background Image
+                      </label>
+                      <ImageUpload
+                        currentImage={content.hero.backgroundImage}
+                        onImageChange={(url) => handleContentChange("hero", "backgroundImage", url)}
+                        onImageRemove={() => handleContentChange("hero", "backgroundImage", "")}
+                        uploadOptions={{
+                          folder: 'HERO_IMAGES',
+                          transformation: 'HERO_BANNER',
+                          tags: ['hero', 'content'],
+                        }}
+                        placeholder="Upload hero background image"
+                        disabled={loadingStates.hero.saving}
+                      />
+                    </div>
+
+                    {/* Title */}
+                    <div>
+                      <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                        <Type className="h-4 w-4 mr-2" />
+                        Title Text
+                      </label>
+                      <input
+                        type="text"
+                        value={content.hero.title}
+                        onChange={(e) =>
+                          handleContentChange("hero", "title", e.target.value)
+                        }
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        placeholder="Enter title text"
+                      />
+                    </div>
+
+                    {/* Button Text */}
+                    <div>
+                      <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                        <MousePointer className="h-4 w-4 mr-2" />
+                        Button Text
+                      </label>
+                      <input
+                        type="text"
+                        value={content.hero.buttonText}
+                        onChange={(e) =>
+                          handleContentChange(
+                            "hero",
+                            "buttonText",
+                            e.target.value
+                          )
+                        }
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        placeholder="Enter button text"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Preview */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Preview
+                    </label>
+                    <div className="aspect-[16/9] relative rounded-lg overflow-hidden border border-gray-200">
+                      {content.hero.backgroundImage && (
+                        <Image
+                          src={content.hero.backgroundImage}
+                          alt="Hero background preview"
+                          fill
+                          sizes="(max-width: 768px) 100vw, 33vw"
+                          className="object-cover"
+                          onError={() => { }}
+                        />
+                      )}
+                      <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                        <div className="text-center text-white">
+                          <h3 className="text-xl font-light tracking-wider mb-3">
+                            {content.hero.title}
+                          </h3>
+                          <button className="bg-black bg-opacity-80 hover:bg-opacity-100 text-white px-4 py-2 text-xs font-medium tracking-wider transition-all duration-300">
+                            {content.hero.buttonText}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Sale Section Content */}
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center">
+                    <div className="bg-purple-100 p-2 rounded-lg mr-3">
+                      <ImageIcon className="h-6 w-6 text-purple-600" />
+                    </div>
+                    <div>
+                      <h2 className="text-lg font-semibold text-gray-900">
+                        Sale Section
+                      </h2>
+                      <p className="text-sm text-gray-600">
+                        Promotional section content displayed on the landing page
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={handleSaveSaleSection}
+                    disabled={loadingStates.saleSection.saving}
+                    className="flex items-center px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                  >
+                    {loadingStates.saleSection.saving ? (
+                      <>
+                        <LoadingSpinner size="sm" color="gray" className="mr-2" />
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="h-4 w-4 mr-2" />
+                        Save Sale
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div className="space-y-6">
+                    {/* Background Image */}
+                    <div>
+                      <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                        <ImageIcon className="h-4 w-4 mr-2" />
+                        Background Image
+                      </label>
+                      <ImageUpload
+                        currentImage={content.saleSection.backgroundImage}
+                        onImageChange={(url) => handleContentChange("saleSection", "backgroundImage", url)}
+                        onImageRemove={() => handleContentChange("saleSection", "backgroundImage", "")}
+                        uploadOptions={{
+                          folder: 'SALE_IMAGES',
+                          transformation: 'SALE_BANNER',
+                          tags: ['sale', 'content'],
+                        }}
+                        placeholder="Upload sale section background image"
+                        disabled={loadingStates.saleSection.saving}
+                      />
+                    </div>
+
+                    {/* Title */}
+                    <div>
+                      <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                        <Type className="h-4 w-4 mr-2" />
+                        Title Text
+                      </label>
+                      <input
+                        type="text"
+                        value={content.saleSection.title}
+                        onChange={(e) =>
+                          handleContentChange(
+                            "saleSection",
+                            "title",
+                            e.target.value
+                          )
+                        }
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        placeholder="Enter title text"
+                      />
+                    </div>
+
+                    {/* Button Text */}
+                    <div>
+                      <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                        <MousePointer className="h-4 w-4 mr-2" />
+                        Button Text
+                      </label>
+                      <input
+                        type="text"
+                        value={content.saleSection.buttonText}
+                        onChange={(e) =>
+                          handleContentChange(
+                            "saleSection",
+                            "buttonText",
+                            e.target.value
+                          )
+                        }
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        placeholder="Enter button text"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Preview */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Preview
+                    </label>
+                    <div className="aspect-[16/9] relative rounded-lg overflow-hidden border border-gray-200">
+                      {content.saleSection.backgroundImage && (
+                        <Image
+                          src={content.saleSection.backgroundImage}
+                          alt="Sale section background preview"
+                          fill
+                          sizes="(max-width: 768px) 100vw, 33vw"
+                          className="object-cover"
+                          onError={() => { }}
+                        />
+                      )}
+                      <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
+                        <div className="text-center text-white">
+                          <h3 className="text-2xl font-light tracking-wider mb-3">
+                            {content.saleSection.title}
+                          </h3>
+                          <button className="bg-white text-gray-900 px-4 py-2 text-xs font-medium tracking-wider uppercase hover:bg-gray-100 transition-all duration-300">
+                            {content.saleSection.buttonText}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            /* Full Preview Mode */
+            <div className="space-y-8">
+              {/* Hero Preview */}
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                <div className="bg-gray-50 px-6 py-3 border-b border-gray-200">
+                  <h3 className="text-lg font-medium text-gray-900">
+                    Hero Section Preview
+                  </h3>
+                </div>
+                <div className="relative h-96">
+                  {content.hero.backgroundImage && (
+                    <Image
+                      src={content.hero.backgroundImage}
+                      alt="Hero background preview"
+                      fill
+                      sizes="(max-width: 768px) 100vw, 33vw"
+                      className="object-cover"
+                      onError={() => { }}
+                    />
+                  )}
+                  <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                    <div className="text-center text-white">
+                      <h1 className="text-4xl md:text-6xl font-light tracking-[0.2em] mb-8">
+                        {content.hero.title}
+                      </h1>
+                      <button className="bg-black bg-opacity-80 hover:bg-opacity-100 text-white px-8 py-3 text-sm font-medium tracking-wider transition-all duration-300 hover:scale-105">
+                        {content.hero.buttonText}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Sale Section Preview */}
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                <div className="bg-gray-50 px-6 py-3 border-b border-gray-200">
+                  <h3 className="text-lg font-medium text-gray-900">
+                    Sale Section Preview
+                  </h3>
+                </div>
+                <div className="relative h-96">
+                  {content.saleSection.backgroundImage && (
+                    <Image
+                      src={content.saleSection.backgroundImage}
+                      alt="Sale section background preview"
+                      fill
+                      className="object-cover"
+                      onError={() => { }}
+                    />
+                  )}
+                  <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
+                    <div className="text-center text-white">
+                      <h2 className="text-4xl md:text-6xl lg:text-7xl font-light tracking-[0.3em] mb-8">
+                        {content.saleSection.title}
+                      </h2>
+                      <button className="bg-white text-gray-900 px-8 py-3 text-sm font-medium tracking-wider uppercase hover:bg-gray-100 transition-all duration-300 transform hover:scale-105 shadow-lg">
+                        {content.saleSection.buttonText}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
         </div>
-
-        {!showPreview ? (
-          <div className="space-y-8">
-            {/* Hero Section Content */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center">
-                  <div className="bg-blue-100 p-2 rounded-lg mr-3">
-                    <ImageIcon className="h-6 w-6 text-blue-600" />
-                  </div>
-                  <div>
-                    <h2 className="text-lg font-semibold text-gray-900">
-                      Hero Section
-                    </h2>
-                    <p className="text-sm text-gray-600">
-                      Main banner content displayed at the top of the landing page
-                    </p>
-                  </div>
-                </div>
-                <button
-                  onClick={handleSaveHero}
-                  disabled={loadingStates.hero.saving}
-                  className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
-                >
-                  {loadingStates.hero.saving ? (
-                    <>
-                      <LoadingSpinner size="sm" color="gray" className="mr-2" />
-                      Saving...
-                    </>
-                  ) : (
-                    <>
-                      <Save className="h-4 w-4 mr-2" />
-                      Save Hero
-                    </>
-                  )}
-                </button>
-              </div>
-
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="space-y-6">
-                  {/* Background Image */}
-                  <div>
-                    <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
-                      <ImageIcon className="h-4 w-4 mr-2" />
-                      Background Image
-                    </label>
-                    <ImageUpload
-                      currentImage={content.hero.backgroundImage}
-                      onImageChange={(url) => handleContentChange("hero", "backgroundImage", url)}
-                      onImageRemove={() => handleContentChange("hero", "backgroundImage", "")}
-                      uploadOptions={{
-                        folder: 'HERO_IMAGES',
-                        transformation: 'HERO_BANNER',
-                        tags: ['hero', 'content'],
-                      }}
-                      placeholder="Upload hero background image"
-                      disabled={loadingStates.hero.saving}
-                    />
-                  </div>
-
-                  {/* Title */}
-                  <div>
-                    <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
-                      <Type className="h-4 w-4 mr-2" />
-                      Title Text
-                    </label>
-                    <input
-                      type="text"
-                      value={content.hero.title}
-                      onChange={(e) =>
-                        handleContentChange("hero", "title", e.target.value)
-                      }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="Enter title text"
-                    />
-                  </div>
-
-                  {/* Button Text */}
-                  <div>
-                    <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
-                      <MousePointer className="h-4 w-4 mr-2" />
-                      Button Text
-                    </label>
-                    <input
-                      type="text"
-                      value={content.hero.buttonText}
-                      onChange={(e) =>
-                        handleContentChange(
-                          "hero",
-                          "buttonText",
-                          e.target.value
-                        )
-                      }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="Enter button text"
-                    />
-                  </div>
-                </div>
-
-                {/* Preview */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Preview
-                  </label>
-                  <div className="aspect-[16/9] relative rounded-lg overflow-hidden border border-gray-200">
-                    {content.hero.backgroundImage && (
-                      <Image
-                        src={content.hero.backgroundImage}
-                        alt="Hero background preview"
-                        fill
-                        sizes="(max-width: 768px) 100vw, 33vw"
-                        className="object-cover"
-                        onError={() => { }}
-                      />
-                    )}
-                    <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
-                      <div className="text-center text-white">
-                        <h3 className="text-xl font-light tracking-wider mb-3">
-                          {content.hero.title}
-                        </h3>
-                        <button className="bg-black bg-opacity-80 hover:bg-opacity-100 text-white px-4 py-2 text-xs font-medium tracking-wider transition-all duration-300">
-                          {content.hero.buttonText}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Sale Section Content */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center">
-                  <div className="bg-purple-100 p-2 rounded-lg mr-3">
-                    <ImageIcon className="h-6 w-6 text-purple-600" />
-                  </div>
-                  <div>
-                    <h2 className="text-lg font-semibold text-gray-900">
-                      Sale Section
-                    </h2>
-                    <p className="text-sm text-gray-600">
-                      Promotional section content displayed on the landing page
-                    </p>
-                  </div>
-                </div>
-                <button
-                  onClick={handleSaveSaleSection}
-                  disabled={loadingStates.saleSection.saving}
-                  className="flex items-center px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
-                >
-                  {loadingStates.saleSection.saving ? (
-                    <>
-                      <LoadingSpinner size="sm" color="gray" className="mr-2" />
-                      Saving...
-                    </>
-                  ) : (
-                    <>
-                      <Save className="h-4 w-4 mr-2" />
-                      Save Sale
-                    </>
-                  )}
-                </button>
-              </div>
-
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="space-y-6">
-                  {/* Background Image */}
-                  <div>
-                    <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
-                      <ImageIcon className="h-4 w-4 mr-2" />
-                      Background Image
-                    </label>
-                    <ImageUpload
-                      currentImage={content.saleSection.backgroundImage}
-                      onImageChange={(url) => handleContentChange("saleSection", "backgroundImage", url)}
-                      onImageRemove={() => handleContentChange("saleSection", "backgroundImage", "")}
-                      uploadOptions={{
-                        folder: 'SALE_IMAGES',
-                        transformation: 'SALE_BANNER',
-                        tags: ['sale', 'content'],
-                      }}
-                      placeholder="Upload sale section background image"
-                      disabled={loadingStates.saleSection.saving}
-                    />
-                  </div>
-
-                  {/* Title */}
-                  <div>
-                    <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
-                      <Type className="h-4 w-4 mr-2" />
-                      Title Text
-                    </label>
-                    <input
-                      type="text"
-                      value={content.saleSection.title}
-                      onChange={(e) =>
-                        handleContentChange(
-                          "saleSection",
-                          "title",
-                          e.target.value
-                        )
-                      }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="Enter title text"
-                    />
-                  </div>
-
-                  {/* Button Text */}
-                  <div>
-                    <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
-                      <MousePointer className="h-4 w-4 mr-2" />
-                      Button Text
-                    </label>
-                    <input
-                      type="text"
-                      value={content.saleSection.buttonText}
-                      onChange={(e) =>
-                        handleContentChange(
-                          "saleSection",
-                          "buttonText",
-                          e.target.value
-                        )
-                      }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="Enter button text"
-                    />
-                  </div>
-                </div>
-
-                {/* Preview */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Preview
-                  </label>
-                  <div className="aspect-[16/9] relative rounded-lg overflow-hidden border border-gray-200">
-                    {content.saleSection.backgroundImage && (
-                      <Image
-                        src={content.saleSection.backgroundImage}
-                        alt="Sale section background preview"
-                        fill
-                        sizes="(max-width: 768px) 100vw, 33vw"
-                        className="object-cover"
-                        onError={() => { }}
-                      />
-                    )}
-                    <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
-                      <div className="text-center text-white">
-                        <h3 className="text-2xl font-light tracking-wider mb-3">
-                          {content.saleSection.title}
-                        </h3>
-                        <button className="bg-white text-gray-900 px-4 py-2 text-xs font-medium tracking-wider uppercase hover:bg-gray-100 transition-all duration-300">
-                          {content.saleSection.buttonText}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        ) : (
-          /* Full Preview Mode */
-          <div className="space-y-8">
-            {/* Hero Preview */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-              <div className="bg-gray-50 px-6 py-3 border-b border-gray-200">
-                <h3 className="text-lg font-medium text-gray-900">
-                  Hero Section Preview
-                </h3>
-              </div>
-              <div className="relative h-96">
-                {content.hero.backgroundImage && (
-                  <Image
-                    src={content.hero.backgroundImage}
-                    alt="Hero background preview"
-                    fill
-                    sizes="(max-width: 768px) 100vw, 33vw"
-                    className="object-cover"
-                    onError={() => { }}
-                  />
-                )}
-                <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
-                  <div className="text-center text-white">
-                    <h1 className="text-4xl md:text-6xl font-light tracking-[0.2em] mb-8">
-                      {content.hero.title}
-                    </h1>
-                    <button className="bg-black bg-opacity-80 hover:bg-opacity-100 text-white px-8 py-3 text-sm font-medium tracking-wider transition-all duration-300 hover:scale-105">
-                      {content.hero.buttonText}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Sale Section Preview */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-              <div className="bg-gray-50 px-6 py-3 border-b border-gray-200">
-                <h3 className="text-lg font-medium text-gray-900">
-                  Sale Section Preview
-                </h3>
-              </div>
-              <div className="relative h-96">
-                {content.saleSection.backgroundImage && (
-                  <Image
-                    src={content.saleSection.backgroundImage}
-                    alt="Sale section background preview"
-                    fill
-                    className="object-cover"
-                    onError={() => { }}
-                  />
-                )}
-                <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
-                  <div className="text-center text-white">
-                    <h2 className="text-4xl md:text-6xl lg:text-7xl font-light tracking-[0.3em] mb-8">
-                      {content.saleSection.title}
-                    </h2>
-                    <button className="bg-white text-gray-900 px-8 py-3 text-sm font-medium tracking-wider uppercase hover:bg-gray-100 transition-all duration-300 transform hover:scale-105 shadow-lg">
-                      {content.saleSection.buttonText}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-    </main>
+      </main>
+    </AdminGuard>
   );
 }
 
-// Main component wrapped with ToastProvider
+// Main component wrapped with ToastProvider and AdminGuard
 export default function ContentManagementPage() {
   return (
-    <ToastProvider>
-      <ContentManagementPageContent />
-    </ToastProvider>
+    <AdminGuard>
+      <ToastProvider>
+        <ContentManagementPageContent />
+      </ToastProvider>
+    </AdminGuard>
   );
 }

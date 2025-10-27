@@ -15,10 +15,12 @@ import {
   ChevronUp,
   ArrowUpDown,
   Loader2,
+  Shield,
   RefreshCw,
 } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
+import { useAdmin } from "@/contexts/AdminContext";
 import { useAdminProducts, useUpdateProductStock, useDeleteProduct } from "@/hooks/useAdminProducts";
+import AdminGuard from "@/components/AdminGuard";
 import { ProductTableSkeleton } from "@/components/ProductTableSkeleton";
 import { ProductsError } from "@/components/ProductsError";
 import { DeleteProductDialog } from "@/components/DeleteProductDialog";
@@ -182,8 +184,17 @@ const PRODUCTS_PER_BATCH = 10;
 const TABLE_HEIGHT = "calc(100vh - 400px)"; // Adjust based on header/filter heights
 
 export default function ProductsPage() {
-  // Authentication
-  const { token, isAuthenticated } = useAuth();
+  // Prevent server/client markup mismatch by ensuring this client-only
+  // component renders the same root on both server and client. We mount
+  // the heavy client-only UI after the first render on the client.
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+  // Admin authentication
+  const { getToken, isAuthenticated } = useAdmin();
+  const token = getToken();
   
   // Toast notifications
   const { success, error } = useToast();
@@ -436,32 +447,24 @@ export default function ProductsPage() {
     setDisplayedCount(PRODUCTS_PER_BATCH);
   };
 
-  // Show loading skeleton while fetching data
-  if (isLoading) {
+  // Show a consistent placeholder on the server and initial client render
+  // to avoid hydration mismatches; once mounted we show the full UI.
+  if (!mounted) {
     return (
-      <main className="min-h-screen bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {/* Header */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">Products</h1>
-                <p className="text-gray-600 mt-1">
-                  Manage your product inventory and stock levels
-                </p>
+      <main className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="bg-white p-8 rounded-lg shadow-sm border border-gray-200">
+            <div className="flex justify-center mb-4">
+              <div className="bg-gray-900 p-3 rounded-full">
+                <Shield className="h-8 w-8 text-white" />
               </div>
-              <Link
-                href="/admin/products/create"
-                className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Add Product
-              </Link>
             </div>
+            <div className="flex items-center justify-center mb-4">
+              <Loader2 className="h-6 w-6 animate-spin text-gray-600 mr-3" />
+              <span className="text-lg font-medium text-gray-900">Loading products...</span>
+            </div>
+            <p className="text-sm text-gray-600">Preparing admin products view...</p>
           </div>
-
-          {/* Loading skeleton */}
-          <ProductTableSkeleton />
         </div>
       </main>
     );
@@ -502,33 +505,8 @@ export default function ProductsPage() {
     );
   }
 
-  // Show authentication required message
-  if (!isAuthenticated) {
-    return (
-      <main className="min-h-screen bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12">
-            <div className="text-center">
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                Authentication Required
-              </h3>
-              <p className="text-gray-600 mb-6">
-                Please log in to access the admin products page.
-              </p>
-              <Link
-                href="/login"
-                className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-              >
-                Go to Login
-              </Link>
-            </div>
-          </div>
-        </div>
-      </main>
-    );
-  }
-
   return (
+    <AdminGuard>
     <main className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
@@ -903,5 +881,6 @@ export default function ProductsPage() {
         />
       </div>
     </main>
+    </AdminGuard>
   );
 }
