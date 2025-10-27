@@ -177,9 +177,13 @@ export class ProductService {
    */
   static async createProduct(productData: CreateProductRequest, token: string): Promise<Product> {
     try {
+      // Backend expects `category` in the request body (controller maps it to category_id).
+      // Map our frontend `category_id` field to `category` to satisfy the API shape.
+      const payload = { ...productData, category: productData.category_id } as any;
+
       const response = await apiService.post<{ product: Product }>(
         API_ENDPOINTS.PRODUCTS.CREATE,
-        productData,
+        payload,
         token
       );
 
@@ -199,9 +203,12 @@ export class ProductService {
    */
   static async updateProduct(id: string, productData: UpdateProductRequest, token: string): Promise<Product> {
     try {
+      // Map `category_id` to `category` for backend update endpoint as well
+      const payload = { ...productData, category: (productData as any).category_id } as any;
+
       const response = await apiService.put<{ product: Product }>(
         API_ENDPOINTS.PRODUCTS.UPDATE(id),
-        productData,
+        payload,
         token
       );
 

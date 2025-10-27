@@ -10,7 +10,9 @@ import { useCreateProduct } from "@/hooks/useAdminProducts";
 import AdminGuard from "@/components/AdminGuard";
 import { uploadImageToCloudinary, validateImageFile } from "@/lib/cloudinary-utils";
 import { CreateProductRequest, ProductImage } from "@/types/product.types";
-import { useToast } from "@/components/ToastProvider";
+import { useToast } from "@/contexts/ToastContext";
+import { fetchCategories } from "@/services/category.service";
+import { useQuery } from "@tanstack/react-query";
 
 // Product interface for form data
 interface ProductFormData {
@@ -53,12 +55,17 @@ export default function CreateProductPage() {
   const { getToken, isAuthenticated } = useAdmin();
   const token = getToken();
   const createProductMutation = useCreateProduct();
-  const { showSuccess, showError } = useToast();
+  const { success, error } = useToast();
   
   const [formData, setFormData] = useState<ProductFormData>(initialFormData);
   const [errors, setErrors] = useState<FormErrors>({});
   const [isUploading, setIsUploading] = useState(false);
   const [uploadingIndex, setUploadingIndex] = useState<number | null>(null);
+
+  const { data: categories = [], isLoading: isCategoriesLoading } = useQuery({
+    queryKey: ['categories'],
+    queryFn: fetchCategories,
+  });
 
   // Generate unique SKU
   const generateSku = () => {
@@ -242,15 +249,15 @@ export default function CreateProductPage() {
       });
 
       // Success - show notification and redirect to products list
-      showSuccess(
+      success(
         'Product Created Successfully',
         `${formData.name} has been added to your product catalog.`
       );
       
       router.push('/admin/products');
-    } catch (error) {
-      console.error('Failed to create product:', error);
-      showError(
+    } catch (err) {
+      console.error('Failed to create product:', err);
+      error(
         'Failed to Create Product',
         'There was an error creating the product. Please try again.'
       );
@@ -360,13 +367,16 @@ export default function CreateProductPage() {
                   className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                     errors.category_id ? 'border-red-300' : 'border-gray-300'
                   }`}
+                  disabled={isCategoriesLoading}
                 >
-                  <option value="">Select category</option>
-                  <option value="console-tables">Console Tables</option>
-                  <option value="dining-tables">Dining Tables</option>
-                  <option value="coffee-tables">Coffee Tables</option>
-                  <option value="chairs">Chairs</option>
-                  <option value="storage">Storage</option>
+                  <option value="">
+                    {isCategoriesLoading ? "Loading categories..." : "Select category"}
+                  </option>
+                  {categories.map((category) => (
+                    <option key={category.id} value={category.id}>
+                      {category.name}
+                    </option>
+                  ))}
                 </select>
                 {errors.category_id && (
                   <p className="mt-1 text-sm text-red-600">{errors.category_id}</p>

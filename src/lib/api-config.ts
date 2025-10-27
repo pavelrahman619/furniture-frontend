@@ -49,8 +49,8 @@ export const API_ENDPOINTS = {
 
   // Categories
   CATEGORIES: {
-    LIST: '/category/list',
-    DETAIL: (id: string) => `/category/${id}`,
+    LIST: '/categories',
+    DETAIL: (id: string) => `/categories/${id}`,
   },
 
   // Cart
