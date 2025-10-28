@@ -57,25 +57,27 @@ export function useUpdateProduct() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ 
-      id, 
-      productData, 
-      token 
-    }: { 
-      id: string; 
-      productData: UpdateProductRequest; 
-      token: string 
+    mutationFn: ({
+      id,
+      productData,
+      token
+    }: {
+      id: string;
+      productData: UpdateProductRequest;
+      token: string
     }) => ProductService.updateProduct(id, productData, token),
     onSuccess: (updatedProduct) => {
-      // Invalidate all product queries
+      // Invalidate all product queries to refresh data
       queryClient.invalidateQueries({ queryKey: productKeys.all });
       queryClient.invalidateQueries({ queryKey: adminProductKeys.all });
-      
-      // Update the specific product in cache
-      queryClient.setQueryData(
-        productKeys.detail(updatedProduct._id),
-        updatedProduct
-      );
+
+      // Update the specific product in cache if we have valid data
+      if (updatedProduct && updatedProduct._id) {
+        queryClient.setQueryData(
+          productKeys.detail(updatedProduct._id),
+          updatedProduct
+        );
+      }
     },
     onError: (error) => {
       console.error('Failed to update product:', error);

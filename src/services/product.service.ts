@@ -206,7 +206,18 @@ export class ProductService {
       // Map `category_id` to `category` for backend update endpoint as well
       const payload = { ...productData, category: (productData as any).category_id } as any;
 
-      const response = await apiService.put<{ product: Product }>(
+      const response = await apiService.put<{
+        id: string;
+        name: string;
+        sku: string;
+        category: any;
+        price: number;
+        description: string;
+        variants: any[];
+        images: any[];
+        featured: boolean;
+        stock: number;
+      }>(
         API_ENDPOINTS.PRODUCTS.UPDATE(id),
         payload,
         token
@@ -216,7 +227,23 @@ export class ProductService {
         throw new Error('Failed to update product');
       }
 
-      return response.data.product;
+      // Transform the flat response to match Product interface
+      const updatedProduct: Product = {
+        _id: response.data.id,
+        name: response.data.name,
+        sku: response.data.sku,
+        category_id: response.data.category,
+        price: response.data.price,
+        description: response.data.description || '',
+        variants: response.data.variants || [],
+        images: response.data.images || [],
+        stock: response.data.stock || 0,
+        featured: response.data.featured || false,
+        created_at: new Date(), // We don't have this from response
+        updated_at: new Date(),
+      };
+
+      return updatedProduct;
     } catch (error) {
       console.error('Error updating product:', error);
       throw transformApiError(error);
@@ -247,9 +274,14 @@ export class ProductService {
    */
   static async updateProductStock(id: string, stockData: { stock: number }, token: string): Promise<StockInfo> {
     try {
+      // Backend expects { locations: [{ stock: number }] }
+      const payload = {
+        locations: [{ stock: stockData.stock }]
+      };
+
       const response = await apiService.put<StockInfo>(
         API_ENDPOINTS.PRODUCTS.UPDATE_STOCK(id),
-        stockData,
+        payload,
         token
       );
 

@@ -11,7 +11,7 @@ import AdminGuard from "@/components/AdminGuard";
 import { ProductService } from "@/services/product.service";
 import { uploadImageToCloudinary, validateImageFile } from "@/lib/cloudinary-utils";
 import { UpdateProductRequest, ProductImage, Product } from "@/types/product.types";
-import { useToast } from "@/components/ToastProvider";
+import { useToast } from "@/contexts/ToastContext";
 
 // Product interface for form data
 interface ProductFormData {
@@ -44,7 +44,7 @@ export default function EditProductPage() {
   const { getToken, isAuthenticated } = useAdmin();
   const token = getToken();
   const updateProductMutation = useUpdateProduct();
-  const { showSuccess, showError } = useToast();
+  const { success, error } = useToast();
   
   const [formData, setFormData] = useState<ProductFormData | null>(null);
   const [errors, setErrors] = useState<FormErrors>({});
@@ -269,15 +269,15 @@ export default function EditProductPage() {
       });
 
       // Success - show notification and redirect to products list
-      showSuccess(
+      success(
         'Product Updated Successfully',
         `${formData.name} has been updated in your product catalog.`
       );
       
       router.push('/admin/products');
-    } catch (error) {
-      console.error('Failed to update product:', error);
-      showError(
+    } catch (err) {
+      console.error('Failed to update product:', err);
+      error(
         'Failed to Update Product',
         'There was an error updating the product. Please try again.'
       );
