@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -10,12 +10,18 @@ import {
   ShoppingBag,
   Package,
   Settings,
+  LogOut,
+  ChevronDown,
 } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
+import { useAdmin } from "@/contexts/AdminContext";
 
 const Navbar = () => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [showAdminDropdown, setShowAdminDropdown] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const { getTotalItems } = useCart();
+  const { admin, isAuthenticated, logout } = useAdmin();
   const cartItemCount = getTotalItems();
 
   const mainNavItems = [
@@ -32,6 +38,37 @@ const Navbar = () => {
     // { name: "TEST2", href: "#" },
     // { name: "TEST3", href: "#" },
   // ];
+
+  const adminMenuItems = [
+    { name: "Products", href: "/admin/products", icon: Package },
+    { name: "Orders", href: "/admin/orders", icon: ShoppingBag },
+    { name: "Content", href: "/admin/content", icon: Settings },
+  ];
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      setShowAdminDropdown(false);
+      // Redirect to home page after logout
+      window.location.href = "/";
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+  };
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowAdminDropdown(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   return (
     <nav className="sticky top-0 z-50 w-full bg-white border-b border-gray-200 shadow-sm">
@@ -70,21 +107,24 @@ const Navbar = () => {
 
           {/* Right Side Actions */}
           <div className="flex items-center space-x-6">
-            {/* Admin Panel */}
-            <Link
-              href="/admin/content"
-              className="flex items-center text-sm text-gray-700 hover:text-gray-900 transition-colors"
-            >
-              <Settings className="h-4 w-4 mr-1" />
-              Admin
-            </Link>
-            {/* <Link 
-              href="#"
-              className="flex items-center text-sm text-gray-700 hover:text-gray-900 transition-colors"
-            >
-              <Settings className="h-4 w-4 mr-1" />
-              Test1
-            </Link> */}
+            {/* Admin Menu Items - Only show when authenticated */}
+            {isAuthenticated && (
+              <>
+                {adminMenuItems.map((item) => {
+                  const IconComponent = item.icon;
+                  return (
+                    <Link
+                      key={item.name}
+                      href={item.href}
+                      className="flex items-center text-sm text-gray-700 hover:text-gray-900 transition-colors"
+                    >
+                      <IconComponent className="h-4 w-4 mr-1" />
+                      {item.name}
+                    </Link>
+                  );
+                })}
+              </>
+            )}
 
             {/* Track Order */}
             {/* <Link
@@ -101,14 +141,47 @@ const Navbar = () => {
               Become A Member
             </button> */}
 
-            {/* Sign In */}
-            {/* <Link
-              href="/login"
-              className="flex items-center text-sm text-gray-700 hover:text-gray-900 transition-colors"
-            >
-              <User className="h-4 w-4 mr-1" />
-              Sign In
-            </Link> */}
+            {/* Admin User Info & Logout OR Sign In */}
+            {isAuthenticated && admin ? (
+              <div className="relative" ref={dropdownRef}>
+                <button
+                  onClick={() => setShowAdminDropdown(!showAdminDropdown)}
+                  className="flex items-center text-sm text-gray-700 hover:text-gray-900 transition-colors"
+                >
+                  <User className="h-4 w-4 mr-1" />
+                  {admin.name}
+                  <ChevronDown className="h-3 w-3 ml-1" />
+                </button>
+                
+                {/* Admin Dropdown */}
+                {showAdminDropdown && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 z-50">
+                    <div className="py-1">
+                      <div className="px-4 py-2 text-sm text-gray-500 border-b border-gray-100">
+                        <div className="font-medium text-gray-900">{admin.name}</div>
+                        <div className="text-xs">{admin.email}</div>
+                        <div className="text-xs capitalize">{admin.role.replace('_', ' ')}</div>
+                      </div>
+                      <button
+                        onClick={handleLogout}
+                        className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                      >
+                        <LogOut className="h-4 w-4 mr-2" />
+                        Logout
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <Link
+                href="/login"
+                className="flex items-center text-sm text-gray-700 hover:text-gray-900 transition-colors"
+              >
+                <User className="h-4 w-4 mr-1" />
+                Sign In
+              </Link>
+            )}
 
             {/* Cart */}
             <Link

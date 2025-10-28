@@ -1,4 +1,6 @@
 import { apiService } from '@/lib/api-service';
+import { API_ENDPOINTS } from '@/lib/api-config';
+import { transformApiError } from '@/lib/error-utils';
 import {
   Product,
   SingleProductResponse,
@@ -6,6 +8,10 @@ import {
   ProductsQueryParams,
   StockResponse,
   DisplayProduct,
+  CreateProductRequest,
+  UpdateProductRequest,
+
+  StockInfo,
 } from '@/types/product.types';
 
 /**
@@ -17,7 +23,7 @@ export class ProductService {
    */
   static async getProduct(id: string): Promise<Product> {
     try {
-      const response = await apiService.get<SingleProductResponse>(`/products/${id}`);
+      const response = await apiService.get<SingleProductResponse>(API_ENDPOINTS.PRODUCTS.DETAIL(id));
 
       if (!response.success || !response.data) {
         throw new Error('Failed to fetch product');
@@ -26,7 +32,7 @@ export class ProductService {
       return response.data.product;
     } catch (error) {
       console.error('Error fetching product:', error);
-      throw error;
+      throw transformApiError(error);
     }
   }
 
@@ -50,7 +56,7 @@ export class ProductService {
         });
       }
 
-      const endpoint = `/products${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+      const endpoint = `${API_ENDPOINTS.PRODUCTS.LIST}${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
       const response = await apiService.get<ProductsResponse>(endpoint);
 
       if (!response.success || !response.data) {
@@ -60,7 +66,7 @@ export class ProductService {
       return response.data;
     } catch (error) {
       console.error('Error fetching products:', error);
-      throw error;
+      throw transformApiError(error);
     }
   }
 
@@ -135,7 +141,7 @@ export class ProductService {
         });
       }
 
-      const response = await apiService.get<{ products: Product[] }>(`/products/search?${queryParams.toString()}`);
+      const response = await apiService.get<{ products: Product[] }>(`${API_ENDPOINTS.PRODUCTS.SEARCH}?${queryParams.toString()}`);
 
       if (!response.success || !response.data) {
         throw new Error('Failed to search products');
@@ -144,7 +150,7 @@ export class ProductService {
       return response.data.products;
     } catch (error) {
       console.error('Error searching products:', error);
-      throw error;
+      throw transformApiError(error);
     }
   }
 
@@ -153,7 +159,7 @@ export class ProductService {
    */
   static async getProductStock(id: string): Promise<StockResponse> {
     try {
-      const response = await apiService.get<StockResponse>(`/products/${id}/stock`);
+      const response = await apiService.get<StockResponse>(API_ENDPOINTS.PRODUCTS.STOCK(id));
 
       if (!response.success || !response.data) {
         throw new Error('Failed to fetch product stock');
@@ -162,7 +168,165 @@ export class ProductService {
       return response.data;
     } catch (error) {
       console.error('Error fetching product stock:', error);
-      throw error;
+      throw transformApiError(error);
+    }
+  }
+
+  /**
+   * Create a new product (Admin only)
+   */
+  static async createProduct(productData: CreateProductRequest, token: string): Promise<Product> {
+    try {
+      // Backend expects `category` in the request body (controller maps it to category_id).
+      // Map our frontend `category_id` field to `category` to satisfy the API shape.
+      const payload = { ...productData, category: productData.category_id } as any;
+
+      const response = await apiService.post<{ product: Product }>(
+        API_ENDPOINTS.PRODUCTS.CREATE,
+        payload,
+        token
+      );
+
+      if (!response.success || !response.data) {
+        throw new Error('Failed to create product');
+      }
+
+      return response.data.product;
+    } catch (error) {
+      console.error('Error creating product:', error);
+      throw transformApiError(error);
+    }
+  }
+
+  /**
+   * Update an existing product (Admin only)
+   */
+  static async updateProduct(id: string, productData: UpdateProductRequest, token: string): Promise<Product> {
+    try {
+      // Map `category_id` to `category` for backend update endpoint as well
+      const payload = { ...productData, category: (productData as any).category_id } as any;
+
+      const response = await apiService.put<{
+        id: string;
+        name: string;
+        sku: string;
+        category: any;
+        price: number;
+        description: string;
+        variants: any[];
+        images: any[];
+        featured: boolean;
+        stock: number;
+      }>(
+        API_ENDPOINTS.PRODUCTS.UPDATE(id),
+        payload,
+        token
+      );
+
+      if (!response.success || !response.data) {
+        throw new Error('Failed to update product');
+      }
+
+      // Transform the flat response to match Product interface
+      const updatedProduct: Product = {
+        _id: response.data.id,
+        name: response.data.name,
+        sku: response.data.sku,
+        category_id: response.data.category,
+        price: response.data.price,
+        description: response.data.description || '',
+        variants: response.data.variants || [],
+        images: response.data.images || [],
+        stock: response.data.stock || 0,
+        featured: response.data.featured || false,
+        created_at: new Date(), // We don't have this from response
+        updated_at: new Date(),
+      };
+
+      return updatedProduct;
+    } catch (error) {
+      console.error('Error updating product:', error);
+      throw transformApiError(error);
+    }
+  }
+
+  /**
+   * Delete a product (Admin only)
+   */
+  static async deleteProduct(id: string, token: string): Promise<void> {
+    try {
+      const response = await apiService.delete<{ message: string }>(
+        API_ENDPOINTS.PRODUCTS.DELETE(id),
+        token
+      );
+
+      if (!response.success) {
+        throw new Error('Failed to delete product');
+      }
+    } catch (error) {
+      console.error('Error deleting product:', error);
+      throw transformApiError(error);
+    }
+  }
+
+  /**
+   * Update product stock (Admin only)
+   */
+  static async updateProductStock(id: string, stockData: { stock: number }, token: string): Promise<StockInfo> {
+    try {
+      // Backend expects { locations: [{ stock: number }] }
+      const payload = {
+        locations: [{ stock: stockData.stock }]
+      };
+
+      const response = await apiService.put<StockInfo>(
+        API_ENDPOINTS.PRODUCTS.UPDATE_STOCK(id),
+        payload,
+        token
+      );
+
+      if (!response.success || !response.data) {
+        throw new Error('Failed to update product stock');
+      }
+
+      return response.data;
+    } catch (error) {
+      console.error('Error updating product stock:', error);
+      throw transformApiError(error);
+    }
+  }
+
+  /**
+   * Get products with admin-specific data and filters
+   */
+  static async getAdminProducts(params?: ProductsQueryParams, token?: string): Promise<ProductsResponse> {
+    try {
+      const queryParams = new URLSearchParams();
+
+      if (params) {
+        Object.entries(params).forEach(([key, value]) => {
+          if (value !== undefined && value !== null) {
+            // Handle arrays (like categories) by joining them
+            if (Array.isArray(value)) {
+              queryParams.append(key, value.join(','));
+            } else {
+              queryParams.append(key, value.toString());
+            }
+          }
+        });
+      }
+
+      const endpoint = `${API_ENDPOINTS.PRODUCTS.LIST}${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+      const response = await apiService.get<ProductsResponse>(endpoint, token);
+
+      if (!response.success || !response.data) {
+        throw new Error('Failed to fetch admin products');
+      }
+
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching admin products:', error);
+      throw transformApiError(error);
     }
   }
 }

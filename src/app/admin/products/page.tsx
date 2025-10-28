@@ -15,9 +15,19 @@ import {
   ChevronUp,
   ArrowUpDown,
   Loader2,
+  Shield,
+  RefreshCw,
 } from "lucide-react";
+import { useAdmin } from "@/contexts/AdminContext";
+import { useAdminProducts, useUpdateProductStock, useDeleteProduct } from "@/hooks/useAdminProducts";
+import AdminGuard from "@/components/AdminGuard";
+import { ProductTableSkeleton } from "@/components/ProductTableSkeleton";
+import { ProductsError } from "@/components/ProductsError";
+import { DeleteProductDialog } from "@/components/DeleteProductDialog";
+import { useToast } from "@/contexts/ToastContext";
+import { Product as ApiProduct, ProductsQueryParams } from "@/types/product.types";
 
-// Product interface for table display
+// Product interface for table display (transformed from API data)
 interface Product {
   id: string;
   name: string;
@@ -31,255 +41,141 @@ interface Product {
   createdAt: string;
 }
 
-// Sample products data
-const sampleProducts: Product[] = [
-  {
-    id: "59972101",
-    name: "Luxury Living Room Sofa",
-    sku: "59972101",
-    category: "Living Room",
-    price: 3299,
-    availability: "in-stock",
-    totalStock: 3,
-    image:
-      "https://images.unsplash.com/photo-1494947665470-20322015e3a8?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-    isFirstLook: true,
-    createdAt: "2024-01-15",
-  },
-  {
-    id: "59972102",
-    name: "Elegant Dining Table Set",
-    sku: "59972102",
-    category: "Dining Room",
-    price: 2599,
-    availability: "in-stock",
-    totalStock: 5,
-    image:
-      "https://images.unsplash.com/photo-1549497538-303791108f95?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-    isFirstLook: false,
-    createdAt: "2024-01-10",
-  },
-  {
-    id: "59972103",
-    name: "Master Bedroom Headboard",
-    sku: "59972103",
-    category: "Bedroom",
-    price: 1899,
-    availability: "in-stock",
-    totalStock: 2,
-    image:
-      "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-    isFirstLook: false,
-    createdAt: "2024-01-08",
-  },
-  {
-    id: "59972104",
-    name: "Executive Office Desk",
-    sku: "59972104",
-    category: "Office",
-    price: 2199,
-    availability: "in-stock",
-    totalStock: 2,
-    image:
-      "https://images.unsplash.com/photo-1506439773649-6e0eb8cfb237?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-    isFirstLook: false,
-    createdAt: "2024-01-05",
-  },
-  {
-    id: "59972105",
-    name: "Entryway Console Table",
-    sku: "59972105",
-    category: "Entry & Decor",
-    price: 1299,
-    availability: "in-stock",
-    totalStock: 3,
-    image:
-      "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-    isFirstLook: true,
-    createdAt: "2024-01-03",
-  },
-  {
-    id: "59972106",
-    name: "Living Room Coffee Table",
-    sku: "59972106",
-    category: "Living Room",
-    price: 1599,
-    availability: "in-stock",
-    totalStock: 4,
-    image:
-      "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-    isFirstLook: false,
-    createdAt: "2024-01-01",
-  },
-  // Additional sample products for better infinite scroll demonstration
-  {
-    id: "59972107",
-    name: "Mid-Century Modern Sofa",
-    sku: "59972107",
-    category: "Chairs",
-    price: 2199,
-    availability: "in-stock",
-    totalStock: 3,
-    image:
-      "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-    isFirstLook: false,
-    createdAt: "2023-12-28",
-  },
-  {
-    id: "59972108",
-    name: "Rustic Wooden Desk",
-    sku: "59972108",
-    category: "Console Tables",
-    price: 899,
-    availability: "in-stock",
-    totalStock: 7,
-    image:
-      "https://images.unsplash.com/photo-1494947665470-20322015e3a8?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-    isFirstLook: true,
-    createdAt: "2023-12-25",
-  },
-  {
-    id: "59972109",
-    name: "Glass Top Side Table",
-    sku: "59972109",
-    category: "Coffee Tables",
-    price: 449,
-    availability: "on-order",
-    totalStock: 0,
-    image:
-      "https://images.unsplash.com/photo-1549497538-303791108f95?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-    isFirstLook: false,
-    createdAt: "2023-12-20",
-  },
-  {
-    id: "59972110",
-    name: "Velvet Ottoman",
-    sku: "59972110",
-    category: "Chairs",
-    price: 299,
-    availability: "in-stock",
-    totalStock: 20,
-    image:
-      "https://images.unsplash.com/photo-1506439773649-6e0eb8cfb237?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-    isFirstLook: false,
-    createdAt: "2023-12-18",
-  },
-  {
-    id: "59972111",
-    name: "Industrial Bar Stools Set",
-    sku: "59972111",
-    category: "Chairs",
-    price: 599,
-    availability: "in-stock",
-    totalStock: 12,
-    image:
-      "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-    isFirstLook: false,
-    createdAt: "2023-12-15",
-  },
-  {
-    id: "59972112",
-    name: "Farmhouse Dining Set",
-    sku: "59972112",
-    category: "Dining Tables",
-    price: 1899,
-    availability: "in-stock",
-    totalStock: 2,
-    image:
-      "https://images.unsplash.com/photo-1549497538-303791108f95?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-    isFirstLook: true,
-    createdAt: "2023-12-12",
-  },
-  {
-    id: "59972113",
-    name: "Floating Wall Shelf",
-    sku: "59972113",
-    category: "Storage",
-    price: 149,
-    availability: "in-stock",
-    totalStock: 25,
-    image:
-      "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-    isFirstLook: false,
-    createdAt: "2023-12-10",
-  },
-  {
-    id: "59972114",
-    name: "Marble Top Console",
-    sku: "59972114",
-    category: "Console Tables",
-    price: 1299,
-    availability: "out-of-stock",
-    totalStock: 0,
-    image:
-      "https://images.unsplash.com/photo-1494947665470-20322015e3a8?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-    isFirstLook: false,
-    createdAt: "2023-12-08",
-  },
-  {
-    id: "59972115",
-    name: "Leather Executive Chair",
-    sku: "59972115",
-    category: "Chairs",
-    price: 799,
-    availability: "in-stock",
-    totalStock: 6,
-    image:
-      "https://images.unsplash.com/photo-1506439773649-6e0eb8cfb237?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-    isFirstLook: false,
-    createdAt: "2023-12-05",
-  },
-  {
-    id: "59972116",
-    name: "Round Pedestal Table",
-    sku: "59972116",
-    category: "Dining Tables",
-    price: 1099,
-    availability: "in-stock",
-    totalStock: 4,
-    image:
-      "https://images.unsplash.com/photo-1549497538-303791108f95?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-    isFirstLook: true,
-    createdAt: "2023-12-03",
-  },
-  {
-    id: "59972117",
-    name: "Storage Bench",
-    sku: "59972117",
-    category: "Storage",
-    price: 399,
-    availability: "in-stock",
-    totalStock: 18,
-    image:
-      "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-    isFirstLook: false,
-    createdAt: "2023-12-01",
-  },
-  {
-    id: "59972118",
-    name: "Live Edge Coffee Table",
-    sku: "59972118",
-    category: "Coffee Tables",
-    price: 1599,
-    availability: "on-order",
-    totalStock: 0,
-    image:
-      "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-    isFirstLook: true,
-    createdAt: "2023-11-28",
-  },
-];
+// Stock Management Component
+interface StockManagementProps {
+  product: Product;
+  onUpdateStock: (productId: string, change: number) => void;
+  isUpdating: boolean;
+}
 
-// Duplicate sample products to create more data for infinite scroll demonstration
-const extendedSampleProducts = [
-  ...sampleProducts,
-  ...sampleProducts.map((product, index) => ({
-    ...product,
-    id: `${product.id}_${index + 100}`,
-    sku: `${product.sku}_${index + 100}`,
-    name: `${product.name} - Variant ${index + 1}`,
-  })),
-];
+function StockManagement({ product, onUpdateStock, isUpdating }: StockManagementProps) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [stockValue, setStockValue] = useState(product.totalStock.toString());
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Update local state when product stock changes
+  useEffect(() => {
+    setStockValue(product.totalStock.toString());
+  }, [product.totalStock]);
+
+  const handleDirectStockUpdate = useCallback(async () => {
+    const newStock = parseInt(stockValue, 10);
+    
+    // Validate input
+    if (isNaN(newStock) || newStock < 0) {
+      setStockValue(product.totalStock.toString());
+      setIsEditing(false);
+      return;
+    }
+
+    const change = newStock - product.totalStock;
+    if (change !== 0) {
+      await onUpdateStock(product.id, change);
+    }
+    
+    setIsEditing(false);
+  }, [stockValue, product.totalStock, product.id, onUpdateStock]);
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleDirectStockUpdate();
+    } else if (e.key === 'Escape') {
+      setStockValue(product.totalStock.toString());
+      setIsEditing(false);
+    }
+  };
+
+  const handleStockInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    // Only allow non-negative integers
+    if (value === '' || (/^\d+$/.test(value) && parseInt(value, 10) >= 0)) {
+      setStockValue(value);
+    }
+  };
+
+  return (
+    <div className="flex items-center space-x-2">
+      <button
+        onClick={() => onUpdateStock(product.id, -1)}
+        disabled={product.totalStock === 0 || isUpdating}
+        className="p-1 rounded-md text-red-600 hover:bg-red-50 disabled:text-gray-300 disabled:hover:bg-transparent transition-colors"
+        title="Decrease stock by 1"
+      >
+        {isUpdating ? (
+          <Loader2 className="h-4 w-4 animate-spin" />
+        ) : (
+          <Minus className="h-4 w-4" />
+        )}
+      </button>
+
+      {isEditing ? (
+        <input
+          ref={inputRef}
+          type="text"
+          value={stockValue}
+          onChange={handleStockInputChange}
+          onBlur={handleDirectStockUpdate}
+          onKeyDown={handleKeyPress}
+          className="w-16 px-2 py-1 text-sm text-center border border-blue-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          autoFocus
+          disabled={isUpdating}
+        />
+      ) : (
+        <button
+          onClick={() => {
+            setIsEditing(true);
+            setTimeout(() => inputRef.current?.select(), 0);
+          }}
+          disabled={isUpdating}
+          className="w-16 px-2 py-1 text-sm text-center border border-gray-300 rounded hover:border-blue-300 hover:bg-blue-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          title="Click to edit stock directly"
+        >
+          {product.totalStock}
+        </button>
+      )}
+
+      <button
+        onClick={() => onUpdateStock(product.id, 1)}
+        disabled={isUpdating}
+        className="p-1 rounded-md text-green-600 hover:bg-green-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        title="Increase stock by 1"
+      >
+        {isUpdating ? (
+          <Loader2 className="h-4 w-4 animate-spin" />
+        ) : (
+          <Plus className="h-4 w-4" />
+        )}
+      </button>
+    </div>
+  );
+}
+
+// Transform API product to display product
+const transformApiProduct = (apiProduct: ApiProduct): Product => {
+  const totalStock = typeof apiProduct.stock === 'number' && !Number.isNaN(apiProduct.stock)
+    ? apiProduct.stock
+    : (apiProduct.variants || []).reduce((sum, variant) => sum + (variant.stock || 0), 0);
+
+  const primaryImage = apiProduct.images?.find(img => img.is_primary) || apiProduct.images?.[0];
+  const imageUrl = primaryImage?.url || "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80";
+
+  const categoryName = typeof apiProduct.category_id === 'object' && apiProduct.category_id?.name
+    ? apiProduct.category_id.name
+    : 'Uncategorized';
+
+  return {
+    id: apiProduct._id,
+    name: apiProduct.name,
+    sku: apiProduct.sku,
+    category: categoryName,
+    price: apiProduct.price,
+    availability: totalStock > 0 ? "in-stock" : "out-of-stock",
+    totalStock,
+    image: imageUrl,
+    isFirstLook: apiProduct.featured || false,
+    createdAt: apiProduct.created_at || new Date().toISOString(),
+  };
+};
 
 type SortField = keyof Product;
 type SortDirection = "asc" | "desc";
@@ -288,7 +184,22 @@ const PRODUCTS_PER_BATCH = 10;
 const TABLE_HEIGHT = "calc(100vh - 400px)"; // Adjust based on header/filter heights
 
 export default function ProductsPage() {
-  const [products, setProducts] = useState<Product[]>(extendedSampleProducts);
+  // Prevent server/client markup mismatch by ensuring this client-only
+  // component renders the same root on both server and client. We mount
+  // the heavy client-only UI after the first render on the client.
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+  // Admin authentication
+  const { getToken, isAuthenticated } = useAdmin();
+  const token = getToken();
+  
+  // Toast notifications
+  const { success, error } = useToast();
+  
+  // Local state for filters and UI
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
   const [availabilityFilter, setAvailabilityFilter] = useState("");
@@ -298,26 +209,131 @@ export default function ProductsPage() {
   const [showFilters, setShowFilters] = useState(false);
   const [displayedCount, setDisplayedCount] = useState(PRODUCTS_PER_BATCH);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [productToDelete, setProductToDelete] = useState<Product | null>(null);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
+  // Build query parameters for API
+  const queryParams = useMemo((): ProductsQueryParams => {
+    const params: ProductsQueryParams = {
+      limit: 100, // Get more products for client-side filtering/sorting
+    };
+
+    if (searchTerm.trim()) {
+      params.search = searchTerm.trim();
+    }
+
+    if (categoryFilter) {
+      params.category = categoryFilter;
+    }
+
+    if (priceRange.min) {
+      params.price_min = Number(priceRange.min);
+    }
+
+    if (priceRange.max) {
+      params.price_max = Number(priceRange.max);
+    }
+
+    return params;
+  }, [searchTerm, categoryFilter, priceRange]);
+
+  // Fetch products from API
+  const {
+    data: apiResponse,
+    isLoading,
+    error: productsError,
+    refetch,
+    isRefetching,
+  } = useAdminProducts(queryParams, token || undefined);
+
+  // Mutations for product operations
+  const updateStockMutation = useUpdateProductStock();
+  const deleteProductMutation = useDeleteProduct();
+
+  // Transform API products to display format
+  const products = useMemo(() => {
+    if (!apiResponse?.products) return [];
+    return apiResponse.products.map(transformApiProduct);
+  }, [apiResponse]);
+
   // Get unique categories for filter
-  const categories = Array.from(new Set(products.map((p) => p.category)));
+  const categories = useMemo(() => {
+    if (apiResponse?.filters_available?.categories) {
+      return apiResponse.filters_available.categories.map(cat => cat.name);
+    }
+    return Array.from(new Set(products.map((p) => p.category)));
+  }, [apiResponse, products]);
 
   // Handle stock changes
-  const updateStock = (productId: string, change: number) => {
-    setProducts((prev) =>
-      prev.map((product) =>
-        product.id === productId
-          ? {
-              ...product,
-              totalStock: Math.max(0, product.totalStock + change),
-              availability:
-                product.totalStock + change > 0 ? "in-stock" : "out-of-stock",
-            }
-          : product
-      )
-    );
-  };
+  const updateStock = useCallback(async (productId: string, change: number) => {
+    if (!token) return;
+
+    const product = products.find(p => p.id === productId);
+    if (!product) return;
+
+    const newStock = Math.max(0, product.totalStock + change);
+    const productName = product.name;
+
+    try {
+      await updateStockMutation.mutateAsync({
+        id: productId,
+        stockData: { stock: newStock },
+        token,
+      });
+      
+      // Show success notification
+      success(
+        "Stock updated successfully", 
+        `${productName} stock updated to ${newStock} units`
+      );
+    } catch (err) {
+      console.error('Failed to update stock:', err);
+      // Show error notification
+      error(
+        "Failed to update stock",
+        `Could not update stock for ${productName}. Please try again.`
+      );
+    }
+  }, [products, token, updateStockMutation, success, error]);
+
+  // Handle product deletion
+  const handleDeleteProduct = useCallback((productId: string) => {
+    const product = products.find(p => p.id === productId);
+    if (!product) return;
+
+    setProductToDelete(product);
+    setShowDeleteDialog(true);
+  }, [products]);
+
+  // Confirm product deletion
+  const confirmDeleteProduct = useCallback(async (productId: string) => {
+    if (!token) return;
+
+    const product = products.find(p => p.id === productId);
+    const productName = product?.name || "Product";
+
+    try {
+      await deleteProductMutation.mutateAsync({
+        id: productId,
+        token,
+      });
+      setShowDeleteDialog(false);
+      setProductToDelete(null);
+      success("Product deleted successfully", `${productName} has been removed from your inventory.`);
+    } catch (err) {
+      console.error('Failed to delete product:', err);
+      error("Failed to delete product", "An error occurred while deleting the product. Please try again.");
+    }
+  }, [token, deleteProductMutation, products, success, error]);
+
+  // Close delete dialog
+  const closeDeleteDialog = useCallback(() => {
+    if (!deleteProductMutation.isPending) {
+      setShowDeleteDialog(false);
+      setProductToDelete(null);
+    }
+  }, [deleteProductMutation.isPending]);
 
   // Handle sorting
   const handleSort = (field: SortField) => {
@@ -431,25 +447,99 @@ export default function ProductsPage() {
     setDisplayedCount(PRODUCTS_PER_BATCH);
   };
 
+  // Show a consistent placeholder on the server and initial client render
+  // to avoid hydration mismatches; once mounted we show the full UI.
+  if (!mounted) {
+    return (
+      <main className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="bg-white p-8 rounded-lg shadow-sm border border-gray-200">
+            <div className="flex justify-center mb-4">
+              <div className="bg-gray-900 p-3 rounded-full">
+                <Shield className="h-8 w-8 text-white" />
+              </div>
+            </div>
+            <div className="flex items-center justify-center mb-4">
+              <Loader2 className="h-6 w-6 animate-spin text-gray-600 mr-3" />
+              <span className="text-lg font-medium text-gray-900">Loading products...</span>
+            </div>
+            <p className="text-sm text-gray-600">Preparing admin products view...</p>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  // Show error state
+  if (productsError) {
+    return (
+      <main className="min-h-screen bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* Header */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">Products</h1>
+                <p className="text-gray-600 mt-1">
+                  Manage your product inventory and stock levels
+                </p>
+              </div>
+              <Link
+                href="/admin/products/create"
+                className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add Product
+              </Link>
+            </div>
+          </div>
+
+          {/* Error component */}
+          <ProductsError
+            error={productsError}
+            onRetry={refetch}
+            isRetrying={isRefetching}
+          />
+        </div>
+      </main>
+    );
+  }
+
   return (
+    <AdminGuard>
     <main className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Products</h1>
+              <div className="flex items-center">
+                <h1 className="text-2xl font-bold text-gray-900">Products</h1>
+                {isRefetching && (
+                  <Loader2 className="h-5 w-5 animate-spin text-blue-600 ml-3" />
+                )}
+              </div>
               <p className="text-gray-600 mt-1">
                 Manage your product inventory and stock levels
               </p>
             </div>
-            <Link
-              href="/admin/products/create"
-              className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add Product
-            </Link>
+            <div className="flex items-center space-x-3">
+              <button
+                onClick={() => refetch()}
+                disabled={isRefetching}
+                className="flex items-center px-3 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                title="Refresh products"
+              >
+                <RefreshCw className={`h-4 w-4 ${isRefetching ? 'animate-spin' : ''}`} />
+              </button>
+              <Link
+                href="/admin/products/create"
+                className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add Product
+              </Link>
+            </div>
           </div>
         </div>
 
@@ -574,16 +664,16 @@ export default function ProductsPage() {
 
         {/* Products Table */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-          <div className="overflow-x-auto">
+          <div className="overflow-x-hidden">
             {/* Fixed Header */}
             <table className="w-full">
               <thead className="bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">
                     Product
                   </th>
                   <th
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 bg-gray-50"
+                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 bg-gray-50"
                     onClick={() => handleSort("category")}
                   >
                     <div className="flex items-center">
@@ -592,7 +682,7 @@ export default function ProductsPage() {
                     </div>
                   </th>
                   <th
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 bg-gray-50"
+                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 bg-gray-50"
                     onClick={() => handleSort("price")}
                   >
                     <div className="flex items-center">
@@ -601,7 +691,7 @@ export default function ProductsPage() {
                     </div>
                   </th>
                   <th
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 bg-gray-50"
+                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 bg-gray-50"
                     onClick={() => handleSort("availability")}
                   >
                     <div className="flex items-center">
@@ -610,7 +700,7 @@ export default function ProductsPage() {
                     </div>
                   </th>
                   <th
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 bg-gray-50"
+                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 bg-gray-50"
                     onClick={() => handleSort("totalStock")}
                   >
                     <div className="flex items-center">
@@ -618,10 +708,10 @@ export default function ProductsPage() {
                       <ArrowUpDown className="h-3 w-3 ml-1" />
                     </div>
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">
                     Stock Actions
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">
                     Actions
                   </th>
                 </tr>
@@ -639,19 +729,19 @@ export default function ProductsPage() {
                 <tbody className="bg-white divide-y divide-gray-200">
                   {displayedProducts.map((product) => (
                     <tr key={product.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div className="flex-shrink-0 h-16 w-16">
+                      <td className="px-4 py-3 align-top">
+                        <div className="flex items-start">
+                          <div className="flex-shrink-0 h-12 w-12">
                             <Image
                               src={product.image}
                               alt={product.name}
-                              width={64}
-                              height={64}
-                              className="h-16 w-16 rounded-lg object-cover"
+                              width={48}
+                              height={48}
+                              className="h-12 w-12 rounded-lg object-cover"
                             />
                           </div>
-                          <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900">
+                          <div className="ml-3">
+                            <div className="text-sm font-medium text-gray-900 break-words max-w-[20rem]">
                               {product.name}
                               {product.isFirstLook && (
                                 <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
@@ -659,19 +749,19 @@ export default function ProductsPage() {
                                 </span>
                               )}
                             </div>
-                            <div className="text-sm text-gray-500">
+                            <div className="text-sm text-gray-500 break-words">
                               SKU: {product.sku}
                             </div>
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <td className="px-4 py-3 text-sm text-gray-900 break-words">
                         {product.category}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <td className="px-4 py-3 text-sm text-gray-900">
                         ${product.price.toLocaleString()}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-4 py-3">
                         <span
                           className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                             product.availability === "in-stock"
@@ -687,27 +777,17 @@ export default function ProductsPage() {
                           {product.availability === "on-order" && "On Order"}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
+                      <td className="px-4 py-3 text-sm text-gray-900 font-medium">
                         {product.totalStock}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center space-x-2">
-                          <button
-                            onClick={() => updateStock(product.id, -1)}
-                            disabled={product.totalStock === 0}
-                            className="p-1 rounded-md text-red-600 hover:bg-red-50 disabled:text-gray-300 disabled:hover:bg-transparent transition-colors"
-                          >
-                            <Minus className="h-4 w-4" />
-                          </button>
-                          <button
-                            onClick={() => updateStock(product.id, 1)}
-                            className="p-1 rounded-md text-green-600 hover:bg-green-50 transition-colors"
-                          >
-                            <Plus className="h-4 w-4" />
-                          </button>
-                        </div>
+                      <td className="px-4 py-3">
+                        <StockManagement
+                          product={product}
+                          onUpdateStock={updateStock}
+                          isUpdating={updateStockMutation.isPending && updateStockMutation.variables?.id === product.id}
+                        />
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="px-4 py-3 text-sm text-gray-500">
                         <div className="flex items-center space-x-2">
                           <Link
                             href={`/products/${product.id}`}
@@ -716,17 +796,24 @@ export default function ProductsPage() {
                           >
                             <Eye className="h-4 w-4" />
                           </Link>
-                          <button
+                          <Link
+                            href={`/admin/products/${product.id}/edit`}
                             className="p-1 rounded-md text-gray-600 hover:bg-gray-50 transition-colors"
                             title="Edit Product"
                           >
                             <Edit className="h-4 w-4" />
-                          </button>
+                          </Link>
                           <button
-                            className="p-1 rounded-md text-red-600 hover:bg-red-50 transition-colors"
+                            onClick={() => handleDeleteProduct(product.id)}
+                            disabled={deleteProductMutation.isPending}
+                            className="p-1 rounded-md text-red-600 hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                             title="Delete Product"
                           >
-                            <Trash2 className="h-4 w-4" />
+                            {deleteProductMutation.isPending && deleteProductMutation.variables?.id === product.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Trash2 className="h-4 w-4" />
+                            )}
                           </button>
                         </div>
                       </td>
@@ -783,7 +870,17 @@ export default function ProductsPage() {
             </div>
           )}
         </div>
+
+        {/* Delete Product Dialog */}
+        <DeleteProductDialog
+          product={productToDelete}
+          isOpen={showDeleteDialog}
+          isDeleting={deleteProductMutation.isPending}
+          onClose={closeDeleteDialog}
+          onConfirm={confirmDeleteProduct}
+        />
       </div>
     </main>
+    </AdminGuard>
   );
 }
