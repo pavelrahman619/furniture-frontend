@@ -178,10 +178,11 @@ const Navbar = () => {
                 href="/login"
                 className="flex items-center text-sm text-gray-700 hover:text-gray-900 transition-colors"
               >
-                <User className="h-4 w-4 mr-1" />
-                Sign In
+                {/* <User className="h-4 w-4 mr-1" />
+                Sign In */}
               </Link>
-            )}
+            )
+            }
 
             {/* Cart */}
             <Link
