@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+
 import Link from "next/link";
 import Image from "next/image";
 import { useParams } from "next/navigation";
 import AdminGuard from "@/components/AdminGuard";
+import { useAdminOrder, useUpdateOrderStatus } from "@/hooks/useAdminOrders";
 import {
   ArrowLeft,
   Package,
@@ -22,120 +23,13 @@ import {
   Edit3,
   Printer,
   Download,
+  Loader2,
+  AlertCircle,
+  RefreshCw,
 } from "lucide-react";
 
-// Order interfaces (matching the main orders page)
-interface OrderItem {
-  id: string;
-  name: string;
-  price: number;
-  quantity: number;
-  image: string;
-  sku?: string;
-  category?: string;
-}
-
-interface Order {
-  id: string;
-  orderNumber: string;
-  customerName: string;
-  customerEmail: string;
-  customerPhone?: string;
-  total: number;
-  status: "pending" | "processing" | "shipped" | "delivered" | "cancelled";
-  items: OrderItem[];
-  orderDate: string;
-  estimatedDelivery?: string;
-  shippingAddress: string;
-  billingAddress?: string;
-  paymentMethod?: string;
-  paymentStatus?: "pending" | "paid" | "failed" | "refunded";
-  notes?: string;
-  trackingNumber?: string;
-  subtotal?: number;
-  shippingCost?: number;
-  tax?: number;
-  discount?: number;
-}
-
-// Extended sample orders data with more detailed information
-const sampleOrderDetails: Record<string, Order> = {
-  ORD001: {
-    id: "ORD001",
-    orderNumber: "ORD-2024-001",
-    customerName: "John Smith",
-    customerEmail: "john.smith@email.com",
-    customerPhone: "+1 (555) 123-4567",
-    total: 2599,
-    status: "processing",
-    items: [
-      {
-        id: "59972101",
-        name: "Mattai Reclaimed Wood 4Dwr Console",
-        price: 1599,
-        quantity: 1,
-        image:
-          "https://images.unsplash.com/photo-1494947665470-20322015e3a8?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-        sku: "MW-4DWR-001",
-        category: "Console Tables",
-      },
-      {
-        id: "59972102",
-        name: "Modern Oak Dining Table",
-        price: 1000,
-        quantity: 1,
-        image:
-          "https://images.unsplash.com/photo-1549497538-303791108f95?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-        sku: "OAK-DT-002",
-        category: "Dining Tables",
-      },
-    ],
-    orderDate: "2024-01-15",
-    estimatedDelivery: "2024-01-25",
-    shippingAddress: "123 Main St, New York, NY 10001",
-    billingAddress: "123 Main St, New York, NY 10001",
-    paymentMethod: "Credit Card ending in 4242",
-    paymentStatus: "paid",
-    notes: "Customer requested white glove delivery. Call before delivery.",
-    trackingNumber: "1Z999AA1234567890",
-    subtotal: 2599,
-    shippingCost: 0,
-    tax: 208,
-    discount: 0,
-  },
-  ORD002: {
-    id: "ORD002",
-    orderNumber: "ORD-2024-002",
-    customerName: "Sarah Johnson",
-    customerEmail: "sarah.johnson@email.com",
-    customerPhone: "+1 (555) 234-5678",
-    total: 1299,
-    status: "shipped",
-    items: [
-      {
-        id: "59972104",
-        name: "Vintage Leather Armchair",
-        price: 1299,
-        quantity: 1,
-        image:
-          "https://images.unsplash.com/photo-1506439773649-6e0eb8cfb237?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-        sku: "VL-AC-004",
-        category: "Armchairs",
-      },
-    ],
-    orderDate: "2024-01-14",
-    estimatedDelivery: "2024-01-22",
-    shippingAddress: "456 Oak Ave, Los Angeles, CA 90210",
-    billingAddress: "456 Oak Ave, Los Angeles, CA 90210",
-    paymentMethod: "Credit Card ending in 5555",
-    paymentStatus: "paid",
-    trackingNumber: "1Z999AA1234567891",
-    subtotal: 1299,
-    shippingCost: 0,
-    tax: 104,
-    discount: 50,
-  },
-};
+// Order status type for status updates
+type OrderStatus = "pending" | "processing" | "shipped" | "delivered" | "cancelled";
 
 const statusConfig = {
   pending: {
@@ -172,85 +66,138 @@ const paymentStatusConfig = {
   refunded: "bg-gray-100 text-gray-800",
 };
 
+// Helper function to format address
+function formatAddress(address: {
+  street: string;
+  city: string;
+  state: string;
+  zip_code: string;
+  country: string;
+}): string {
+  return `${address.street}, ${address.city}, ${address.state} ${address.zip_code}`;
+}
+
+// Helper function to generate order number from ID
+function generateOrderNumber(id: string): string {
+  return `ORD-${id.slice(-6).toUpperCase()}`;
+}
+
 export default function OrderDetailsPage() {
   const params = useParams();
   const orderId = params.id as string;
 
-  const [order, setOrder] = useState<Order | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+  // API hooks
+  const { data: orderResponse, isLoading, error, refetch } = useAdminOrder(orderId);
+  const updateOrderStatusMutation = useUpdateOrderStatus();
 
-  useEffect(() => {
-    // Simulate API call to fetch order details
-    const fetchOrder = async () => {
-      setIsLoading(true);
-      // In a real app, this would be an API call
-      setTimeout(() => {
-        const orderData = sampleOrderDetails[orderId];
-        setOrder(orderData || null);
-        setIsLoading(false);
-      }, 500);
-    };
+  // Extract order data from API response
+  const order = orderResponse?.order;
 
-    if (orderId) {
-      fetchOrder();
-    }
-  }, [orderId]);
-
-  const updateOrderStatus = async (newStatus: Order["status"]) => {
+  const updateOrderStatus = async (newStatus: OrderStatus) => {
     if (!order) return;
 
-    setIsUpdatingStatus(true);
-    // Simulate API call
-    setTimeout(() => {
-      setOrder({ ...order, status: newStatus });
-      setIsUpdatingStatus(false);
-    }, 500);
+    updateOrderStatusMutation.mutate({
+      orderId: order._id,
+      status: newStatus,
+    });
   };
 
   if (isLoading) {
     return (
-      <main className="min-h-screen bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex items-center justify-center h-64">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto mb-4"></div>
-              <p className="text-gray-600">Loading order details...</p>
+      <AdminGuard>
+        <main className="min-h-screen bg-gray-50">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="flex items-center justify-center h-64">
+              <div className="text-center">
+                <Loader2 className="h-12 w-12 animate-spin text-blue-600 mx-auto mb-4" />
+                <p className="text-gray-600">Loading order details...</p>
+              </div>
             </div>
           </div>
-        </div>
-      </main>
+        </main>
+      </AdminGuard>
+    );
+  }
+
+  if (error) {
+    return (
+      <AdminGuard>
+        <main className="min-h-screen bg-gray-50">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="text-center">
+              <div className="bg-white rounded-lg shadow-sm border border-red-200 p-12">
+                <AlertCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
+                <h1 className="text-2xl font-bold text-gray-900 mb-2">
+                  Failed to Load Order
+                </h1>
+                <p className="text-gray-600 mb-6">
+                  {error instanceof Error 
+                    ? error.message.includes('authentication') || error.message.includes('Unauthorized')
+                      ? 'Authentication required. Please log in again.'
+                      : error.message
+                    : 'An error occurred while loading the order details'
+                  }
+                </p>
+                <div className="flex items-center justify-center space-x-4">
+                  <button
+                    onClick={() => refetch()}
+                    className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                  >
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Try Again
+                  </button>
+                  <Link
+                    href="/admin/orders"
+                    className="inline-flex items-center px-4 py-2 bg-gray-900 text-white rounded-md hover:bg-gray-800 transition-colors"
+                  >
+                    <ArrowLeft className="h-4 w-4 mr-2" />
+                    Back to Orders
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
+        </main>
+      </AdminGuard>
     );
   }
 
   if (!order) {
     return (
-      <main className="min-h-screen bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="text-center">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12">
-              <XCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
-              <h1 className="text-2xl font-bold text-gray-900 mb-2">
-                Order Not Found
-              </h1>
-              <p className="text-gray-600 mb-6">
-                The order with ID &quot;{orderId}&quot; could not be found.
-              </p>
-              <Link
-                href="/admin/orders"
-                className="inline-flex items-center px-4 py-2 bg-gray-900 text-white rounded-md hover:bg-gray-800 transition-colors"
-              >
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Orders
-              </Link>
+      <AdminGuard>
+        <main className="min-h-screen bg-gray-50">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="text-center">
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12">
+                <XCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
+                <h1 className="text-2xl font-bold text-gray-900 mb-2">
+                  Order Not Found
+                </h1>
+                <p className="text-gray-600 mb-6">
+                  The order with ID &quot;{orderId}&quot; could not be found.
+                </p>
+                <Link
+                  href="/admin/orders"
+                  className="inline-flex items-center px-4 py-2 bg-gray-900 text-white rounded-md hover:bg-gray-800 transition-colors"
+                >
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Back to Orders
+                </Link>
+              </div>
             </div>
           </div>
-        </div>
-      </main>
+        </main>
+      </AdminGuard>
     );
   }
 
-  const StatusIcon = statusConfig[order.status].icon;
+  // Generate display data from backend order
+  const orderNumber = generateOrderNumber(order._id);
+  const customerName = order.customer_email?.split('@')[0] || 'Guest Customer';
+  const shippingAddress = formatAddress(order.shipping_address);
+  const orderStatus = order.status.toLowerCase() as OrderStatus;
+  
+  const StatusIcon = statusConfig[orderStatus].icon;
 
   return (
     <AdminGuard>
@@ -270,10 +217,10 @@ export default function OrderDetailsPage() {
               <div className="h-6 border-l border-gray-300"></div>
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">
-                  Order {order.orderNumber}
+                  Order {orderNumber}
                 </h1>
                 <p className="text-gray-600">
-                  Placed on {new Date(order.orderDate).toLocaleDateString()}
+                  Placed on {new Date(order.created_at).toLocaleDateString()}
                 </p>
               </div>
             </div>
@@ -300,23 +247,23 @@ export default function OrderDetailsPage() {
                 </p>
                 <div
                   className={`inline-flex items-center px-3 py-1 text-sm font-semibold rounded-full border ${
-                    statusConfig[order.status].className
+                    statusConfig[orderStatus].className
                   }`}
                 >
                   <StatusIcon className="h-4 w-4 mr-2" />
-                  {statusConfig[order.status].label}
+                  {statusConfig[orderStatus].label}
                 </div>
               </div>
               <Edit3 className="h-5 w-5 text-gray-400" />
             </div>
             <div className="mt-4">
               <select
-                value={order.status}
+                value={orderStatus}
                 onChange={(e) =>
-                  updateOrderStatus(e.target.value as Order["status"])
+                  updateOrderStatus(e.target.value as OrderStatus)
                 }
-                disabled={isUpdatingStatus}
-                className="w-full text-sm border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                disabled={updateOrderStatusMutation.isPending}
+                className="w-full text-sm border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <option value="pending">Pending</option>
                 <option value="processing">Processing</option>
@@ -324,6 +271,12 @@ export default function OrderDetailsPage() {
                 <option value="delivered">Delivered</option>
                 <option value="cancelled">Cancelled</option>
               </select>
+              {updateOrderStatusMutation.isPending && (
+                <div className="flex items-center mt-2 text-sm text-gray-600">
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  Updating status...
+                </div>
+              )}
             </div>
           </div>
 
@@ -363,8 +316,8 @@ export default function OrderDetailsPage() {
                   Expected Delivery
                 </p>
                 <p className="text-sm font-medium text-gray-900">
-                  {order.estimatedDelivery
-                    ? new Date(order.estimatedDelivery).toLocaleDateString()
+                  {order.estimated_delivery
+                    ? new Date(order.estimated_delivery).toLocaleDateString()
                     : "TBD"}
                 </p>
               </div>
@@ -384,15 +337,15 @@ export default function OrderDetailsPage() {
               </div>
               <div className="p-6">
                 <div className="space-y-6">
-                  {order.items.map((item) => (
+                  {order.items.map((item, index) => (
                     <div
-                      key={item.id}
+                      key={`${item.product_id}-${index}`}
                       className="flex items-center space-x-4 pb-6 border-b border-gray-200 last:border-b-0 last:pb-0"
                     >
                       <div className="flex-shrink-0">
                         <div className="w-20 h-20 relative bg-gray-100 rounded-lg overflow-hidden">
                           <Image
-                            src={item.image}
+                            src="https://images.unsplash.com/photo-1586023492125-27b2c045efd7?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80"
                             alt={item.name}
                             fill
                             className="object-cover"
@@ -402,27 +355,25 @@ export default function OrderDetailsPage() {
                       </div>
                       <div className="flex-grow">
                         <h3 className="text-lg font-medium text-gray-900 mb-1">
-                          {item.name}
+                          {String(item.name || 'Unknown Product')}
                         </h3>
-                        {item.sku && (
-                          <p className="text-sm text-gray-500 mb-1">
-                            SKU: {item.sku}
-                          </p>
-                        )}
-                        {item.category && (
+                        <p className="text-sm text-gray-500 mb-1">
+                          Product ID: {String(item.product_id || 'N/A')}
+                        </p>
+                        {item.variant_id && (
                           <p className="text-sm text-gray-500 mb-2">
-                            Category: {item.category}
+                            Variant ID: {String(item.variant_id)}
                           </p>
                         )}
                         <div className="flex items-center space-x-4 text-sm text-gray-600">
-                          <span>Qty: {item.quantity}</span>
+                          <span>Qty: {Number(item.quantity || 0)}</span>
                           <span>•</span>
-                          <span>${item.price.toLocaleString()} each</span>
+                          <span>${Number(item.price || 0).toLocaleString()} each</span>
                         </div>
                       </div>
                       <div className="text-right">
                         <p className="text-lg font-semibold text-gray-900">
-                          ${(item.price * item.quantity).toLocaleString()}
+                          ${(Number(item.price || 0) * Number(item.quantity || 0)).toLocaleString()}
                         </p>
                       </div>
                     </div>
@@ -451,65 +402,121 @@ export default function OrderDetailsPage() {
                         Order Placed
                       </p>
                       <p className="text-sm text-gray-500">
-                        {new Date(order.orderDate).toLocaleString()}
+                        {new Date(order.created_at).toLocaleString()}
                       </p>
                     </div>
                   </div>
 
-                  {order.status !== "pending" && (
-                    <div className="flex items-center space-x-3">
-                      <div className="flex-shrink-0">
-                        <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                          <Package className="h-5 w-5 text-blue-600" />
-                        </div>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">
-                          Order Confirmed
-                        </p>
-                        <p className="text-sm text-gray-500">
-                          Payment processed successfully
-                        </p>
-                      </div>
-                    </div>
-                  )}
+                  {/* Display timeline from backend data */}
+                  {order.timeline && order.timeline.length > 0 ? (
+                    order.timeline
+                      .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
+                      .map((timelineEntry, index) => {
+                        const timelineStatus = timelineEntry.status.toLowerCase();
+                        let icon = Clock;
+                        let bgColor = "bg-gray-100";
+                        let iconColor = "text-gray-600";
 
-                  {(order.status === "shipped" ||
-                    order.status === "delivered") && (
-                    <div className="flex items-center space-x-3">
-                      <div className="flex-shrink-0">
-                        <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
-                          <Truck className="h-5 w-5 text-purple-600" />
-                        </div>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">
-                          Order Shipped
-                        </p>
-                        <p className="text-sm text-gray-500">
-                          {order.trackingNumber &&
-                            `Tracking: ${order.trackingNumber}`}
-                        </p>
-                      </div>
-                    </div>
-                  )}
+                        if (timelineStatus.includes('confirmed') || timelineStatus.includes('processing')) {
+                          icon = Package;
+                          bgColor = "bg-blue-100";
+                          iconColor = "text-blue-600";
+                        } else if (timelineStatus.includes('shipped')) {
+                          icon = Truck;
+                          bgColor = "bg-purple-100";
+                          iconColor = "text-purple-600";
+                        } else if (timelineStatus.includes('delivered')) {
+                          icon = CheckCircle;
+                          bgColor = "bg-green-100";
+                          iconColor = "text-green-600";
+                        } else if (timelineStatus.includes('cancelled')) {
+                          icon = XCircle;
+                          bgColor = "bg-red-100";
+                          iconColor = "text-red-600";
+                        }
 
-                  {order.status === "delivered" && (
-                    <div className="flex items-center space-x-3">
-                      <div className="flex-shrink-0">
-                        <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                          <CheckCircle className="h-5 w-5 text-green-600" />
+                        const TimelineIcon = icon;
+
+                        return (
+                          <div key={index} className="flex items-center space-x-3">
+                            <div className="flex-shrink-0">
+                              <div className={`w-8 h-8 ${bgColor} rounded-full flex items-center justify-center`}>
+                                <TimelineIcon className={`h-5 w-5 ${iconColor}`} />
+                              </div>
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium text-gray-900">
+                                {timelineEntry.status}
+                              </p>
+                              <p className="text-sm text-gray-500">
+                                {new Date(timelineEntry.timestamp).toLocaleString()}
+                              </p>
+                              {timelineEntry.notes && (
+                                <p className="text-sm text-gray-500 mt-1">
+                                  {timelineEntry.notes}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })
+                  ) : (
+                    // Fallback timeline based on current status
+                    <>
+                      {orderStatus !== "pending" && (
+                        <div className="flex items-center space-x-3">
+                          <div className="flex-shrink-0">
+                            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                              <Package className="h-5 w-5 text-blue-600" />
+                            </div>
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-gray-900">
+                              Order Confirmed
+                            </p>
+                            <p className="text-sm text-gray-500">
+                              Payment processed successfully
+                            </p>
+                          </div>
                         </div>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">
-                          Order Delivered
-                        </p>
-                        <p className="text-sm text-gray-500">
-                          Successfully delivered to customer
-                        </p>
-                      </div>
-                    </div>
+                      )}
+
+                      {(orderStatus === "shipped" || orderStatus === "delivered") && (
+                        <div className="flex items-center space-x-3">
+                          <div className="flex-shrink-0">
+                            <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                              <Truck className="h-5 w-5 text-purple-600" />
+                            </div>
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-gray-900">
+                              Order Shipped
+                            </p>
+                            <p className="text-sm text-gray-500">
+                              {order.tracking_number && `Tracking: ${order.tracking_number}`}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+
+                      {orderStatus === "delivered" && (
+                        <div className="flex items-center space-x-3">
+                          <div className="flex-shrink-0">
+                            <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                              <CheckCircle className="h-5 w-5 text-green-600" />
+                            </div>
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-gray-900">
+                              Order Delivered
+                            </p>
+                            <p className="text-sm text-gray-500">
+                              Successfully delivered to customer
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               </div>
@@ -530,28 +537,30 @@ export default function OrderDetailsPage() {
                   <User className="h-5 w-5 text-gray-400" />
                   <div>
                     <p className="text-sm font-medium text-gray-900">
-                      {order.customerName}
+                      {customerName}
                     </p>
                     <p className="text-sm text-gray-500">Customer</p>
                   </div>
                 </div>
 
-                <div className="flex items-center space-x-3">
-                  <Mail className="h-5 w-5 text-gray-400" />
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">
-                      {order.customerEmail}
-                    </p>
-                    <p className="text-sm text-gray-500">Email</p>
+                {order.customer_email && (
+                  <div className="flex items-center space-x-3">
+                    <Mail className="h-5 w-5 text-gray-400" />
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">
+                        {order.customer_email}
+                      </p>
+                      <p className="text-sm text-gray-500">Email</p>
+                    </div>
                   </div>
-                </div>
+                )}
 
-                {order.customerPhone && (
+                {order.customer_phone && (
                   <div className="flex items-center space-x-3">
                     <Phone className="h-5 w-5 text-gray-400" />
                     <div>
                       <p className="text-sm font-medium text-gray-900">
-                        {order.customerPhone}
+                        {order.customer_phone}
                       </p>
                       <p className="text-sm text-gray-500">Phone</p>
                     </div>
@@ -575,12 +584,12 @@ export default function OrderDetailsPage() {
                       Shipping Address
                     </p>
                     <p className="text-sm text-gray-500">
-                      {order.shippingAddress}
+                      {shippingAddress}
                     </p>
                   </div>
                 </div>
 
-                {order.trackingNumber && (
+                {order.tracking_number && (
                   <div className="flex items-center space-x-3">
                     <Truck className="h-5 w-5 text-gray-400" />
                     <div>
@@ -588,7 +597,7 @@ export default function OrderDetailsPage() {
                         Tracking Number
                       </p>
                       <p className="text-sm text-gray-500 font-mono">
-                        {order.trackingNumber}
+                        {order.tracking_number}
                       </p>
                     </div>
                   </div>
@@ -604,73 +613,47 @@ export default function OrderDetailsPage() {
                 </h2>
               </div>
               <div className="p-6 space-y-4">
-                {order.paymentMethod && (
-                  <div className="flex items-center space-x-3">
-                    <CreditCard className="h-5 w-5 text-gray-400" />
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">
-                        {order.paymentMethod}
-                      </p>
-                      <p className="text-sm text-gray-500">Payment Method</p>
-                    </div>
+                <div className="flex items-center space-x-3">
+                  <CreditCard className="h-5 w-5 text-gray-400" />
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">
+                      {order.payment_method}
+                    </p>
+                    <p className="text-sm text-gray-500">Payment Method</p>
                   </div>
-                )}
+                </div>
 
-                {order.paymentStatus && (
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-900">
-                      Payment Status
-                    </span>
-                    <span
-                      className={`inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full ${
-                        paymentStatusConfig[order.paymentStatus]
-                      }`}
-                    >
-                      {order.paymentStatus.charAt(0).toUpperCase() +
-                        order.paymentStatus.slice(1)}
-                    </span>
-                  </div>
-                )}
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-gray-900">
+                    Payment Status
+                  </span>
+                  <span
+                    className={`inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full ${
+                      paymentStatusConfig[order.payment_status as keyof typeof paymentStatusConfig] || 'bg-gray-100 text-gray-800'
+                    }`}
+                  >
+                    {order.payment_status.charAt(0).toUpperCase() +
+                      order.payment_status.slice(1)}
+                  </span>
+                </div>
 
                 {/* Order Summary */}
                 <div className="border-t border-gray-200 pt-4 space-y-2">
-                  {order.subtotal && (
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">Subtotal:</span>
-                      <span className="text-gray-900">
-                        ${order.subtotal.toLocaleString()}
-                      </span>
-                    </div>
-                  )}
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Subtotal:</span>
+                    <span className="text-gray-900">
+                      ${order.subtotal.toLocaleString()}
+                    </span>
+                  </div>
 
-                  {order.shippingCost !== undefined && (
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">Shipping:</span>
-                      <span className="text-gray-900">
-                        {order.shippingCost === 0
-                          ? "Free"
-                          : `$${order.shippingCost.toLocaleString()}`}
-                      </span>
-                    </div>
-                  )}
-
-                  {order.tax && (
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">Tax:</span>
-                      <span className="text-gray-900">
-                        ${order.tax.toLocaleString()}
-                      </span>
-                    </div>
-                  )}
-
-                  {order.discount && order.discount > 0 && (
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">Discount:</span>
-                      <span className="text-green-600">
-                        -${order.discount.toLocaleString()}
-                      </span>
-                    </div>
-                  )}
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Delivery:</span>
+                    <span className="text-gray-900">
+                      {order.delivery_cost === 0
+                        ? "Free"
+                        : `$${order.delivery_cost.toLocaleString()}`}
+                    </span>
+                  </div>
 
                   <div className="flex justify-between text-base font-semibold border-t border-gray-200 pt-2">
                     <span className="text-gray-900">Total:</span>
@@ -681,20 +664,6 @@ export default function OrderDetailsPage() {
                 </div>
               </div>
             </div>
-
-            {/* Notes */}
-            {order.notes && (
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-                <div className="px-6 py-4 border-b border-gray-200">
-                  <h2 className="text-lg font-semibold text-gray-900">
-                    Order Notes
-                  </h2>
-                </div>
-                <div className="p-6">
-                  <p className="text-sm text-gray-700">{order.notes}</p>
-                </div>
-              </div>
-            )}
           </div>
         </div>
       </div>
