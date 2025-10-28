@@ -16,6 +16,39 @@ export interface AdminLoginResponse {
   expiresIn: number;
 }
 
+/**
+ * Backend user format (different from AdminUser)
+ */
+interface BackendUser {
+  _id?: string;
+  id?: string;
+  email?: string;
+  first_name?: string;
+  last_name?: string;
+  role?: string;
+  permissions?: string[];
+}
+
+/**
+ * Backend login response format (before mapping)
+ */
+interface BackendLoginResponse {
+  token: string;
+  refreshToken?: string;
+  user?: BackendUser;
+  admin?: BackendUser;
+  expires_in?: number;
+  expiresIn?: number;
+}
+
+/**
+ * Backend verify token response format
+ */
+interface BackendVerifyResponse {
+  valid: boolean;
+  user?: BackendUser;
+}
+
 export interface AdminUser {
   id: string;
   email: string;
@@ -192,7 +225,7 @@ export class AdminService {
    */
   static async login(credentials: AdminLoginRequest): Promise<ApiResponse<AdminLoginResponse>> {
     try {
-      const response = await apiService.post<any>(
+      const response = await apiService.post<BackendLoginResponse>(
         API_ENDPOINTS.ADMIN.LOGIN,
         credentials
       );
@@ -203,7 +236,7 @@ export class AdminService {
         // We need to map it to our AdminLoginResponse format
         const backendData = response.data;
         const token = backendData.token;
-        const refreshToken = backendData.refreshToken || backendData.token; // Use token as refreshToken if not provided
+        const refreshToken: string = backendData.refreshToken || backendData.token; // Use token as refreshToken if not provided
         const expiresIn = backendData.expires_in || backendData.expiresIn || 3600;
 
         // Map user to admin format
@@ -218,7 +251,7 @@ export class AdminService {
         }
 
         const admin: AdminUser = {
-          id: user.id || user._id,
+          id: user.id || user._id || 'unknown',
           email: user.email || credentials.email,
           name: `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Admin User',
           role: user.role as 'admin' | 'super_admin',
@@ -247,7 +280,7 @@ export class AdminService {
         };
       }
 
-      return response;
+      return response as ApiResponse<AdminLoginResponse>;
     } catch (error) {
       // Clear any existing session on login failure
       tokenStorage.clearSession();
@@ -373,7 +406,7 @@ export class AdminService {
 
     try {
       // Backend expects GET request with Authorization header, not POST with token in body
-      const response = await apiService.get<{ valid: boolean; user?: any }>(
+      const response = await apiService.get<BackendVerifyResponse>(
         API_ENDPOINTS.ADMIN.VERIFY,
         tokenToVerify
       );
@@ -389,7 +422,7 @@ export class AdminService {
           const session = tokenStorage.getSession();
           if (session) {
             const updatedAdmin: AdminUser = {
-              id: user.id || user._id,
+              id: user.id || user._id || 'unknown',
               email: user.email || session.admin.email,
               name: `${user.first_name || ''} ${user.last_name || ''}`.trim() || session.admin.name,
               role: user.role as 'admin' | 'super_admin',
