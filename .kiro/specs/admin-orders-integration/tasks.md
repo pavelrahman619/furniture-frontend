@@ -1,31 +1,47 @@
 # Implementation Plan
 
-- [] 1. Create API service methods for orders in src/services/order.service.ts
+- [x] 1. Create API service methods for orders in src/services/order.service.ts
+
+
+
   - Add method to fetch orders list with filtering (page, limit, status, customer, date_from, date_to)
   - Ensure existing updateOrderStatus method works with backend API
   - Add data transformation to match frontend Order interface
   - _Requirements: 1.1, 1.2, 3.1, 5.1_
 
-- [] 2. Replace sample data in /admin/orders/page.tsx with API calls
-  - Remove sample orders array and replace with API calls using React Query
-  - Update component to handle loading and error states
-  - Keep existing filtering UI but connect to backend parameters
-  - _Requirements: 1.1, 1.2, 1.3, 4.1, 5.2_
+- [ ] 2. Replace sample data in /admin/orders/page.tsx with API calls
+  - Remove sample orders array and replace with useQuery for OrderService.getOrders
+  - Add useMutation for OrderService.updateOrderStatus with optimistic updates
+  - Update component to handle loading and error states from React Query
+  - Connect existing filtering UI to backend parameters
+  - Maintain existing infinite scroll functionality with real pagination
+  - _Requirements: 1.1, 1.2, 1.3, 3.1, 4.1, 5.1, 5.2_
 
-- [] 3. Connect order details page to GET /api/orders/:id
-  - Update order details page to fetch real data from backend
-  - Handle cases where order structure differs from sample data
+- [ ] 3. Create order details page at /admin/orders/[id]/page.tsx
+  - Create new dynamic route for individual order details
+  - Fetch order details using existing OrderService.getOrder method
+  - Display complete order information including timeline and items
   - Add loading and error handling for order details
   - _Requirements: 2.1, 2.2, 2.4, 4.1_
 
-- [ ] 4. Connect status dropdown to PUT /api/orders/:id/status
-  - Integrate existing status dropdown with backend API
-  - Add loading state during status updates
-  - Show success/error feedback for status changes
-  - _Requirements: 3.1, 3.2, 3.3, 4.2_
-
-- [ ] 5. Add loading states and error handling
-  - Add loading indicators for data fetching and status updates
-  - Implement error messages with retry functionality
-  - Handle network errors and API failures gracefully
+- [ ] 4. Add comprehensive error handling and retry mechanisms
+  - Add error boundaries for graceful error handling
+  - Implement retry functionality for failed API requests
+  - Add user-friendly error messages for different error types
+  - Handle network timeouts and connection errors
   - _Requirements: 4.1, 4.2, 4.3, 4.4_
+
+- [ ]* 4.1 Add toast notifications for user feedback
+  - Implement toast system for success/error messages
+  - Add notifications for status updates and API operations
+  - _Requirements: 3.3, 4.2_
+
+- [ ]* 4.2 Add bulk operations support
+  - Enable selecting multiple orders for bulk status updates
+  - Add bulk export functionality for order data
+  - _Requirements: 3.1, 5.1_
+
+- [ ]* 4.3 Add real-time updates with WebSocket integration
+  - Implement WebSocket connection for live order updates
+  - Auto-refresh order data when changes occur
+  - _Requirements: 1.1, 4.1_

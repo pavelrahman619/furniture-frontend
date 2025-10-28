@@ -130,6 +130,129 @@ export interface OrderListResponse {
   };
 }
 
+// Admin-specific order interfaces (simplified for admin table display)
+export interface AdminOrderItem {
+  id: string;
+  name: string;
+  price: number;
+  quantity: number;
+  image: string;
+}
+
+export interface AdminOrder {
+  id: string;
+  orderNumber: string;
+  customerName: string;
+  customerEmail: string;
+  total: number;
+  status: "pending" | "processing" | "shipped" | "delivered" | "cancelled";
+  items: AdminOrderItem[];
+  orderDate: string;
+  estimatedDelivery?: string;
+  shippingAddress: string;
+}
+
+export interface AdminOrdersResponse {
+  orders: AdminOrder[];
+  pagination: {
+    current_page: number;
+    total_pages: number;
+    total_count: number;
+    has_next: boolean;
+    has_prev: boolean;
+  };
+}
+
+// Transformation utilities
+function formatAddress(address: {
+  street: string;
+  city: string;
+  state: string;
+  zip_code: string;
+  country: string;
+}): string {
+  return `${address.street}, ${address.city}, ${address.state} ${address.zip_code}`;
+}
+
+function transformOrderItemForAdmin(backendItem: {
+  product_id: string;
+  variant_id?: string;
+  quantity: number;
+  price: number;
+  name: string;
+}): AdminOrderItem {
+  return {
+    id: backendItem.product_id,
+    name: backendItem.name,
+    price: backendItem.price,
+    quantity: backendItem.quantity,
+    // Default image - in a real app, you'd fetch this from product data
+    image: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
+  };
+}
+
+function transformOrderForAdmin(backendOrder: {
+  _id: string;
+  customer_id?: string;
+  customer_email?: string;
+  customer_phone?: string;
+  items: Array<{
+    product_id: string;
+    variant_id?: string;
+    quantity: number;
+    price: number;
+    name: string;
+  }>;
+  shipping_address: {
+    street: string;
+    city: string;
+    state: string;
+    zip_code: string;
+    country: string;
+  };
+  billing_address: {
+    street: string;
+    city: string;
+    state: string;
+    zip_code: string;
+    country: string;
+  };
+  payment_method: string;
+  payment_status: string;
+  status: string;
+  timeline: Array<{
+    status: string;
+    timestamp: string;
+    notes?: string;
+  }>;
+  tracking_number?: string;
+  estimated_delivery?: string;
+  subtotal: number;
+  delivery_cost: number;
+  total: number;
+  created_at: string;
+  updated_at: string;
+}): AdminOrder {
+  // Generate order number from ID (backend might not have orderNumber field)
+  const orderNumber = `ORD-${backendOrder._id.slice(-6).toUpperCase()}`;
+  
+  // Extract customer name from email if no separate name field
+  const customerName = backendOrder.customer_email?.split('@')[0] || 'Guest Customer';
+  
+  return {
+    id: backendOrder._id,
+    orderNumber,
+    customerName,
+    customerEmail: backendOrder.customer_email || '',
+    total: backendOrder.total,
+    status: backendOrder.status.toLowerCase() as AdminOrder['status'],
+    items: backendOrder.items.map(transformOrderItemForAdmin),
+    orderDate: backendOrder.created_at,
+    estimatedDelivery: backendOrder.estimated_delivery,
+    shippingAddress: formatAddress(backendOrder.shipping_address),
+  };
+}
+
 export class OrderService {
   /**
    * Create a new order
@@ -214,6 +337,46 @@ export class OrderService {
       throw new Error('Failed to track order - no response data');
     }
     return response.data;
+  }
+
+  /**
+   * Get orders list for admin with transformation (includes filtering)
+   */
+  static async getOrdersForAdmin(params?: {
+    page?: number;
+    limit?: number;
+    status?: string;
+    customer?: string;
+    date_from?: string;
+    date_to?: string;
+    search?: string;
+    sort_field?: string;
+    sort_direction?: 'asc' | 'desc';
+  }): Promise<AdminOrdersResponse> {
+    const queryParams = new URLSearchParams();
+
+    if (params?.page) queryParams.append('page', params.page.toString());
+    if (params?.limit) queryParams.append('limit', params.limit.toString());
+    if (params?.status) queryParams.append('status', params.status);
+    if (params?.customer) queryParams.append('customer', params.customer);
+    if (params?.date_from) queryParams.append('date_from', params.date_from);
+    if (params?.date_to) queryParams.append('date_to', params.date_to);
+    if (params?.search) queryParams.append('search', params.search);
+    if (params?.sort_field) queryParams.append('sort_field', params.sort_field);
+    if (params?.sort_direction) queryParams.append('sort_direction', params.sort_direction);
+
+    const endpoint = `${API_ENDPOINTS.ORDERS.LIST}?${queryParams.toString()}`;
+
+    const response = await apiService.get<OrderListResponse>(endpoint);
+    if (!response.data) {
+      throw new Error('Failed to fetch orders - no response data');
+    }
+
+    // Transform backend response to admin format
+    return {
+      orders: response.data.orders.map(transformOrderForAdmin),
+      pagination: response.data.pagination,
+    };
   }
 
   /**
