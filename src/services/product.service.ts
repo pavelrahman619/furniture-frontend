@@ -10,9 +10,33 @@ import {
   DisplayProduct,
   CreateProductRequest,
   UpdateProductRequest,
-
+  ProductVariant,
+  ProductImage,
   StockInfo,
 } from '@/types/product.types';
+
+// Backend request types (different field names)
+interface BackendCreateProductRequest extends Omit<CreateProductRequest, 'category_id'> {
+  category: string;
+}
+
+interface BackendUpdateProductRequest extends Omit<UpdateProductRequest, 'category_id'> {
+  category?: string;
+}
+
+// Backend response types for product operations
+interface BackendProductResponse {
+  id: string;
+  name: string;
+  sku: string;
+  category: string;
+  price: number;
+  description: string;
+  variants: ProductVariant[];
+  images: ProductImage[];
+  featured: boolean;
+  stock: number;
+}
 
 /**
  * Product service for API interactions
@@ -179,7 +203,10 @@ export class ProductService {
     try {
       // Backend expects `category` in the request body (controller maps it to category_id).
       // Map our frontend `category_id` field to `category` to satisfy the API shape.
-      const payload = { ...productData, category: productData.category_id } as any;
+      const payload: BackendCreateProductRequest = {
+        ...productData,
+        category: productData.category_id
+      };
 
       const response = await apiService.post<{ product: Product }>(
         API_ENDPOINTS.PRODUCTS.CREATE,
@@ -204,20 +231,12 @@ export class ProductService {
   static async updateProduct(id: string, productData: UpdateProductRequest, token: string): Promise<Product> {
     try {
       // Map `category_id` to `category` for backend update endpoint as well
-      const payload = { ...productData, category: (productData as any).category_id } as any;
+      const payload: BackendUpdateProductRequest = {
+        ...productData,
+        ...(productData.category_id && { category: productData.category_id })
+      };
 
-      const response = await apiService.put<{
-        id: string;
-        name: string;
-        sku: string;
-        category: any;
-        price: number;
-        description: string;
-        variants: any[];
-        images: any[];
-        featured: boolean;
-        stock: number;
-      }>(
+      const response = await apiService.put<BackendProductResponse>(
         API_ENDPOINTS.PRODUCTS.UPDATE(id),
         payload,
         token
@@ -239,8 +258,8 @@ export class ProductService {
         images: response.data.images || [],
         stock: response.data.stock || 0,
         featured: response.data.featured || false,
-        created_at: new Date(), // We don't have this from response
-        updated_at: new Date(),
+        created_at: new Date().toISOString(), // We don't have this from response
+        updated_at: new Date().toISOString(),
       };
 
       return updatedProduct;
