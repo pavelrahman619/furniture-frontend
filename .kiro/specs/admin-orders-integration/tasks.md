@@ -9,7 +9,12 @@
   - Add data transformation to match frontend Order interface
   - _Requirements: 1.1, 1.2, 3.1, 5.1_
 
-- [ ] 2. Replace sample data in /admin/orders/page.tsx with API calls
+- [x] 2. Replace sample data in /admin/orders/page.tsx with API calls
+
+
+
+
+
   - Remove sample orders array and replace with useQuery for OrderService.getOrders
   - Add useMutation for OrderService.updateOrderStatus with optimistic updates
   - Update component to handle loading and error states from React Query

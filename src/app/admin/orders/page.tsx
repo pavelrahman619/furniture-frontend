@@ -3,12 +3,14 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import Link from "next/link";
 import AdminGuard from "@/components/AdminGuard";
+import { useAdminOrders, useUpdateOrderStatus, AdminOrdersParams } from "@/hooks/useAdminOrders";
+import { AdminOrder } from "@/services/order.service";
 import {
-  Search,
+  Search, // Still needed for "No orders found" icon
   Filter,
   ChevronDown,
   ChevronUp,
-  ArrowUpDown,
+  // ArrowUpDown, // Commented out as sorting is not supported
   Loader2,
   Package,
   Clock,
@@ -18,295 +20,20 @@ import {
   User,
   Calendar,
   DollarSign,
+  AlertCircle,
+  RefreshCw,
 } from "lucide-react";
 
-// Order interface for table display
-interface OrderItem {
-  id: string;
-  name: string;
-  price: number;
-  quantity: number;
-  image: string;
-}
+// Re-export types from service for consistency
+type Order = AdminOrder;
 
-interface Order {
-  id: string;
-  orderNumber: string;
-  customerName: string;
-  customerEmail: string;
-  total: number;
-  status: "pending" | "processing" | "shipped" | "delivered" | "cancelled";
-  items: OrderItem[];
-  orderDate: string;
-  estimatedDelivery?: string;
-  shippingAddress: string;
-}
+// Constants for pagination and UI
+const ORDERS_PER_PAGE = 20;
 
-// Sample orders data
-const sampleOrders: Order[] = [
-  {
-    id: "ORD001",
-    orderNumber: "ORD-2024-001",
-    customerName: "John Smith",
-    customerEmail: "john.smith@email.com",
-    total: 2599,
-    status: "processing",
-    items: [
-      {
-        id: "59972101",
-        name: "Mattai Reclaimed Wood 4Dwr Console",
-        price: 1599,
-        quantity: 1,
-        image:
-          "https://images.unsplash.com/photo-1494947665470-20322015e3a8?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-      },
-      {
-        id: "59972102",
-        name: "Modern Oak Dining Table",
-        price: 1000,
-        quantity: 1,
-        image:
-          "https://images.unsplash.com/photo-1549497538-303791108f95?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-      },
-    ],
-    orderDate: "2024-01-15",
-    estimatedDelivery: "2024-01-25",
-    shippingAddress: "123 Main St, New York, NY 10001",
-  },
-  {
-    id: "ORD002",
-    orderNumber: "ORD-2024-002",
-    customerName: "Sarah Johnson",
-    customerEmail: "sarah.johnson@email.com",
-    total: 1299,
-    status: "shipped",
-    items: [
-      {
-        id: "59972104",
-        name: "Vintage Leather Armchair",
-        price: 1299,
-        quantity: 1,
-        image:
-          "https://images.unsplash.com/photo-1506439773649-6e0eb8cfb237?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-      },
-    ],
-    orderDate: "2024-01-14",
-    estimatedDelivery: "2024-01-22",
-    shippingAddress: "456 Oak Ave, Los Angeles, CA 90210",
-  },
-  {
-    id: "ORD003",
-    orderNumber: "ORD-2024-003",
-    customerName: "Michael Brown",
-    customerEmail: "michael.brown@email.com",
-    total: 1598,
-    status: "delivered",
-    items: [
-      {
-        id: "59972103",
-        name: "Rustic Pine Coffee Table",
-        price: 899,
-        quantity: 1,
-        image:
-          "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-      },
-      {
-        id: "59972105",
-        name: "Industrial Metal Bookshelf",
-        price: 699,
-        quantity: 1,
-        image:
-          "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-      },
-    ],
-    orderDate: "2024-01-12",
-    estimatedDelivery: "2024-01-20",
-    shippingAddress: "789 Pine St, Chicago, IL 60601",
-  },
-  {
-    id: "ORD004",
-    orderNumber: "ORD-2024-004",
-    customerName: "Emily Davis",
-    customerEmail: "emily.davis@email.com",
-    total: 349,
-    status: "pending",
-    items: [
-      {
-        id: "59972106",
-        name: "Scandinavian Nightstand",
-        price: 349,
-        quantity: 1,
-        image:
-          "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-      },
-    ],
-    orderDate: "2024-01-16",
-    estimatedDelivery: "2024-01-26",
-    shippingAddress: "321 Elm Dr, Miami, FL 33101",
-  },
-  {
-    id: "ORD005",
-    orderNumber: "ORD-2024-005",
-    customerName: "David Wilson",
-    customerEmail: "david.wilson@email.com",
-    total: 2198,
-    status: "processing",
-    items: [
-      {
-        id: "59972107",
-        name: "Mid-Century Modern Sofa",
-        price: 2199,
-        quantity: 1,
-        image:
-          "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-      },
-    ],
-    orderDate: "2024-01-13",
-    estimatedDelivery: "2024-01-23",
-    shippingAddress: "654 Maple Ln, Seattle, WA 98101",
-  },
-  {
-    id: "ORD006",
-    orderNumber: "ORD-2024-006",
-    customerName: "Lisa Anderson",
-    customerEmail: "lisa.anderson@email.com",
-    total: 1548,
-    status: "cancelled",
-    items: [
-      {
-        id: "59972108",
-        name: "Rustic Wooden Desk",
-        price: 899,
-        quantity: 1,
-        image:
-          "https://images.unsplash.com/photo-1494947665470-20322015e3a8?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-      },
-      {
-        id: "59972109",
-        name: "Glass Top Side Table",
-        price: 449,
-        quantity: 1,
-        image:
-          "https://images.unsplash.com/photo-1549497538-303791108f95?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-      },
-    ],
-    orderDate: "2024-01-11",
-    shippingAddress: "987 Cedar Ave, Boston, MA 02101",
-  },
-  {
-    id: "ORD007",
-    orderNumber: "ORD-2024-007",
-    customerName: "Robert Taylor",
-    customerEmail: "robert.taylor@email.com",
-    total: 1098,
-    status: "shipped",
-    items: [
-      {
-        id: "59972116",
-        name: "Round Pedestal Table",
-        price: 1099,
-        quantity: 1,
-        image:
-          "https://images.unsplash.com/photo-1549497538-303791108f95?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-      },
-    ],
-    orderDate: "2024-01-10",
-    estimatedDelivery: "2024-01-20",
-    shippingAddress: "147 Birch St, Denver, CO 80201",
-  },
-  {
-    id: "ORD008",
-    orderNumber: "ORD-2024-008",
-    customerName: "Jennifer Martinez",
-    customerEmail: "jennifer.martinez@email.com",
-    total: 798,
-    status: "delivered",
-    items: [
-      {
-        id: "59972115",
-        name: "Leather Executive Chair",
-        price: 799,
-        quantity: 1,
-        image:
-          "https://images.unsplash.com/photo-1506439773649-6e0eb8cfb237?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-      },
-    ],
-    orderDate: "2024-01-09",
-    estimatedDelivery: "2024-01-19",
-    shippingAddress: "258 Spruce Way, Phoenix, AZ 85001",
-  },
-  {
-    id: "ORD009",
-    orderNumber: "ORD-2024-009",
-    customerName: "Christopher Lee",
-    customerEmail: "christopher.lee@email.com",
-    total: 948,
-    status: "processing",
-    items: [
-      {
-        id: "59972111",
-        name: "Industrial Bar Stools Set",
-        price: 599,
-        quantity: 1,
-        image:
-          "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-      },
-      {
-        id: "59972117",
-        name: "Storage Bench",
-        price: 399,
-        quantity: 1,
-        image:
-          "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-      },
-    ],
-    orderDate: "2024-01-08",
-    estimatedDelivery: "2024-01-18",
-    shippingAddress: "369 Willow Rd, Atlanta, GA 30301",
-  },
-  {
-    id: "ORD010",
-    orderNumber: "ORD-2024-010",
-    customerName: "Amanda White",
-    customerEmail: "amanda.white@email.com",
-    total: 1899,
-    status: "pending",
-    items: [
-      {
-        id: "59972112",
-        name: "Farmhouse Dining Set",
-        price: 1899,
-        quantity: 1,
-        image:
-          "https://images.unsplash.com/photo-1549497538-303791108f95?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-      },
-    ],
-    orderDate: "2024-01-07",
-    estimatedDelivery: "2024-01-17",
-    shippingAddress: "741 Aspen Blvd, Portland, OR 97201",
-  },
-];
+// Sorting types commented out as backend doesn't support sorting
+// type SortField = keyof Order;
+// type SortDirection = "asc" | "desc";
 
-// Duplicate sample orders to create more data for infinite scroll demonstration
-const extendedSampleOrders = [
-  ...sampleOrders,
-  ...sampleOrders.map((order, index) => ({
-    ...order,
-    id: `${order.id}_${index + 100}`,
-    orderNumber: `${order.orderNumber}_${index + 100}`,
-    customerName: `${order.customerName} ${index + 1}`,
-    orderDate: new Date(
-      new Date(order.orderDate).getTime() - (index + 1) * 86400000
-    )
-      .toISOString()
-      .split("T")[0],
-  })),
-];
-
-type SortField = keyof Order;
-type SortDirection = "asc" | "desc";
-
-const ORDERS_PER_BATCH = 10;
 const TABLE_HEIGHT = "calc(100vh - 400px)";
 
 const statusConfig = {
@@ -338,139 +65,97 @@ const statusConfig = {
 };
 
 export default function OrdersPage() {
-  const [orders, setOrders] = useState<Order[]>(extendedSampleOrders);
-  const [searchTerm, setSearchTerm] = useState("");
+  // Filter and pagination state
+  // const [searchTerm, setSearchTerm] = useState(""); // Backend doesn't support search
   const [statusFilter, setStatusFilter] = useState("");
   const [dateRange, setDateRange] = useState({ start: "", end: "" });
   const [totalRange, setTotalRange] = useState({ min: "", max: "" });
-  const [sortField, setSortField] = useState<SortField>("orderDate");
-  const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
+  // const [sortField, setSortField] = useState<SortField>("orderDate"); // Backend doesn't support sorting
+  // const [sortDirection, setSortDirection] = useState<SortDirection>("desc"); // Backend doesn't support sorting
   const [showFilters, setShowFilters] = useState(false);
-  const [displayedCount, setDisplayedCount] = useState(ORDERS_PER_BATCH);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
+  // Build query parameters (only backend-supported parameters)
+  const queryParams: AdminOrdersParams = useMemo(() => {
+    const params: AdminOrdersParams = {
+      page: currentPage,
+      limit: ORDERS_PER_PAGE,
+      // sort_field: sortField, // Backend doesn't support sorting
+      // sort_direction: sortDirection, // Backend doesn't support sorting
+    };
+
+    // if (searchTerm.trim()) params.search = searchTerm.trim(); // Backend doesn't support search
+    if (statusFilter) params.status = statusFilter;
+    if (dateRange.start) params.date_from = dateRange.start;
+    if (dateRange.end) params.date_to = dateRange.end;
+
+    return params;
+  }, [statusFilter, dateRange, currentPage]); // Removed searchTerm, sortField, sortDirection
+
+  // API hooks
+  const { data: ordersData, isLoading, error, refetch } = useAdminOrders(queryParams);
+  const updateOrderStatusMutation = useUpdateOrderStatus();
+
   // Handle order status changes
-  const updateOrderStatus = (orderId: string, newStatus: Order["status"]) => {
-    setOrders((prev) =>
-      prev.map((order) =>
-        order.id === orderId ? { ...order, status: newStatus } : order
-      )
-    );
-  };
+  const updateOrderStatus = useCallback((orderId: string, newStatus: Order["status"]) => {
+    updateOrderStatusMutation.mutate({ 
+      orderId, 
+      status: newStatus 
+    });
+  }, [updateOrderStatusMutation]);
 
-  // Handle sorting
-  const handleSort = (field: SortField) => {
-    if (sortField === field) {
-      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
-    } else {
-      setSortField(field);
-      setSortDirection("asc");
+  // Handle sorting - Commented out as backend doesn't support sorting
+  // const handleSort = useCallback((field: SortField) => {
+  //   if (sortField === field) {
+  //     setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+  //   } else {
+  //     setSortField(field);
+  //     setSortDirection("asc");
+  //   }
+  //   setCurrentPage(1); // Reset to first page when sorting changes
+  // }, [sortField, sortDirection]);
+
+  // Get pagination info from API response
+  const pagination = ordersData?.pagination;
+
+  // Client-side filtering for total range (since backend might not support this)
+  const displayedOrders = useMemo(() => {
+    const orders = ordersData?.orders || [];
+    
+    if (!totalRange.min && !totalRange.max) {
+      return orders;
     }
-  };
 
-  // Filter and sort all orders
-  const allFilteredAndSortedOrders = useMemo(() => {
-    const filtered = orders.filter((order) => {
-      const matchesSearch =
-        order.orderNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        order.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        order.customerEmail.toLowerCase().includes(searchTerm.toLowerCase());
-
-      const matchesStatus = !statusFilter || order.status === statusFilter;
-
-      const matchesDate =
-        (!dateRange.start || order.orderDate >= dateRange.start) &&
-        (!dateRange.end || order.orderDate <= dateRange.end);
-
+    return orders.filter((order) => {
       const matchesTotal =
         (!totalRange.min || order.total >= Number(totalRange.min)) &&
         (!totalRange.max || order.total <= Number(totalRange.max));
-
-      return matchesSearch && matchesStatus && matchesDate && matchesTotal;
+      return matchesTotal;
     });
+  }, [ordersData?.orders, totalRange]);
 
-    // Sort orders
-    filtered.sort((a, b) => {
-      let aValue = a[sortField];
-      let bValue = b[sortField];
-
-      if (typeof aValue === "string") {
-        aValue = aValue.toLowerCase();
-        bValue = (bValue as string).toLowerCase();
-      }
-
-      if (aValue && bValue && aValue < bValue)
-        return sortDirection === "asc" ? -1 : 1;
-      if (aValue && bValue && aValue > bValue)
-        return sortDirection === "asc" ? 1 : -1;
-      return 0;
-    });
-
-    return filtered;
-  }, [
-    orders,
-    searchTerm,
-    statusFilter,
-    dateRange,
-    totalRange,
-    sortField,
-    sortDirection,
-  ]);
-
-  // Get displayed orders (for infinite scroll)
-  const displayedOrders = useMemo(() => {
-    return allFilteredAndSortedOrders.slice(0, displayedCount);
-  }, [allFilteredAndSortedOrders, displayedCount]);
-
-  // Load more orders
-  const loadMoreOrders = useCallback(() => {
-    if (displayedCount >= allFilteredAndSortedOrders.length || isLoadingMore) {
-      return;
+  // Handle pagination
+  const handlePageChange = useCallback((newPage: number) => {
+    setCurrentPage(newPage);
+    // Scroll to top when page changes
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTop = 0;
     }
+  }, []);
 
-    setIsLoadingMore(true);
-    // Simulate loading delay
-    setTimeout(() => {
-      setDisplayedCount((prev) =>
-        Math.min(prev + ORDERS_PER_BATCH, allFilteredAndSortedOrders.length)
-      );
-      setIsLoadingMore(false);
-    }, 300);
-  }, [displayedCount, allFilteredAndSortedOrders.length, isLoadingMore]);
-
-  // Handle scroll event
-  const handleScroll = useCallback(() => {
-    const container = scrollContainerRef.current;
-    if (!container) return;
-
-    const { scrollTop, scrollHeight, clientHeight } = container;
-    const threshold = 100; // Load more when 100px from bottom
-
-    if (scrollHeight - scrollTop - clientHeight < threshold) {
-      loadMoreOrders();
-    }
-  }, [loadMoreOrders]);
-
-  // Reset displayed count when filters change
+  // Reset to first page when filters change
   useEffect(() => {
-    setDisplayedCount(ORDERS_PER_BATCH);
-  }, [
-    searchTerm,
-    statusFilter,
-    dateRange,
-    totalRange,
-    sortField,
-    sortDirection,
-  ]);
+    setCurrentPage(1);
+  }, [statusFilter, dateRange, totalRange]); // Removed searchTerm as it's not used
 
-  const clearFilters = () => {
-    setSearchTerm("");
+  const clearFilters = useCallback(() => {
+    // setSearchTerm(""); // Commented out as search is not supported
     setStatusFilter("");
     setDateRange({ start: "", end: "" });
     setTotalRange({ min: "", max: "" });
-    setDisplayedCount(ORDERS_PER_BATCH);
-  };
+    setCurrentPage(1);
+  }, []);
 
   return (
     <AdminGuard>
@@ -486,11 +171,21 @@ export default function OrdersPage() {
               </p>
             </div>
             <div className="flex items-center space-x-4">
+              {error && (
+                <button
+                  onClick={() => refetch()}
+                  className="flex items-center px-3 py-2 text-sm text-red-600 hover:text-red-800 transition-colors"
+                  title="Retry loading orders"
+                >
+                  <RefreshCw className="h-4 w-4 mr-1" />
+                  Retry
+                </button>
+              )}
               <div className="flex items-center space-x-2 text-sm text-gray-600">
                 <DollarSign className="h-4 w-4" />
                 <span>
                   Total Revenue: $
-                  {allFilteredAndSortedOrders
+                  {displayedOrders
                     .reduce((sum, order) => sum + order.total, 0)
                     .toLocaleString()}
                 </span>
@@ -502,8 +197,8 @@ export default function OrdersPage() {
         {/* Search and Filters */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
           <div className="flex flex-col lg:flex-row lg:items-center gap-4">
-            {/* Search */}
-            <div className="flex-1">
+            {/* Search - Commented out as backend doesn't support search */}
+            {/* <div className="flex-1">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                 <input
@@ -513,6 +208,13 @@ export default function OrdersPage() {
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
+              </div>
+            </div> */}
+            
+            {/* Placeholder for search - Backend doesn't support search yet */}
+            <div className="flex-1">
+              <div className="text-sm text-gray-500 italic">
+                {/* Search functionality will be available when backend supports it */}
               </div>
             </div>
 
@@ -636,60 +338,66 @@ export default function OrdersPage() {
           )}
         </div>
 
+        {/* Error State */}
+        {error && (
+          <div className="bg-white rounded-lg shadow-sm border border-red-200 p-8 mb-8">
+            <div className="text-center">
+              <AlertCircle className="h-12 w-12 mx-auto mb-4 text-red-500" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                Failed to load orders
+              </h3>
+              <p className="text-gray-600 mb-4">
+                {error instanceof Error 
+                  ? error.message.includes('authentication') || error.message.includes('Unauthorized')
+                    ? 'Authentication required. Please log in again.'
+                    : error.message
+                  : 'An error occurred while loading orders'
+                }
+              </p>
+              <button
+                onClick={() => refetch()}
+                className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+              >
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Try Again
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Orders Table */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-          <div className="overflow-x-auto">
+          {isLoading && (
+            <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center z-10">
+              <div className="flex items-center">
+                <Loader2 className="h-5 w-5 animate-spin text-blue-600 mr-2" />
+                <span className="text-sm text-gray-600">Loading orders...</span>
+              </div>
+            </div>
+          )}
+          <div className="overflow-x-auto relative">
             {/* Fixed Header */}
             <table className="w-full">
               <thead className="bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
                 <tr>
-                  <th
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 bg-gray-50"
-                    onClick={() => handleSort("orderNumber")}
-                  >
-                    <div className="flex items-center">
-                      Order
-                      <ArrowUpDown className="h-3 w-3 ml-1" />
-                    </div>
+                  {/* Sorting disabled - Backend doesn't support sorting */}
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">
+                    Order
                   </th>
-                  <th
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 bg-gray-50"
-                    onClick={() => handleSort("customerName")}
-                  >
-                    <div className="flex items-center">
-                      Customer
-                      <ArrowUpDown className="h-3 w-3 ml-1" />
-                    </div>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">
+                    Customer
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">
                     Items
                   </th>
-                  <th
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 bg-gray-50"
-                    onClick={() => handleSort("total")}
-                  >
-                    <div className="flex items-center">
-                      Total
-                      <ArrowUpDown className="h-3 w-3 ml-1" />
-                    </div>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">
+                    Total
                   </th>
-                  <th
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 bg-gray-50"
-                    onClick={() => handleSort("status")}
-                  >
-                    <div className="flex items-center">
-                      Status
-                      <ArrowUpDown className="h-3 w-3 ml-1" />
-                    </div>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">
+                    Status
                   </th>
-                  <th
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 bg-gray-50"
-                    onClick={() => handleSort("orderDate")}
-                  >
-                    <div className="flex items-center">
-                      Order Date
-                      <ArrowUpDown className="h-3 w-3 ml-1" />
-                    </div>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">
+                    Order Date
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">
                     Change Status
@@ -701,7 +409,6 @@ export default function OrdersPage() {
             {/* Scrollable Body */}
             <div
               ref={scrollContainerRef}
-              onScroll={handleScroll}
               className="overflow-y-auto"
               style={{ height: TABLE_HEIGHT }}
             >
@@ -783,7 +490,8 @@ export default function OrdersPage() {
                               )
                             }
                             onClick={(e) => e.stopPropagation()}
-                            className="text-sm border border-gray-300 rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            disabled={updateOrderStatusMutation.isPending}
+                            className="text-sm border border-gray-300 rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             <option value="pending">Pending</option>
                             <option value="processing">Processing</option>
@@ -791,6 +499,9 @@ export default function OrdersPage() {
                             <option value="delivered">Delivered</option>
                             <option value="cancelled">Cancelled</option>
                           </select>
+                          {updateOrderStatusMutation.isPending && (
+                            <Loader2 className="h-3 w-3 animate-spin text-blue-600 ml-2 inline" />
+                          )}
                         </td>
                       </tr>
                     );
@@ -798,49 +509,56 @@ export default function OrdersPage() {
                 </tbody>
               </table>
 
-              {/* Loading indicator */}
-              {isLoadingMore && (
-                <div className="flex justify-center items-center py-4 bg-white">
-                  <Loader2 className="h-5 w-5 animate-spin text-blue-600 mr-2" />
-                  <span className="text-sm text-gray-600">
-                    Loading more orders...
-                  </span>
+              {/* Pagination */}
+              {pagination && pagination.total_pages > 1 && (
+                <div className="flex justify-center items-center py-4 bg-gray-50 border-t border-gray-200">
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={() => handlePageChange(currentPage - 1)}
+                      disabled={!pagination.has_prev || isLoading}
+                      className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Previous
+                    </button>
+                    
+                    <span className="text-sm text-gray-600">
+                      Page {pagination.current_page} of {pagination.total_pages}
+                    </span>
+                    
+                    <button
+                      onClick={() => handlePageChange(currentPage + 1)}
+                      disabled={!pagination.has_next || isLoading}
+                      className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Next
+                    </button>
+                  </div>
                 </div>
               )}
-
-              {/* End of results indicator */}
-              {displayedCount >= allFilteredAndSortedOrders.length &&
-                allFilteredAndSortedOrders.length > 0 &&
-                !isLoadingMore && (
-                  <div className="text-center py-4 bg-gray-50">
-                    <span className="text-sm text-gray-500">
-                      All orders loaded ({allFilteredAndSortedOrders.length}{" "}
-                      total)
-                    </span>
-                  </div>
-                )}
             </div>
           </div>
 
           {/* No results message */}
-          {allFilteredAndSortedOrders.length === 0 && (
+          {!isLoading && !error && displayedOrders.length === 0 && (
             <div className="text-center py-12">
               <div className="text-gray-500">
                 <Search className="h-12 w-12 mx-auto mb-4 opacity-50" />
                 <h3 className="text-lg font-medium text-gray-900 mb-2">
                   No orders found
                 </h3>
-                <p>Try adjusting your search or filter criteria.</p>
+                <p>Try adjusting your filter criteria.</p>
               </div>
             </div>
           )}
 
           {/* Results summary */}
-          {allFilteredAndSortedOrders.length > 0 && (
+          {!isLoading && !error && displayedOrders.length > 0 && pagination && (
             <div className="bg-gray-50 px-6 py-3 border-t border-gray-200">
               <div className="text-sm text-gray-700">
-                Showing {displayedCount} of {allFilteredAndSortedOrders.length}{" "}
-                filtered orders ({orders.length} total)
+                Showing {displayedOrders.length} of {pagination.total_count} orders
+                {pagination.total_pages > 1 && (
+                  <span> (Page {pagination.current_page} of {pagination.total_pages})</span>
+                )}
               </div>
             </div>
           )}

@@ -349,25 +349,36 @@ export class OrderService {
     customer?: string;
     date_from?: string;
     date_to?: string;
-    search?: string;
-    sort_field?: string;
-    sort_direction?: 'asc' | 'desc';
+    // search?: string; // Backend doesn't support search parameter
+    // sort_field?: string; // Backend doesn't support sorting parameters
+    // sort_direction?: 'asc' | 'desc'; // Backend doesn't support sorting parameters
   }): Promise<AdminOrdersResponse> {
+    // Get admin token for authentication
+    const { AdminService } = await import('./admin.service');
+    const token = AdminService.getCurrentToken();
+    
+    if (!token) {
+      throw new Error('Admin authentication required');
+    }
+
     const queryParams = new URLSearchParams();
 
+    // Only include parameters that the backend supports
     if (params?.page) queryParams.append('page', params.page.toString());
     if (params?.limit) queryParams.append('limit', params.limit.toString());
     if (params?.status) queryParams.append('status', params.status);
     if (params?.customer) queryParams.append('customer', params.customer);
     if (params?.date_from) queryParams.append('date_from', params.date_from);
     if (params?.date_to) queryParams.append('date_to', params.date_to);
-    if (params?.search) queryParams.append('search', params.search);
-    if (params?.sort_field) queryParams.append('sort_field', params.sort_field);
-    if (params?.sort_direction) queryParams.append('sort_direction', params.sort_direction);
+    
+    // Remove unsupported parameters
+    // if (params?.search) queryParams.append('search', params.search);
+    // if (params?.sort_field) queryParams.append('sort_field', params.sort_field);
+    // if (params?.sort_direction) queryParams.append('sort_direction', params.sort_direction);
 
     const endpoint = `${API_ENDPOINTS.ORDERS.LIST}?${queryParams.toString()}`;
 
-    const response = await apiService.get<OrderListResponse>(endpoint);
+    const response = await apiService.get<OrderListResponse>(endpoint, token);
     if (!response.data) {
       throw new Error('Failed to fetch orders - no response data');
     }
@@ -387,9 +398,18 @@ export class OrderService {
     status: string,
     notes?: string
   ): Promise<{ status: string; notes: string }> {
+    // Get admin token for authentication
+    const { AdminService } = await import('./admin.service');
+    const token = AdminService.getCurrentToken();
+    
+    if (!token) {
+      throw new Error('Admin authentication required');
+    }
+
     const response = await apiService.put<{ status: string; notes: string }>(
       API_ENDPOINTS.ORDERS.UPDATE_STATUS(orderId),
-      { status, notes }
+      { status, notes },
+      token
     );
     if (!response.data) {
       throw new Error('Failed to update order status - no response data');
