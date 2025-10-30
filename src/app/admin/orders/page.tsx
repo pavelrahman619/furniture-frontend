@@ -22,6 +22,7 @@ import {
   DollarSign,
   AlertCircle,
   RefreshCw,
+  ArrowRight,
 } from "lucide-react";
 
 // Re-export types from service for consistency
@@ -422,9 +423,10 @@ export default function OrdersPage() {
                           <div>
                             <Link
                               href={`/admin/orders/${order.id}`}
-                              className="text-sm font-medium text-gray-900 hover:text-blue-600 transition-colors"
+                              className="inline-flex items-center gap-1.5 text-sm font-semibold text-blue-600 hover:text-blue-700 hover:underline transition-all duration-200 cursor-pointer group"
                             >
-                              {order.orderNumber}
+                              <span>{order.orderNumber}</span>
+                              <ArrowRight className="h-3.5 w-3.5 transition-transform duration-200 group-hover:translate-x-0.5" />
                             </Link>
                             <div className="text-sm text-gray-500">
                               ID: {order.id}
