@@ -664,61 +664,7 @@ export default function ProductsPage() {
 
         {/* Products Table */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-          <div className="overflow-x-hidden">
-            {/* Fixed Header */}
-            <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
-                <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">
-                    Product
-                  </th>
-                  <th
-                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 bg-gray-50"
-                    onClick={() => handleSort("category")}
-                  >
-                    <div className="flex items-center">
-                      Category
-                      <ArrowUpDown className="h-3 w-3 ml-1" />
-                    </div>
-                  </th>
-                  <th
-                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 bg-gray-50"
-                    onClick={() => handleSort("price")}
-                  >
-                    <div className="flex items-center">
-                      Price
-                      <ArrowUpDown className="h-3 w-3 ml-1" />
-                    </div>
-                  </th>
-                  <th
-                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 bg-gray-50"
-                    onClick={() => handleSort("availability")}
-                  >
-                    <div className="flex items-center">
-                      Status
-                      <ArrowUpDown className="h-3 w-3 ml-1" />
-                    </div>
-                  </th>
-                  <th
-                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 bg-gray-50"
-                    onClick={() => handleSort("totalStock")}
-                  >
-                    <div className="flex items-center">
-                      Stock
-                      <ArrowUpDown className="h-3 w-3 ml-1" />
-                    </div>
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">
-                    Stock Actions
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-            </table>
-
-            {/* Scrollable Body */}
+          <div className="overflow-x-auto">
             <div
               ref={scrollContainerRef}
               onScroll={handleScroll}
@@ -726,6 +672,55 @@ export default function ProductsPage() {
               style={{ height: TABLE_HEIGHT }}
             >
               <table className="w-full">
+                <thead className="bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">
+                      Product
+                    </th>
+                    <th
+                      className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 bg-gray-50"
+                      onClick={() => handleSort("category")}
+                    >
+                      <div className="flex items-center">
+                        Category
+                        <ArrowUpDown className="h-3 w-3 ml-1" />
+                      </div>
+                    </th>
+                    <th
+                      className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 bg-gray-50"
+                      onClick={() => handleSort("price")}
+                    >
+                      <div className="flex items-center">
+                        Price
+                        <ArrowUpDown className="h-3 w-3 ml-1" />
+                      </div>
+                    </th>
+                    <th
+                      className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 bg-gray-50"
+                      onClick={() => handleSort("availability")}
+                    >
+                      <div className="flex items-center">
+                        Status
+                        <ArrowUpDown className="h-3 w-3 ml-1" />
+                      </div>
+                    </th>
+                    <th
+                      className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 bg-gray-50"
+                      onClick={() => handleSort("totalStock")}
+                    >
+                      <div className="flex items-center">
+                        Stock
+                        <ArrowUpDown className="h-3 w-3 ml-1" />
+                      </div>
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">
+                      Stock Actions
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {displayedProducts.map((product) => (
                     <tr key={product.id} className="hover:bg-gray-50">
