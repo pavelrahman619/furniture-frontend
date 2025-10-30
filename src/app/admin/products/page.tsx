@@ -679,6 +679,15 @@ export default function ProductsPage() {
                     </th>
                     <th
                       className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 bg-gray-50"
+                      onClick={() => handleSort("sku")}
+                    >
+                      <div className="flex items-center">
+                        SKU
+                        <ArrowUpDown className="h-3 w-3 ml-1" />
+                      </div>
+                    </th>
+                    <th
+                      className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 bg-gray-50"
                       onClick={() => handleSort("category")}
                     >
                       <div className="flex items-center">
@@ -744,11 +753,11 @@ export default function ProductsPage() {
                                 </span>
                               )}
                             </div>
-                            <div className="text-sm text-gray-500 break-words">
-                              SKU: {product.sku}
-                            </div>
                           </div>
                         </div>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-900 break-words">
+                        {product.sku}
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-900 break-words">
                         {product.category}
