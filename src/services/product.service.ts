@@ -1,5 +1,5 @@
 import { apiService } from '@/lib/api-service';
-import { API_ENDPOINTS } from '@/lib/api-config';
+import { API_ENDPOINTS, buildApiUrl, getApiHeaders } from '@/lib/api-config';
 import { transformApiError } from '@/lib/error-utils';
 import {
   Product,
@@ -345,6 +345,42 @@ export class ProductService {
       return response.data;
     } catch (error) {
       console.error('Error fetching admin products:', error);
+      throw transformApiError(error);
+    }
+  }
+
+  /**
+   * Export products to Excel file (Admin only)
+   * Returns a Blob that can be downloaded
+   */
+  static async exportProductsToExcel(token: string): Promise<Blob> {
+    try {
+      const url = buildApiUrl(API_ENDPOINTS.ADMIN.PRODUCTS_EXPORT);
+      const headers = getApiHeaders(token);
+
+      // Override Accept header to expect binary response
+      headers['Accept'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+
+      const response = await fetch(url, {
+        method: 'GET',
+        headers,
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        let errorMessage = 'Failed to export products';
+        try {
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData.message || errorMessage;
+        } catch {
+          errorMessage = errorText || errorMessage;
+        }
+        throw new Error(errorMessage);
+      }
+
+      return await response.blob();
+    } catch (error) {
+      console.error('Error exporting products to Excel:', error);
       throw transformApiError(error);
     }
   }

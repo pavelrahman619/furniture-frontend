@@ -17,6 +17,7 @@ import {
   Loader2,
   Shield,
   RefreshCw,
+  Download,
 } from "lucide-react";
 import { useAdmin } from "@/contexts/AdminContext";
 import { useAdminProducts, useUpdateProductStock, useDeleteProduct } from "@/hooks/useAdminProducts";
@@ -26,6 +27,7 @@ import { ProductsError } from "@/components/ProductsError";
 import { DeleteProductDialog } from "@/components/DeleteProductDialog";
 import { useToast } from "@/contexts/ToastContext";
 import { Product as ApiProduct, ProductsQueryParams } from "@/types/product.types";
+import { ProductService } from "@/services/product.service";
 
 // Product interface for table display (transformed from API data)
 interface Product {
@@ -211,6 +213,7 @@ export default function ProductsPage() {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [productToDelete, setProductToDelete] = useState<Product | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   // Build query parameters for API
@@ -447,6 +450,39 @@ export default function ProductsPage() {
     setDisplayedCount(PRODUCTS_PER_BATCH);
   };
 
+  // Handle Excel export
+  const handleExportProducts = useCallback(async () => {
+    if (!token) {
+      error("Export failed", "Authentication required. Please log in again.");
+      return;
+    }
+
+    setIsExporting(true);
+    try {
+      const blob = await ProductService.exportProductsToExcel(token);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'products.xlsx';
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      success("Export successful", "Products exported to Excel successfully.");
+    } catch (err) {
+      console.error('Export failed:', err);
+      error(
+        "Export failed",
+        err instanceof Error 
+          ? err.message 
+          : "Failed to export products. Please try again."
+      );
+    } finally {
+      setIsExporting(false);
+    }
+  }, [token, success, error]);
+
   // Show a consistent placeholder on the server and initial client render
   // to avoid hydration mismatches; once mounted we show the full UI.
   if (!mounted) {
@@ -531,6 +567,19 @@ export default function ProductsPage() {
                 title="Refresh products"
               >
                 <RefreshCw className={`h-4 w-4 ${isRefetching ? 'animate-spin' : ''}`} />
+              </button>
+              <button
+                onClick={handleExportProducts}
+                disabled={isExporting}
+                className="flex items-center px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                title="Export products to Excel"
+              >
+                {isExporting ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Download className="h-4 w-4 mr-2" />
+                )}
+                {isExporting ? 'Exporting...' : 'Export to Excel'}
               </button>
               <Link
                 href="/admin/products/create"
