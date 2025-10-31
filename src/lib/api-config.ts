@@ -103,6 +103,7 @@ export const API_ENDPOINTS = {
     PROFILE: '/admin/profile',
     VERIFY: '/auth/verify',
     PRODUCTS: '/products',
+    PRODUCTS_EXPORT: '/admin/products/export',
     ORDERS: '/orders',
     USERS: '/users',
     CONTENT: '/content',

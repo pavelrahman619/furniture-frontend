@@ -17,6 +17,7 @@ import {
   Loader2,
   Shield,
   RefreshCw,
+  Download,
 } from "lucide-react";
 import { useAdmin } from "@/contexts/AdminContext";
 import { useAdminProducts, useUpdateProductStock, useDeleteProduct } from "@/hooks/useAdminProducts";
@@ -26,6 +27,7 @@ import { ProductsError } from "@/components/ProductsError";
 import { DeleteProductDialog } from "@/components/DeleteProductDialog";
 import { useToast } from "@/contexts/ToastContext";
 import { Product as ApiProduct, ProductsQueryParams } from "@/types/product.types";
+import { ProductService } from "@/services/product.service";
 
 // Product interface for table display (transformed from API data)
 interface Product {
@@ -211,6 +213,7 @@ export default function ProductsPage() {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [productToDelete, setProductToDelete] = useState<Product | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   // Build query parameters for API
@@ -447,6 +450,39 @@ export default function ProductsPage() {
     setDisplayedCount(PRODUCTS_PER_BATCH);
   };
 
+  // Handle Excel export
+  const handleExportProducts = useCallback(async () => {
+    if (!token) {
+      error("Export failed", "Authentication required. Please log in again.");
+      return;
+    }
+
+    setIsExporting(true);
+    try {
+      const blob = await ProductService.exportProductsToExcel(token);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'products.xlsx';
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      success("Export successful", "Products exported to Excel successfully.");
+    } catch (err) {
+      console.error('Export failed:', err);
+      error(
+        "Export failed",
+        err instanceof Error 
+          ? err.message 
+          : "Failed to export products. Please try again."
+      );
+    } finally {
+      setIsExporting(false);
+    }
+  }, [token, success, error]);
+
   // Show a consistent placeholder on the server and initial client render
   // to avoid hydration mismatches; once mounted we show the full UI.
   if (!mounted) {
@@ -531,6 +567,19 @@ export default function ProductsPage() {
                 title="Refresh products"
               >
                 <RefreshCw className={`h-4 w-4 ${isRefetching ? 'animate-spin' : ''}`} />
+              </button>
+              <button
+                onClick={handleExportProducts}
+                disabled={isExporting}
+                className="flex items-center px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                title="Export products to Excel"
+              >
+                {isExporting ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Download className="h-4 w-4 mr-2" />
+                )}
+                {isExporting ? 'Exporting...' : 'Export to Excel'}
               </button>
               <Link
                 href="/admin/products/create"
@@ -664,61 +713,7 @@ export default function ProductsPage() {
 
         {/* Products Table */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-          <div className="overflow-x-hidden">
-            {/* Fixed Header */}
-            <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
-                <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">
-                    Product
-                  </th>
-                  <th
-                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 bg-gray-50"
-                    onClick={() => handleSort("category")}
-                  >
-                    <div className="flex items-center">
-                      Category
-                      <ArrowUpDown className="h-3 w-3 ml-1" />
-                    </div>
-                  </th>
-                  <th
-                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 bg-gray-50"
-                    onClick={() => handleSort("price")}
-                  >
-                    <div className="flex items-center">
-                      Price
-                      <ArrowUpDown className="h-3 w-3 ml-1" />
-                    </div>
-                  </th>
-                  <th
-                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 bg-gray-50"
-                    onClick={() => handleSort("availability")}
-                  >
-                    <div className="flex items-center">
-                      Status
-                      <ArrowUpDown className="h-3 w-3 ml-1" />
-                    </div>
-                  </th>
-                  <th
-                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 bg-gray-50"
-                    onClick={() => handleSort("totalStock")}
-                  >
-                    <div className="flex items-center">
-                      Stock
-                      <ArrowUpDown className="h-3 w-3 ml-1" />
-                    </div>
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">
-                    Stock Actions
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-            </table>
-
-            {/* Scrollable Body */}
+          <div className="overflow-x-auto">
             <div
               ref={scrollContainerRef}
               onScroll={handleScroll}
@@ -726,6 +721,64 @@ export default function ProductsPage() {
               style={{ height: TABLE_HEIGHT }}
             >
               <table className="w-full">
+                <thead className="bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">
+                      Product
+                    </th>
+                    <th
+                      className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 bg-gray-50"
+                      onClick={() => handleSort("sku")}
+                    >
+                      <div className="flex items-center">
+                        SKU
+                        <ArrowUpDown className="h-3 w-3 ml-1" />
+                      </div>
+                    </th>
+                    <th
+                      className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 bg-gray-50"
+                      onClick={() => handleSort("category")}
+                    >
+                      <div className="flex items-center">
+                        Category
+                        <ArrowUpDown className="h-3 w-3 ml-1" />
+                      </div>
+                    </th>
+                    <th
+                      className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 bg-gray-50"
+                      onClick={() => handleSort("price")}
+                    >
+                      <div className="flex items-center">
+                        Price
+                        <ArrowUpDown className="h-3 w-3 ml-1" />
+                      </div>
+                    </th>
+                    <th
+                      className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 bg-gray-50"
+                      onClick={() => handleSort("availability")}
+                    >
+                      <div className="flex items-center">
+                        Status
+                        <ArrowUpDown className="h-3 w-3 ml-1" />
+                      </div>
+                    </th>
+                    <th
+                      className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 bg-gray-50"
+                      onClick={() => handleSort("totalStock")}
+                    >
+                      <div className="flex items-center">
+                        Stock
+                        <ArrowUpDown className="h-3 w-3 ml-1" />
+                      </div>
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">
+                      Stock Actions
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {displayedProducts.map((product) => (
                     <tr key={product.id} className="hover:bg-gray-50">
@@ -749,11 +802,11 @@ export default function ProductsPage() {
                                 </span>
                               )}
                             </div>
-                            <div className="text-sm text-gray-500 break-words">
-                              SKU: {product.sku}
-                            </div>
                           </div>
                         </div>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-900 break-words">
+                        {product.sku}
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-900 break-words">
                         {product.category}
