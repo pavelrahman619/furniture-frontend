@@ -528,31 +528,21 @@ export default function CreateProductPage() {
               ))}
 
               {/* Upload new image */}
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
+              <label
+                htmlFor="image-upload"
+                className={`block border-2 border-dashed border-gray-300 rounded-lg p-6 cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors ${
+                  isUploading ? 'pointer-events-none opacity-50' : ''
+                }`}
+              >
                 <div className="text-center">
                   <Upload className="mx-auto h-12 w-12 text-gray-400" />
                   <div className="mt-4">
-                    <label htmlFor="image-upload" className="cursor-pointer">
-                      <span className="mt-2 block text-sm font-medium text-gray-900">
-                        Upload product image
-                      </span>
-                      <span className="mt-1 block text-sm text-gray-500">
-                        PNG, JPG, WebP up to 10MB
-                      </span>
-                    </label>
-                    <input
-                      id="image-upload"
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          handleImageUpload(file);
-                        }
-                      }}
-                      className="sr-only"
-                      disabled={isUploading}
-                    />
+                    <span className="mt-2 block text-sm font-medium text-gray-900">
+                      Upload product image
+                    </span>
+                    <span className="mt-1 block text-sm text-gray-500">
+                      PNG, JPG, WebP up to 10MB
+                    </span>
                   </div>
                   {isUploading && (
                     <div className="mt-4 flex items-center justify-center">
@@ -561,7 +551,20 @@ export default function CreateProductPage() {
                     </div>
                   )}
                 </div>
-              </div>
+                <input
+                  id="image-upload"
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      handleImageUpload(file);
+                    }
+                  }}
+                  className="sr-only"
+                  disabled={isUploading}
+                />
+              </label>
             </div>
           </div>
         </form>
