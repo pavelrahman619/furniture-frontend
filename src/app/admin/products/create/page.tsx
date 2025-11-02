@@ -388,14 +388,17 @@ export default function CreateProductPage() {
                 </label>
                 <input
                   type="number"
-                  value={formData.price}
-                  onChange={(e) => handleFieldChange("price", Number(e.target.value))}
+                  value={formData.price || ''}
+                  onChange={(e) => {
+                    const value = e.target.value === '' ? 0 : Number(e.target.value);
+                    handleFieldChange("price", value);
+                  }}
                   className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                     errors.price ? 'border-red-300' : 'border-gray-300'
                   }`}
-                  placeholder="0.00"
+                  placeholder="0"
                   min="0"
-                  step="0.01"
+                  step="0.1"
                 />
                 {errors.price && (
                   <p className="mt-1 text-sm text-red-600">{errors.price}</p>
@@ -407,8 +410,11 @@ export default function CreateProductPage() {
                 </label>
                 <input
                   type="number"
-                  value={formData.stock}
-                  onChange={(e) => handleFieldChange("stock", Number(e.target.value))}
+                  value={formData.stock || ''}
+                  onChange={(e) => {
+                    const value = e.target.value === '' ? 0 : Number(e.target.value);
+                    handleFieldChange("stock", value);
+                  }}
                   className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                     errors.stock ? 'border-red-300' : 'border-gray-300'
                   }`}
