@@ -147,9 +147,9 @@ export class ProductService {
   }
 
   /**
-   * Search products
+   * Search products using dedicated search endpoint
    */
-  static async searchProducts(query: string, filters?: Partial<ProductsQueryParams>): Promise<Product[]> {
+  static async searchProducts(query: string, filters?: Partial<ProductsQueryParams>): Promise<ProductsResponse> {
     try {
       const queryParams = new URLSearchParams({ q: query });
       if (filters) {
@@ -165,13 +165,13 @@ export class ProductService {
         });
       }
 
-      const response = await apiService.get<{ products: Product[] }>(`${API_ENDPOINTS.PRODUCTS.SEARCH}?${queryParams.toString()}`);
+      const response = await apiService.get<ProductsResponse>(`${API_ENDPOINTS.PRODUCTS.SEARCH}?${queryParams.toString()}`);
 
       if (!response.success || !response.data) {
         throw new Error('Failed to search products');
       }
 
-      return response.data.products;
+      return response.data;
     } catch (error) {
       console.error('Error searching products:', error);
       throw transformApiError(error);

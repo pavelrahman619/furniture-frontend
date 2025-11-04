@@ -205,6 +205,8 @@ export default function ProductsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
   const [availabilityFilter, setAvailabilityFilter] = useState("");
+  const [colorFilter, setColorFilter] = useState("");
+  const [materialFilter, setMaterialFilter] = useState("");
   const [priceRange, setPriceRange] = useState({ min: "", max: "" });
   const [sortField, setSortField] = useState<SortField>("createdAt");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
@@ -216,10 +218,11 @@ export default function ProductsPage() {
   const [isExporting, setIsExporting] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  // Build query parameters for API
+  // Build query parameters for API - let backend handle filtering
   const queryParams = useMemo((): ProductsQueryParams => {
     const params: ProductsQueryParams = {
-      limit: 100, // Get more products for client-side filtering/sorting
+      page: 1,
+      limit: 50, // Use backend pagination instead of client-side
     };
 
     if (searchTerm.trim()) {
@@ -238,8 +241,16 @@ export default function ProductsPage() {
       params.price_max = Number(priceRange.max);
     }
 
+    if (colorFilter) {
+      params.color = colorFilter;
+    }
+
+    if (materialFilter) {
+      params.material = materialFilter;
+    }
+
     return params;
-  }, [searchTerm, categoryFilter, priceRange]);
+  }, [searchTerm, categoryFilter, priceRange, colorFilter, materialFilter]);
 
   // Fetch products from API
   const {
@@ -348,26 +359,16 @@ export default function ProductsPage() {
     }
   };
 
-  // Filter and sort all products
+  // Filter and sort products (now only client-side availability filter and sorting)
   const allFilteredAndSortedProducts = useMemo(() => {
-    const filtered = products.filter((product) => {
-      const matchesSearch =
-        product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        product.sku.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesCategory =
-        !categoryFilter || product.category === categoryFilter;
-      const matchesAvailability =
-        !availabilityFilter || product.availability === availabilityFilter;
-      const matchesPrice =
-        (!priceRange.min || product.price >= Number(priceRange.min)) &&
-        (!priceRange.max || product.price <= Number(priceRange.max));
+    let filtered = [...products];
 
-      return (
-        matchesSearch && matchesCategory && matchesAvailability && matchesPrice
-      );
-    });
+    // Apply client-side availability filter (since backend doesn't support this)
+    if (availabilityFilter) {
+      filtered = filtered.filter((product) => product.availability === availabilityFilter);
+    }
 
-    // Sort products
+    // Sort products client-side
     filtered.sort((a, b) => {
       let aValue = a[sortField];
       let bValue = b[sortField];
@@ -385,10 +386,7 @@ export default function ProductsPage() {
     return filtered;
   }, [
     products,
-    searchTerm,
-    categoryFilter,
     availabilityFilter,
-    priceRange,
     sortField,
     sortDirection,
   ]);
@@ -437,6 +435,8 @@ export default function ProductsPage() {
     searchTerm,
     categoryFilter,
     availabilityFilter,
+    colorFilter,
+    materialFilter,
     priceRange,
     sortField,
     sortDirection,
@@ -446,6 +446,8 @@ export default function ProductsPage() {
     setSearchTerm("");
     setCategoryFilter("");
     setAvailabilityFilter("");
+    setColorFilter("");
+    setMaterialFilter("");
     setPriceRange({ min: "", max: "" });
     setDisplayedCount(PRODUCTS_PER_BATCH);
   };
@@ -627,7 +629,7 @@ export default function ProductsPage() {
           {/* Expanded Filters */}
           {showFilters && (
             <div className="border-t border-gray-200 pt-4 mt-4">
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Category
@@ -641,6 +643,42 @@ export default function ProductsPage() {
                     {categories.map((category) => (
                       <option key={category} value={category}>
                         {category}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Color
+                  </label>
+                  <select
+                    value={colorFilter}
+                    onChange={(e) => setColorFilter(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="">All Colors</option>
+                    {apiResponse?.filters_available?.colors?.map((color) => (
+                      <option key={color} value={color}>
+                        {color}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Material
+                  </label>
+                  <select
+                    value={materialFilter}
+                    onChange={(e) => setMaterialFilter(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="">All Materials</option>
+                    {apiResponse?.filters_available?.materials?.map((material) => (
+                      <option key={material} value={material}>
+                        {material}
                       </option>
                     ))}
                   </select>

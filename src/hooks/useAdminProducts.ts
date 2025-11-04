@@ -24,7 +24,13 @@ export const adminProductKeys = {
 export function useAdminProducts(params?: ProductsQueryParams, token?: string) {
   return useQuery({
     queryKey: adminProductKeys.list(params),
-    queryFn: () => ProductService.getAdminProducts(params, token),
+    queryFn: () => {
+      // Use search endpoint if there's a search term
+      if (params?.search) {
+        return ProductService.searchProducts(params.search, params);
+      }
+      return ProductService.getAdminProducts(params, token);
+    },
     staleTime: 1000 * 60 * 2, // 2 minutes for admin data
     enabled: !!token, // Only fetch if authenticated
   });
