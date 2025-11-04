@@ -102,20 +102,46 @@ export class ProductService {
     const response = await this.getProducts(params);
     const { products, filters_available } = response;
 
-    // Update filter store with dynamic category data if available
-    if (filters_available?.categories) {
+    // Update filter store with dynamic filter data if available
+    if (filters_available) {
       try {
         const { useFilterStore } = await import('../stores/filterStore');
         const store = useFilterStore.getState();
-        store.updateFilterOptions({
-          categories: filters_available.categories.map(cat => ({
+        const updateOptions: Partial<{
+          availability: Array<{ value: string; label: string }>;
+          categories: Array<{ value: string; label: string; slug: string }>;
+          colors: Array<{ value: string; label: string }>;
+          materials: Array<{ value: string; label: string }>;
+        }> = {};
+
+        // Update categories if available
+        if (filters_available.categories) {
+          updateOptions.categories = filters_available.categories.map(cat => ({
             value: cat.id,
             label: cat.name,
             slug: cat.name.toLowerCase().replace(/\s+/g, '-')
-          }))
-        });
+          }));
+        }
+
+        // Update colors if available
+        if (filters_available.colors) {
+          updateOptions.colors = filters_available.colors.map(color => ({
+            value: color,
+            label: color
+          }));
+        }
+
+        // Update materials if available
+        if (filters_available.materials) {
+          updateOptions.materials = filters_available.materials.map(material => ({
+            value: material,
+            label: material
+          }));
+        }
+
+        store.updateFilterOptions(updateOptions);
       } catch (error) {
-        console.warn('Failed to update filter store with category data:', error);
+        console.warn('Failed to update filter store with dynamic filter data:', error);
       }
     }
 

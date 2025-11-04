@@ -1,6 +1,7 @@
 # Implementation Plan
 
-- [-] 1. Fix dynamic filter options for colors and materials
+- [x] 1. Fix dynamic filter options for colors and materials
+
 
 
 
