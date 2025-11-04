@@ -124,7 +124,7 @@ export default function ProductPage({ params }: ProductPageProps) {
   };
 
   const breadcrumbs = [
-    { name: "Artisan House", href: "/" },
+    { name: "PALACIOS HOME CO.", href: "/" },
     { name: "Products", href: "/products" },
     { name: displayProduct.category, href: `/products?category=${displayProduct.category.toLowerCase().replace(/\s+/g, '-')}` },
     { name: displayProduct.name, href: "#" },

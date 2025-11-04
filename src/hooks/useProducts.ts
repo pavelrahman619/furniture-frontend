@@ -74,21 +74,47 @@ export function useInfiniteProductsForDisplay(baseParams?: Omit<ProductsQueryPar
     return query.data.pages.flatMap(page => {
       const { products, filters_available } = page;
       
-      // Update filter store with dynamic category data if available (only from first page)
-      if (filters_available?.categories && query.data.pages.indexOf(page) === 0) {
+      // Update filter store with dynamic filter data if available (only from first page)
+      if (filters_available && query.data.pages.indexOf(page) === 0) {
         try {
           import('../stores/filterStore').then(({ useFilterStore }) => {
             const store = useFilterStore.getState();
-            store.updateFilterOptions({
-              categories: filters_available.categories.map(cat => ({
+            const updateOptions: Partial<{
+              availability: Array<{ value: string; label: string }>;
+              categories: Array<{ value: string; label: string; slug: string }>;
+              colors: Array<{ value: string; label: string }>;
+              materials: Array<{ value: string; label: string }>;
+            }> = {};
+            
+            // Update categories if available
+            if (filters_available.categories) {
+              updateOptions.categories = filters_available.categories.map(cat => ({
                 value: cat.id,
                 label: cat.name,
                 slug: cat.name.toLowerCase().replace(/\s+/g, '-')
-              }))
-            });
+              }));
+            }
+            
+            // Update colors if available
+            if (filters_available.colors) {
+              updateOptions.colors = filters_available.colors.map(color => ({
+                value: color,
+                label: color
+              }));
+            }
+            
+            // Update materials if available
+            if (filters_available.materials) {
+              updateOptions.materials = filters_available.materials.map(material => ({
+                value: material,
+                label: material
+              }));
+            }
+            
+            store.updateFilterOptions(updateOptions);
           });
         } catch (error) {
-          console.warn('Failed to update filter store with category data:', error);
+          console.warn('Failed to update filter store with dynamic filter data:', error);
         }
       }
 

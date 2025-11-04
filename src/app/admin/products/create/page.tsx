@@ -9,10 +9,11 @@ import { useAdmin } from "@/contexts/AdminContext";
 import { useCreateProduct } from "@/hooks/useAdminProducts";
 import AdminGuard from "@/components/AdminGuard";
 import { uploadImageToCloudinary, validateImageFile } from "@/lib/cloudinary-utils";
-import { CreateProductRequest, ProductImage } from "@/types/product.types";
+import { CreateProductRequest, ProductImage, ProductVariant } from "@/types/product.types";
 import { useToast } from "@/contexts/ToastContext";
 import { fetchCategories } from "@/services/category.service";
 import { useQuery } from "@tanstack/react-query";
+import VariantManager from "@/components/VariantManager";
 
 // Product interface for form data
 interface ProductFormData {
@@ -24,6 +25,7 @@ interface ProductFormData {
   images: ProductImage[];
   featured: boolean;
   stock: number;
+  variants: ProductVariant[];
 }
 
 // Form validation errors
@@ -36,6 +38,7 @@ interface FormErrors {
   images?: string;
   stock?: string;
   featured?: string;
+  variants?: string;
 }
 
 // Initial form state
@@ -48,6 +51,7 @@ const initialFormData: ProductFormData = {
   images: [],
   featured: false,
   stock: 0,
+  variants: [],
 };
 
 export default function CreateProductPage() {
@@ -84,7 +88,7 @@ export default function CreateProductPage() {
   // Handle basic field changes
   const handleFieldChange = (
     field: keyof ProductFormData,
-    value: string | number | boolean
+    value: string | number | boolean | ProductVariant[]
   ) => {
     setFormData((prev) => ({
       ...prev,
@@ -98,6 +102,11 @@ export default function CreateProductPage() {
         [field]: undefined,
       }));
     }
+  };
+
+  // Handle variant changes
+  const handleVariantsChange = (variants: ProductVariant[]) => {
+    handleFieldChange("variants", variants);
   };
 
   // Handle image upload
@@ -214,6 +223,28 @@ export default function CreateProductPage() {
       newErrors.stock = 'Stock cannot be negative';
     }
 
+    // Validate variants if any exist
+    if (formData.variants.length > 0) {
+      const variantSkus = formData.variants.map(v => v.sku);
+      const duplicateSkus = variantSkus.filter((sku, index) => variantSkus.indexOf(sku) !== index);
+      
+      if (duplicateSkus.length > 0) {
+        newErrors.variants = 'Variant SKUs must be unique';
+      }
+
+      // Check for variants with invalid data
+      const invalidVariants = formData.variants.some(variant => 
+        !variant.sku.trim() || 
+        variant.price <= 0 || 
+        variant.stock < 0 ||
+        (!variant.color && !variant.material && !variant.size)
+      );
+
+      if (invalidVariants) {
+        newErrors.variants = 'All variants must have valid SKU, price, stock, and at least one property (color, material, or size)';
+      }
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -241,6 +272,7 @@ export default function CreateProductPage() {
         images: formData.images,
         featured: formData.featured,
         stock: formData.stock,
+        variants: formData.variants,
       };
 
       await createProductMutation.mutateAsync({
@@ -388,14 +420,17 @@ export default function CreateProductPage() {
                 </label>
                 <input
                   type="number"
-                  value={formData.price}
-                  onChange={(e) => handleFieldChange("price", Number(e.target.value))}
+                  value={formData.price || ''}
+                  onChange={(e) => {
+                    const value = e.target.value === '' ? 0 : Number(e.target.value);
+                    handleFieldChange("price", value);
+                  }}
                   className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                     errors.price ? 'border-red-300' : 'border-gray-300'
                   }`}
-                  placeholder="0.00"
+                  placeholder="0"
                   min="0"
-                  step="0.01"
+                  step="0.1"
                 />
                 {errors.price && (
                   <p className="mt-1 text-sm text-red-600">{errors.price}</p>
@@ -407,8 +442,11 @@ export default function CreateProductPage() {
                 </label>
                 <input
                   type="number"
-                  value={formData.stock}
-                  onChange={(e) => handleFieldChange("stock", Number(e.target.value))}
+                  value={formData.stock || ''}
+                  onChange={(e) => {
+                    const value = e.target.value === '' ? 0 : Number(e.target.value);
+                    handleFieldChange("stock", value);
+                  }}
                   className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                     errors.stock ? 'border-red-300' : 'border-gray-300'
                   }`}
@@ -522,31 +560,21 @@ export default function CreateProductPage() {
               ))}
 
               {/* Upload new image */}
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
+              <label
+                htmlFor="image-upload"
+                className={`block border-2 border-dashed border-gray-300 rounded-lg p-6 cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors ${
+                  isUploading ? 'pointer-events-none opacity-50' : ''
+                }`}
+              >
                 <div className="text-center">
                   <Upload className="mx-auto h-12 w-12 text-gray-400" />
                   <div className="mt-4">
-                    <label htmlFor="image-upload" className="cursor-pointer">
-                      <span className="mt-2 block text-sm font-medium text-gray-900">
-                        Upload product image
-                      </span>
-                      <span className="mt-1 block text-sm text-gray-500">
-                        PNG, JPG, WebP up to 10MB
-                      </span>
-                    </label>
-                    <input
-                      id="image-upload"
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          handleImageUpload(file);
-                        }
-                      }}
-                      className="sr-only"
-                      disabled={isUploading}
-                    />
+                    <span className="mt-2 block text-sm font-medium text-gray-900">
+                      Upload product image
+                    </span>
+                    <span className="mt-1 block text-sm text-gray-500">
+                      PNG, JPG, WebP up to 10MB
+                    </span>
                   </div>
                   {isUploading && (
                     <div className="mt-4 flex items-center justify-center">
@@ -555,8 +583,31 @@ export default function CreateProductPage() {
                     </div>
                   )}
                 </div>
-              </div>
+                <input
+                  id="image-upload"
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      handleImageUpload(file);
+                    }
+                  }}
+                  className="sr-only"
+                  disabled={isUploading}
+                />
+              </label>
             </div>
+          </div>
+
+          {/* Product Variants */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <VariantManager
+              variants={formData.variants}
+              onVariantsChange={handleVariantsChange}
+              isEditing={true}
+              errors={errors.variants ? { variants: errors.variants } : {}}
+            />
           </div>
         </form>
       </div>

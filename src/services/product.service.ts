@@ -102,20 +102,46 @@ export class ProductService {
     const response = await this.getProducts(params);
     const { products, filters_available } = response;
 
-    // Update filter store with dynamic category data if available
-    if (filters_available?.categories) {
+    // Update filter store with dynamic filter data if available
+    if (filters_available) {
       try {
         const { useFilterStore } = await import('../stores/filterStore');
         const store = useFilterStore.getState();
-        store.updateFilterOptions({
-          categories: filters_available.categories.map(cat => ({
+        const updateOptions: Partial<{
+          availability: Array<{ value: string; label: string }>;
+          categories: Array<{ value: string; label: string; slug: string }>;
+          colors: Array<{ value: string; label: string }>;
+          materials: Array<{ value: string; label: string }>;
+        }> = {};
+
+        // Update categories if available
+        if (filters_available.categories) {
+          updateOptions.categories = filters_available.categories.map(cat => ({
             value: cat.id,
             label: cat.name,
             slug: cat.name.toLowerCase().replace(/\s+/g, '-')
-          }))
-        });
+          }));
+        }
+
+        // Update colors if available
+        if (filters_available.colors) {
+          updateOptions.colors = filters_available.colors.map(color => ({
+            value: color,
+            label: color
+          }));
+        }
+
+        // Update materials if available
+        if (filters_available.materials) {
+          updateOptions.materials = filters_available.materials.map(material => ({
+            value: material,
+            label: material
+          }));
+        }
+
+        store.updateFilterOptions(updateOptions);
       } catch (error) {
-        console.warn('Failed to update filter store with category data:', error);
+        console.warn('Failed to update filter store with dynamic filter data:', error);
       }
     }
 
@@ -147,9 +173,9 @@ export class ProductService {
   }
 
   /**
-   * Search products
+   * Search products using dedicated search endpoint
    */
-  static async searchProducts(query: string, filters?: Partial<ProductsQueryParams>): Promise<Product[]> {
+  static async searchProducts(query: string, filters?: Partial<ProductsQueryParams>): Promise<ProductsResponse> {
     try {
       const queryParams = new URLSearchParams({ q: query });
       if (filters) {
@@ -165,13 +191,13 @@ export class ProductService {
         });
       }
 
-      const response = await apiService.get<{ products: Product[] }>(`${API_ENDPOINTS.PRODUCTS.SEARCH}?${queryParams.toString()}`);
+      const response = await apiService.get<ProductsResponse>(`${API_ENDPOINTS.PRODUCTS.SEARCH}?${queryParams.toString()}`);
 
       if (!response.success || !response.data) {
         throw new Error('Failed to search products');
       }
 
-      return response.data.products;
+      return response.data;
     } catch (error) {
       console.error('Error searching products:', error);
       throw transformApiError(error);

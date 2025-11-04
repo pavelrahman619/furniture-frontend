@@ -87,6 +87,10 @@ export interface ProductsQueryParams {
   color?: string;
   material?: string;
   search?: string;
+  // Additional filters that could be supported
+  featured?: boolean;
+  sort?: string;
+  order?: 'asc' | 'desc';
 }
 
 // Filter types for frontend

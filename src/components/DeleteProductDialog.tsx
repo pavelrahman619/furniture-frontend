@@ -8,7 +8,8 @@ interface Product {
   id: string;
   name: string;
   sku: string;
-  category: string;
+  categoryId: string;
+  category?: string; // Optional for display purposes
   price: number;
   image: string;
   totalStock: number;
@@ -95,7 +96,7 @@ export function DeleteProductDialog({
                     SKU: {product.sku}
                   </p>
                   <p className="text-sm text-gray-500">
-                    Category: {product.category}
+                    Category: {product.category || 'Uncategorized'}
                   </p>
                   <p className="text-sm text-gray-500">
                     Price: ${product.price.toLocaleString()}
