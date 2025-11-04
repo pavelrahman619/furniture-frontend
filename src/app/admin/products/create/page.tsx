@@ -9,10 +9,11 @@ import { useAdmin } from "@/contexts/AdminContext";
 import { useCreateProduct } from "@/hooks/useAdminProducts";
 import AdminGuard from "@/components/AdminGuard";
 import { uploadImageToCloudinary, validateImageFile } from "@/lib/cloudinary-utils";
-import { CreateProductRequest, ProductImage } from "@/types/product.types";
+import { CreateProductRequest, ProductImage, ProductVariant } from "@/types/product.types";
 import { useToast } from "@/contexts/ToastContext";
 import { fetchCategories } from "@/services/category.service";
 import { useQuery } from "@tanstack/react-query";
+import VariantManager from "@/components/VariantManager";
 
 // Product interface for form data
 interface ProductFormData {
@@ -24,6 +25,7 @@ interface ProductFormData {
   images: ProductImage[];
   featured: boolean;
   stock: number;
+  variants: ProductVariant[];
 }
 
 // Form validation errors
@@ -36,6 +38,7 @@ interface FormErrors {
   images?: string;
   stock?: string;
   featured?: string;
+  variants?: string;
 }
 
 // Initial form state
@@ -48,6 +51,7 @@ const initialFormData: ProductFormData = {
   images: [],
   featured: false,
   stock: 0,
+  variants: [],
 };
 
 export default function CreateProductPage() {
@@ -84,7 +88,7 @@ export default function CreateProductPage() {
   // Handle basic field changes
   const handleFieldChange = (
     field: keyof ProductFormData,
-    value: string | number | boolean
+    value: string | number | boolean | ProductVariant[]
   ) => {
     setFormData((prev) => ({
       ...prev,
@@ -98,6 +102,11 @@ export default function CreateProductPage() {
         [field]: undefined,
       }));
     }
+  };
+
+  // Handle variant changes
+  const handleVariantsChange = (variants: ProductVariant[]) => {
+    handleFieldChange("variants", variants);
   };
 
   // Handle image upload
@@ -214,6 +223,28 @@ export default function CreateProductPage() {
       newErrors.stock = 'Stock cannot be negative';
     }
 
+    // Validate variants if any exist
+    if (formData.variants.length > 0) {
+      const variantSkus = formData.variants.map(v => v.sku);
+      const duplicateSkus = variantSkus.filter((sku, index) => variantSkus.indexOf(sku) !== index);
+      
+      if (duplicateSkus.length > 0) {
+        newErrors.variants = 'Variant SKUs must be unique';
+      }
+
+      // Check for variants with invalid data
+      const invalidVariants = formData.variants.some(variant => 
+        !variant.sku.trim() || 
+        variant.price <= 0 || 
+        variant.stock < 0 ||
+        (!variant.color && !variant.material && !variant.size)
+      );
+
+      if (invalidVariants) {
+        newErrors.variants = 'All variants must have valid SKU, price, stock, and at least one property (color, material, or size)';
+      }
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -241,6 +272,7 @@ export default function CreateProductPage() {
         images: formData.images,
         featured: formData.featured,
         stock: formData.stock,
+        variants: formData.variants,
       };
 
       await createProductMutation.mutateAsync({
@@ -566,6 +598,16 @@ export default function CreateProductPage() {
                 />
               </label>
             </div>
+          </div>
+
+          {/* Product Variants */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <VariantManager
+              variants={formData.variants}
+              onVariantsChange={handleVariantsChange}
+              isEditing={true}
+              errors={errors.variants ? { variants: errors.variants } : {}}
+            />
           </div>
         </form>
       </div>
