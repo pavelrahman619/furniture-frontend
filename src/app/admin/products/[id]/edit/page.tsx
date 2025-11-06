@@ -517,7 +517,7 @@ export default function EditProductPage() {
                 </div>
               </div>
 
-              <div className="mb-6">
+              {/* <div className="mb-6">
                 <div className="flex items-center">
                   <input
                     type="checkbox"
@@ -530,7 +530,7 @@ export default function EditProductPage() {
                     Mark as Featured Product
                   </label>
                 </div>
-              </div>
+              </div> */}
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
