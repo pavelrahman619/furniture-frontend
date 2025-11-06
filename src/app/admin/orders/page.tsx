@@ -5,6 +5,7 @@ import Link from "next/link";
 import AdminGuard from "@/components/AdminGuard";
 import { useAdminOrders, useUpdateOrderStatus, AdminOrdersParams } from "@/hooks/useAdminOrders";
 import { AdminOrder } from "@/services/order.service";
+
 import {
   Search, // Still needed for "No orders found" icon
   Filter,
@@ -23,6 +24,7 @@ import {
   AlertCircle,
   RefreshCw,
   ArrowRight,
+  Download,
 } from "lucide-react";
 
 // Re-export types from service for consistency
@@ -66,6 +68,7 @@ const statusConfig = {
 };
 
 export default function OrdersPage() {
+
   // Filter and pagination state
   // const [searchTerm, setSearchTerm] = useState(""); // Backend doesn't support search
   const [statusFilter, setStatusFilter] = useState("");
@@ -75,6 +78,7 @@ export default function OrdersPage() {
   // const [sortDirection, setSortDirection] = useState<SortDirection>("desc"); // Backend doesn't support sorting
   const [showFilters, setShowFilters] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [isExporting, setIsExporting] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   // Build query parameters (only backend-supported parameters)
@@ -158,6 +162,71 @@ export default function OrdersPage() {
     setCurrentPage(1);
   }, []);
 
+  // Handle export functionality
+  const handleExport = useCallback(async () => {
+    setIsExporting(true);
+    try {
+      // Use the OrderService for export
+      const { OrderService } = await import('@/services/order.service');
+      
+      // Build export parameters based on current filters
+      const exportParams = {
+        status: statusFilter || undefined,
+        date_from: dateRange.start || undefined,
+        date_to: dateRange.end || undefined,
+        format: 'xlsx' as const,
+      };
+
+      // Call the export service
+      const blob = await OrderService.exportOrders(exportParams);
+
+      // Generate filename with current date and filter info
+      const dateStr = new Date().toISOString().split('T')[0];
+      const filterStr = statusFilter ? `-${statusFilter}` : '';
+      const filename = `orders-export${filterStr}-${dateStr}.xlsx`;
+
+      // Create and trigger download
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      link.style.display = 'none';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      // Show success feedback
+      alert(`Export completed successfully: ${filename}`);
+    } catch (error) {
+      console.error('Export failed:', error);
+      
+      // Enhanced error handling with specific messages
+      let errorMessage = 'Export failed. Please try again.';
+      
+      if (error instanceof Error) {
+        if (error.message.includes('authentication') || error.message.includes('Authentication')) {
+          errorMessage = 'Please log in again to export orders.';
+        } else if (error.message.includes('Access denied')) {
+          errorMessage = 'You do not have permission to export orders.';
+        } else if (error.message.includes('not found') || error.message.includes('Feature may not be available')) {
+          errorMessage = 'Export feature is not available yet. Please contact support.';
+        } else if (error.message.includes('Network error')) {
+          errorMessage = 'Network error. Please check your connection and try again.';
+        } else if (error.message.includes('empty')) {
+          errorMessage = 'No data to export. Try adjusting your filters.';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
+      // Show error to user
+      alert(`Export Failed: ${errorMessage}`);
+    } finally {
+      setIsExporting(false);
+    }
+  }, [statusFilter, dateRange]);
+
   return (
     <AdminGuard>
     <main className="min-h-screen bg-gray-50">
@@ -182,6 +251,19 @@ export default function OrdersPage() {
                   Retry
                 </button>
               )}
+              <button
+                onClick={handleExport}
+                disabled={isExporting || isLoading || displayedOrders.length === 0}
+                className="flex items-center px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                title={`Export ${displayedOrders.length} orders to Excel`}
+              >
+                {isExporting ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Download className="h-4 w-4 mr-2" />
+                )}
+                {isExporting ? 'Exporting...' : 'Export'}
+              </button>
               <div className="flex items-center space-x-2 text-sm text-gray-600">
                 <DollarSign className="h-4 w-4" />
                 <span>
@@ -378,7 +460,16 @@ export default function OrdersPage() {
           )}
           <div className="overflow-x-auto relative">
             {/* Fixed Header */}
-            <table className="w-full">
+            <table className="w-full table-fixed">
+              <colgroup>
+                <col style={{ width: '16%' }} />
+                <col style={{ width: '20%' }} />
+                <col style={{ width: '10%' }} />
+                <col style={{ width: '12%' }} />
+                <col style={{ width: '12%' }} />
+                <col style={{ width: '15%' }} />
+                <col style={{ width: '15%' }} />
+              </colgroup>
               <thead className="bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
                 <tr>
                   {/* Sorting disabled - Backend doesn't support sorting */}
@@ -413,7 +504,16 @@ export default function OrdersPage() {
               className="overflow-y-auto"
               style={{ height: TABLE_HEIGHT }}
             >
-              <table className="w-full">
+              <table className="w-full table-fixed">
+                <colgroup>
+                  <col style={{ width: '16%' }} />
+                  <col style={{ width: '20%' }} />
+                  <col style={{ width: '10%' }} />
+                  <col style={{ width: '12%' }} />
+                  <col style={{ width: '12%' }} />
+                  <col style={{ width: '15%' }} />
+                  <col style={{ width: '15%' }} />
+                </colgroup>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {displayedOrders.map((order) => {
                     const StatusIcon = statusConfig[order.status].icon;
@@ -433,14 +533,14 @@ export default function OrdersPage() {
                             </div>
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center">
-                            <User className="h-4 w-4 text-gray-400 mr-2" />
-                            <div>
-                              <div className="text-sm font-medium text-gray-900">
+                        <td className="px-6 py-4">
+                          <div className="flex items-start">
+                            <User className="h-4 w-4 text-gray-400 mr-2 mt-0.5 flex-shrink-0" />
+                            <div className="min-w-0">
+                              <div className="text-sm font-medium text-gray-900 truncate">
                                 {order.customerName}
                               </div>
-                              <div className="text-sm text-gray-500">
+                              <div className="text-sm text-gray-500 truncate">
                                 {order.customerEmail}
                               </div>
                             </div>
@@ -468,19 +568,21 @@ export default function OrdersPage() {
                             {statusConfig[order.status].label}
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center text-sm text-gray-900">
-                            <Calendar className="h-4 w-4 text-gray-400 mr-2" />
-                            {new Date(order.orderDate).toLocaleDateString()}
-                          </div>
-                          {order.estimatedDelivery && (
-                            <div className="text-xs text-gray-500">
-                              Est. delivery:{" "}
-                              {new Date(
-                                order.estimatedDelivery
-                              ).toLocaleDateString()}
+                        <td className="px-6 py-4">
+                          <div className="flex items-start text-sm text-gray-900">
+                            <Calendar className="h-4 w-4 text-gray-400 mr-2 mt-0.5 flex-shrink-0" />
+                            <div className="min-w-0">
+                              <div>{new Date(order.orderDate).toLocaleDateString()}</div>
+                              {order.estimatedDelivery && (
+                                <div className="text-xs text-gray-500">
+                                  Est. delivery:{" "}
+                                  {new Date(
+                                    order.estimatedDelivery
+                                  ).toLocaleDateString()}
+                                </div>
+                              )}
                             </div>
-                          )}
+                          </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <select
