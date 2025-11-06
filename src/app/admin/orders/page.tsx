@@ -5,6 +5,7 @@ import Link from "next/link";
 import AdminGuard from "@/components/AdminGuard";
 import { useAdminOrders, useUpdateOrderStatus, AdminOrdersParams } from "@/hooks/useAdminOrders";
 import { AdminOrder } from "@/services/order.service";
+
 import {
   Search, // Still needed for "No orders found" icon
   Filter,
@@ -23,6 +24,7 @@ import {
   AlertCircle,
   RefreshCw,
   ArrowRight,
+  Download,
 } from "lucide-react";
 
 // Re-export types from service for consistency
@@ -66,6 +68,7 @@ const statusConfig = {
 };
 
 export default function OrdersPage() {
+
   // Filter and pagination state
   // const [searchTerm, setSearchTerm] = useState(""); // Backend doesn't support search
   const [statusFilter, setStatusFilter] = useState("");
@@ -75,6 +78,7 @@ export default function OrdersPage() {
   // const [sortDirection, setSortDirection] = useState<SortDirection>("desc"); // Backend doesn't support sorting
   const [showFilters, setShowFilters] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [isExporting, setIsExporting] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   // Build query parameters (only backend-supported parameters)
@@ -158,6 +162,71 @@ export default function OrdersPage() {
     setCurrentPage(1);
   }, []);
 
+  // Handle export functionality
+  const handleExport = useCallback(async () => {
+    setIsExporting(true);
+    try {
+      // Use the OrderService for export
+      const { OrderService } = await import('@/services/order.service');
+      
+      // Build export parameters based on current filters
+      const exportParams = {
+        status: statusFilter || undefined,
+        date_from: dateRange.start || undefined,
+        date_to: dateRange.end || undefined,
+        format: 'xlsx' as const,
+      };
+
+      // Call the export service
+      const blob = await OrderService.exportOrders(exportParams);
+
+      // Generate filename with current date and filter info
+      const dateStr = new Date().toISOString().split('T')[0];
+      const filterStr = statusFilter ? `-${statusFilter}` : '';
+      const filename = `orders-export${filterStr}-${dateStr}.xlsx`;
+
+      // Create and trigger download
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      link.style.display = 'none';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      // Show success feedback
+      alert(`Export completed successfully: ${filename}`);
+    } catch (error) {
+      console.error('Export failed:', error);
+      
+      // Enhanced error handling with specific messages
+      let errorMessage = 'Export failed. Please try again.';
+      
+      if (error instanceof Error) {
+        if (error.message.includes('authentication') || error.message.includes('Authentication')) {
+          errorMessage = 'Please log in again to export orders.';
+        } else if (error.message.includes('Access denied')) {
+          errorMessage = 'You do not have permission to export orders.';
+        } else if (error.message.includes('not found') || error.message.includes('Feature may not be available')) {
+          errorMessage = 'Export feature is not available yet. Please contact support.';
+        } else if (error.message.includes('Network error')) {
+          errorMessage = 'Network error. Please check your connection and try again.';
+        } else if (error.message.includes('empty')) {
+          errorMessage = 'No data to export. Try adjusting your filters.';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
+      // Show error to user
+      alert(`Export Failed: ${errorMessage}`);
+    } finally {
+      setIsExporting(false);
+    }
+  }, [statusFilter, dateRange]);
+
   return (
     <AdminGuard>
     <main className="min-h-screen bg-gray-50">
@@ -182,6 +251,19 @@ export default function OrdersPage() {
                   Retry
                 </button>
               )}
+              <button
+                onClick={handleExport}
+                disabled={isExporting || isLoading || displayedOrders.length === 0}
+                className="flex items-center px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                title={`Export ${displayedOrders.length} orders to Excel`}
+              >
+                {isExporting ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Download className="h-4 w-4 mr-2" />
+                )}
+                {isExporting ? 'Exporting...' : 'Export'}
+              </button>
               <div className="flex items-center space-x-2 text-sm text-gray-600">
                 <DollarSign className="h-4 w-4" />
                 <span>

@@ -72,6 +72,7 @@ export const API_ENDPOINTS = {
     CREATE: '/orders',
     UPDATE_STATUS: (id: string) => `/orders/${id}/status`,
     TRACK: (id: string) => `/orders/${id}/track`,
+    EXPORT: '/admin/orders/export', // Admin endpoint for exporting orders
   },
 
   // Payment

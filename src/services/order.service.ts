@@ -416,6 +416,86 @@ export class OrderService {
     }
     return response.data;
   }
+
+  /**
+   * Export orders to Excel (admin only)
+   */
+  static async exportOrders(params?: {
+    status?: string;
+    date_from?: string;
+    date_to?: string;
+    format?: 'xlsx' | 'csv';
+  }): Promise<Blob> {
+    // Get admin token for authentication
+    const { AdminService } = await import('./admin.service');
+    const token = AdminService.getCurrentToken();
+    
+    if (!token) {
+      throw new Error('Admin authentication required');
+    }
+
+    const queryParams = new URLSearchParams();
+    
+    // Add filter parameters
+    if (params?.status) queryParams.append('status', params.status);
+    if (params?.date_from) queryParams.append('date_from', params.date_from);
+    if (params?.date_to) queryParams.append('date_to', params.date_to);
+    if (params?.format) queryParams.append('format', params.format);
+
+    // Build full URL with base URL and query params
+    const { buildApiUrl, getApiHeaders } = await import('@/lib/api-config');
+    const url = buildApiUrl(`${API_ENDPOINTS.ORDERS.EXPORT}?${queryParams.toString()}`);
+    const headers = getApiHeaders(token);
+
+    // Override Accept header to expect binary response (Excel file)
+    headers['Accept'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+    // Remove Content-Type for GET requests with binary response
+    delete headers['Content-Type'];
+
+    try {
+      const response = await fetch(url, {
+        method: 'GET',
+        headers,
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        let errorMessage = 'Failed to export orders';
+        try {
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData.message || errorMessage;
+        } catch {
+          errorMessage = errorText || errorMessage;
+        }
+
+        if (response.status === 401) {
+          throw new Error('Authentication required. Please log in again.');
+        }
+        if (response.status === 403) {
+          throw new Error('Access denied. Admin privileges required.');
+        }
+        if (response.status === 404) {
+          throw new Error('Export endpoint not found. Feature may not be available yet.');
+        }
+        throw new Error(errorMessage);
+      }
+
+      const blob = await response.blob();
+      
+      // Validate that we received a valid file
+      if (blob.size === 0) {
+        throw new Error('Export file is empty');
+      }
+
+      return blob;
+    } catch (error) {
+      console.error('Error exporting orders to Excel:', error);
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new Error('Network error occurred during export');
+    }
+  }
 }
 
 export default OrderService;
