@@ -460,7 +460,16 @@ export default function OrdersPage() {
           )}
           <div className="overflow-x-auto relative">
             {/* Fixed Header */}
-            <table className="w-full">
+            <table className="w-full table-fixed">
+              <colgroup>
+                <col style={{ width: '16%' }} />
+                <col style={{ width: '20%' }} />
+                <col style={{ width: '10%' }} />
+                <col style={{ width: '12%' }} />
+                <col style={{ width: '12%' }} />
+                <col style={{ width: '15%' }} />
+                <col style={{ width: '15%' }} />
+              </colgroup>
               <thead className="bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
                 <tr>
                   {/* Sorting disabled - Backend doesn't support sorting */}
@@ -495,7 +504,16 @@ export default function OrdersPage() {
               className="overflow-y-auto"
               style={{ height: TABLE_HEIGHT }}
             >
-              <table className="w-full">
+              <table className="w-full table-fixed">
+                <colgroup>
+                  <col style={{ width: '16%' }} />
+                  <col style={{ width: '20%' }} />
+                  <col style={{ width: '10%' }} />
+                  <col style={{ width: '12%' }} />
+                  <col style={{ width: '12%' }} />
+                  <col style={{ width: '15%' }} />
+                  <col style={{ width: '15%' }} />
+                </colgroup>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {displayedOrders.map((order) => {
                     const StatusIcon = statusConfig[order.status].icon;
@@ -515,14 +533,14 @@ export default function OrdersPage() {
                             </div>
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center">
-                            <User className="h-4 w-4 text-gray-400 mr-2" />
-                            <div>
-                              <div className="text-sm font-medium text-gray-900">
+                        <td className="px-6 py-4">
+                          <div className="flex items-start">
+                            <User className="h-4 w-4 text-gray-400 mr-2 mt-0.5 flex-shrink-0" />
+                            <div className="min-w-0">
+                              <div className="text-sm font-medium text-gray-900 truncate">
                                 {order.customerName}
                               </div>
-                              <div className="text-sm text-gray-500">
+                              <div className="text-sm text-gray-500 truncate">
                                 {order.customerEmail}
                               </div>
                             </div>
@@ -550,19 +568,21 @@ export default function OrdersPage() {
                             {statusConfig[order.status].label}
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center text-sm text-gray-900">
-                            <Calendar className="h-4 w-4 text-gray-400 mr-2" />
-                            {new Date(order.orderDate).toLocaleDateString()}
-                          </div>
-                          {order.estimatedDelivery && (
-                            <div className="text-xs text-gray-500">
-                              Est. delivery:{" "}
-                              {new Date(
-                                order.estimatedDelivery
-                              ).toLocaleDateString()}
+                        <td className="px-6 py-4">
+                          <div className="flex items-start text-sm text-gray-900">
+                            <Calendar className="h-4 w-4 text-gray-400 mr-2 mt-0.5 flex-shrink-0" />
+                            <div className="min-w-0">
+                              <div>{new Date(order.orderDate).toLocaleDateString()}</div>
+                              {order.estimatedDelivery && (
+                                <div className="text-xs text-gray-500">
+                                  Est. delivery:{" "}
+                                  {new Date(
+                                    order.estimatedDelivery
+                                  ).toLocaleDateString()}
+                                </div>
+                              )}
                             </div>
-                          )}
+                          </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <select
