@@ -191,7 +191,8 @@ const ProductFilter = ({ productCount }: FilterProps) => {
             onChange={(selected) => handleFilterUpdate("shape", selected)}
           /> */}
 
-          <Dropdown
+          {/* Colors and Materials filters - UI hidden (logic kept intact) */}
+          {/* <Dropdown
             label="Colors"
             options={filterOptions.colors}
             selected={filters.colors || []}
@@ -203,7 +204,7 @@ const ProductFilter = ({ productCount }: FilterProps) => {
             options={filterOptions.materials}
             selected={filters.materials || []}
             onChange={(selected) => handleFilterUpdate("materials", selected)}
-          />
+          /> */}
 
           {/* All Filters Button */}
           <button
