@@ -255,8 +255,8 @@ export default function ProductPage({ params }: ProductPageProps) {
                 </div>
               )}
 
-              {/* Color Selection */}
-              {displayProduct.variants.color.options.length > 0 && (
+              {/* Color Selection - UI hidden (logic kept) */}
+              {/* {displayProduct.variants.color.options.length > 0 && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-3">
                     {displayProduct.variants.color.name}
@@ -294,7 +294,7 @@ export default function ProductPage({ params }: ProductPageProps) {
                     ))}
                   </div>
                 </div>
-              )}
+              )} */}
 
               {/* Material Selection (renamed from Finish) */}
               {displayProduct.variants.finish.options.length > 0 && (

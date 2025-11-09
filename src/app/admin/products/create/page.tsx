@@ -236,12 +236,11 @@ export default function CreateProductPage() {
       const invalidVariants = formData.variants.some(variant => 
         !variant.sku.trim() || 
         variant.price <= 0 || 
-        variant.stock < 0 ||
-        (!variant.color && !variant.material && !variant.size)
+        variant.stock < 0
       );
 
       if (invalidVariants) {
-        newErrors.variants = 'All variants must have valid SKU, price, stock, and at least one property (color, material, or size)';
+        newErrors.variants = 'All variants must have valid SKU, price, and non-negative stock';
       }
     }
 
