@@ -92,10 +92,8 @@ export default function VariantManager({
       errors.stock = "Stock cannot be negative";
     }
 
-    // At least one variant property should be specified
-    if (!variant.color && !variant.material && !variant.size) {
-      errors.color = "At least one variant property (color, material, or size) must be specified";
-    }
+    // Variant properties are optional (color/material UI hidden but still in data)
+    // No validation needed for optional fields
 
     return errors;
   }, []);
@@ -232,7 +230,8 @@ export default function VariantManager({
             {variants.map((variant, index) => (
               <div key={index} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 text-sm">
-                  {variant.color && (
+                  {/* Color/Material display hidden - UI only */}
+                  {/* {variant.color && (
                     <div>
                       <span className="font-medium text-gray-700">Color:</span>
                       <p className="text-gray-900">{variant.color}</p>
@@ -243,7 +242,7 @@ export default function VariantManager({
                       <span className="font-medium text-gray-700">Material:</span>
                       <p className="text-gray-900">{variant.material}</p>
                     </div>
-                  )}
+                  )} */}
                   {variant.size && (
                     <div>
                       <span className="font-medium text-gray-700">Size:</span>
@@ -314,7 +313,8 @@ export default function VariantManager({
                 // Display mode
                 <div className="flex items-center justify-between">
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 text-sm flex-1">
-                    {variant.color && (
+                    {/* Color/Material display hidden - UI only */}
+                    {/* {variant.color && (
                       <div>
                         <span className="font-medium text-gray-700">Color:</span>
                         <p className="text-gray-900">{variant.color}</p>
@@ -325,7 +325,7 @@ export default function VariantManager({
                         <span className="font-medium text-gray-700">Material:</span>
                         <p className="text-gray-900">{variant.material}</p>
                       </div>
-                    )}
+                    )} */}
                     {variant.size && (
                       <div>
                         <span className="font-medium text-gray-700">Size:</span>
@@ -410,7 +410,8 @@ function VariantForm({ variant, onChange, errors, onSave, onCancel, isEditing }:
     <div className="space-y-4">
       {/* Variant properties */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div>
+        {/* Color and Material input fields hidden - UI only (logic kept) */}
+        {/* <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Color
           </label>
@@ -444,7 +445,7 @@ function VariantForm({ variant, onChange, errors, onSave, onCancel, isEditing }:
           {errors.material && (
             <p className="mt-1 text-sm text-red-600">{errors.material}</p>
           )}
-        </div>
+        </div> */}
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
