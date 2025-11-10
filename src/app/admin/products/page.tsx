@@ -651,7 +651,7 @@ export default function ProductsPage() {
             {/* Expanded Filters */}
             {showFilters && (
               <div className="border-t border-gray-200 pt-4 mt-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Category
@@ -670,7 +670,8 @@ export default function ProductsPage() {
                     </select>
                   </div>
 
-                  <div>
+                  {/* Color Filter - UI hidden (logic kept) */}
+                  {/* <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Color
                     </label>
@@ -686,9 +687,10 @@ export default function ProductsPage() {
                         </option>
                       ))}
                     </select>
-                  </div>
+                  </div> */}
 
-                  <div>
+                  {/* Material Filter - UI hidden (logic kept) */}
+                  {/* <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Material
                     </label>
@@ -704,7 +706,7 @@ export default function ProductsPage() {
                         </option>
                       ))}
                     </select>
-                  </div>
+                  </div> */}
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">

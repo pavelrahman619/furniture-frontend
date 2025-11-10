@@ -123,10 +123,11 @@ const CartPage = () => {
                         <span className="text-gray-500 uppercase">WIDTH</span>
                         <span className="text-gray-900">{item.width}</span>
                       </div>
-                      <div className="grid grid-cols-2 gap-x-4">
+                      {/* Color display hidden - UI only (logic kept) */}
+                      {/* <div className="grid grid-cols-2 gap-x-4">
                         <span className="text-gray-500 uppercase">COLOR</span>
                         <span className="text-gray-900">{item.color}</span>
-                      </div>
+                      </div> */}
                       <div className="grid grid-cols-2 gap-x-4">
                         <span className="text-gray-500 uppercase">ITEM#</span>
                         <span className="text-gray-900">{item.sku}</span>
