@@ -296,8 +296,8 @@ export default function ProductPage({ params }: ProductPageProps) {
                 </div>
               )} */}
 
-              {/* Material Selection (renamed from Finish) */}
-              {displayProduct.variants.finish.options.length > 0 && (
+              {/* Material Selection (renamed from Finish) - UI hidden (logic kept) */}
+              {/* {displayProduct.variants.finish.options.length > 0 && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-3">
                     {displayProduct.variants.finish.name}
@@ -329,7 +329,7 @@ export default function ProductPage({ params }: ProductPageProps) {
                     ))}
                   </div>
                 </div>
-              )}
+              )} */}
             </div>
 
             {/* Stock Information Table */}
