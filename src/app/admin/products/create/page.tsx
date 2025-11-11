@@ -207,10 +207,6 @@ export default function CreateProductPage() {
       newErrors.category_id = 'Category is required';
     }
 
-    if (formData.price <= 0) {
-      newErrors.price = 'Price must be greater than 0';
-    }
-
     if (!formData.description.trim()) {
       newErrors.description = 'Description is required';
     }
@@ -269,7 +265,7 @@ export default function CreateProductPage() {
         name: formData.name.trim(),
         sku: formData.sku.trim(),
         category_id: formData.category_id,
-        price: formData.price,
+        price: 0, // Price is set at variant level only
         description: formData.description.trim(),
         images: formData.images,
         featured: formData.featured,
@@ -390,7 +386,7 @@ export default function CreateProductPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Category *
@@ -414,28 +410,6 @@ export default function CreateProductPage() {
                 </select>
                 {errors.category_id && (
                   <p className="mt-1 text-sm text-red-600">{errors.category_id}</p>
-                )}
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Price *
-                </label>
-                <input
-                  type="number"
-                  value={formData.price || ''}
-                  onChange={(e) => {
-                    const value = e.target.value === '' ? 0 : Number(e.target.value);
-                    handleFieldChange("price", value);
-                  }}
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                    errors.price ? 'border-red-300' : 'border-gray-300'
-                  }`}
-                  placeholder="0"
-                  min="0"
-                  step="0.1"
-                />
-                {errors.price && (
-                  <p className="mt-1 text-sm text-red-600">{errors.price}</p>
                 )}
               </div>
               <div>
