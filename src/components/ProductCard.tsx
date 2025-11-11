@@ -88,9 +88,9 @@ const ProductCard = ({ product }: ProductCardProps) => {
         
         {/* Price */}
         <div className="flex items-center justify-between">
-          {/* <span className="text-lg font-medium text-gray-900">
+          <span className="text-lg font-medium text-gray-900">
             ${product.price.toLocaleString()}
-          </span> */}
+          </span>
           
           {/* Stock Status */}
           <div className="flex items-center">
