@@ -201,6 +201,10 @@ export default function VariantManager({
 
   // Remove variant
   const handleRemoveVariant = useCallback((index: number) => {
+    // Prevent removing the last variant
+    if (variants.length <= 1) {
+      return;
+    }
     const updatedVariants = variants.filter((_, i) => i !== index);
     onVariantsChange(updatedVariants);
   }, [variants, onVariantsChange]);
@@ -357,8 +361,13 @@ export default function VariantManager({
                     <button
                       type="button"
                       onClick={() => handleRemoveVariant(index)}
-                      className="p-2 text-red-600 hover:bg-red-50 rounded-md transition-colors"
-                      title="Remove variant"
+                      disabled={variants.length <= 1}
+                      className={`p-2 rounded-md transition-colors ${
+                        variants.length <= 1
+                          ? 'text-gray-400 cursor-not-allowed'
+                          : 'text-red-600 hover:bg-red-50'
+                      }`}
+                      title={variants.length <= 1 ? 'At least one variant is required' : 'Remove variant'}
                     >
                       <X className="h-4 w-4" />
                     </button>

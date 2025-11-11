@@ -223,8 +223,11 @@ export default function CreateProductPage() {
       newErrors.stock = 'Stock cannot be negative';
     }
 
-    // Validate variants if any exist
-    if (formData.variants.length > 0) {
+    // Require at least one variant
+    if (formData.variants.length === 0) {
+      newErrors.variants = 'At least one product variant is required';
+    } else {
+      // Validate variants if any exist
       const variantSkus = formData.variants.map(v => v.sku);
       const duplicateSkus = variantSkus.filter((sku, index) => variantSkus.indexOf(sku) !== index);
       
