@@ -174,7 +174,7 @@ const transformApiProduct = (apiProduct: ApiProduct): Product => {
     name: apiProduct.name,
     sku: apiProduct.sku,
     categoryId: categoryId,
-    price: apiProduct.price,
+    price: apiProduct.variants[0]?.price || apiProduct.price,
     availability: totalStock > 0 ? "in-stock" : "out-of-stock",
     totalStock,
     image: imageUrl,
