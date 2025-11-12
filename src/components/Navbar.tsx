@@ -184,19 +184,21 @@ const Navbar = () => {
             )
             }
 
-            {/* Cart */}
-            <Link
-              href="/cart"
-              className="flex items-center text-sm text-gray-700 hover:text-gray-900 transition-colors relative"
-            >
-              <ShoppingBag className="h-4 w-4 mr-1" />
-              Cart
-              {cartItemCount > 0 && (
-                <span className="absolute -top-2 -right-2 bg-gray-900 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                  {cartItemCount > 99 ? "99+" : cartItemCount}
-                </span>
-              )}
-            </Link>
+            {/* Cart - Only show when admin is not logged in */}
+            {!isAuthenticated && (
+              <Link
+                href="/cart"
+                className="flex items-center text-sm text-gray-700 hover:text-gray-900 transition-colors relative"
+              >
+                <ShoppingBag className="h-4 w-4 mr-1" />
+                Cart
+                {cartItemCount > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-gray-900 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                    {cartItemCount > 99 ? "99+" : cartItemCount}
+                  </span>
+                )}
+              </Link>
+            )}
           </div>
         </div>
       </div>
