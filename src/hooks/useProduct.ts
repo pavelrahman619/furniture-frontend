@@ -42,7 +42,7 @@ export const useProduct = (id: string): UseProductResult => {
         availability: productData.stock && productData.stock > 0 ? 'in-stock' : 'out-of-stock',
         // features: [], // Commented out - not available in backend
         // shape: 'rectangular', // Commented out - not available in backend
-        price: productData.price,
+        price: productData.variants[0]?.price || productData.price,
         isFirstLook: productData.featured || false,
         stockInfo: stockData.locations.map((location: StockResponse['locations'][0]) => ({
           location: location.location,
@@ -59,7 +59,7 @@ export const useProduct = (id: string): UseProductResult => {
               .map((v: ProductVariant) => ({
                 value: v.size || '',
                 label: v.size || '',
-                priceModifier: v.price - productData.price
+                priceModifier: v.price - (productData.variants[0]?.price || productData.price)
               }))
               .filter((v: { value: string }, index: number, self: { value: string }[]) => 
                 index === self.findIndex((t: { value: string }) => t.value === v.value)
@@ -73,7 +73,7 @@ export const useProduct = (id: string): UseProductResult => {
                 value: v.color || '',
                 label: v.color || '',
                 colorCode: getColorCode(v.color || ''),
-                priceModifier: v.price - productData.price
+                priceModifier: v.price - (productData.variants[0]?.price || productData.price)
               }))
               .filter((v: { value: string }, index: number, self: { value: string }[]) => 
                 index === self.findIndex((t: { value: string }) => t.value === v.value)
@@ -86,7 +86,7 @@ export const useProduct = (id: string): UseProductResult => {
               .map((v: ProductVariant) => ({
                 value: v.material || '',
                 label: v.material || '',
-                priceModifier: v.price - productData.price
+                priceModifier: v.price - (productData.variants[0]?.price || productData.price)
               }))
               .filter((v: { value: string }, index: number, self: { value: string }[]) => 
                 index === self.findIndex((t: { value: string }) => t.value === v.value)
