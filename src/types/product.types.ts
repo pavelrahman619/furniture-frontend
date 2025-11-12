@@ -10,6 +10,7 @@ export interface ProductVariant {
   price: number;
   stock: number;
   sku: string;
+  images?: ProductImage[];
 }
 
 export interface ProductImage {
@@ -151,6 +152,8 @@ export interface ProductDetails {
   }[];
   description?: string;
   note?: string;
+  rawVariants?: ProductVariant[]; // Raw variant data for variant-specific image selection
+  productLevelImages?: string[]; // Product-level images as fallback
   variants: {
     size: {
       name: string;

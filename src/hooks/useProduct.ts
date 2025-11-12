@@ -31,11 +31,29 @@ export const useProduct = (id: string): UseProductResult => {
       ]);
 
       // Transform backend product to frontend ProductDetails format
+      // Priority: First variant's images > Product-level images (fallback)
+      let productImages: string[] = [];
+      
+      // Try to get images from first variant
+      if (productData.variants && productData.variants.length > 0 && productData.variants[0].images && productData.variants[0].images.length > 0) {
+        productImages = productData.variants[0].images.map((img: ProductImage) => img.url);
+      }
+      
+      // Fallback to product-level images (backwards compatibility)
+      if (productImages.length === 0 && productData.images && productData.images.length > 0) {
+        productImages = productData.images.map((img: ProductImage) => img.url);
+      }
+      
+      // Default placeholder if no images found
+      if (productImages.length === 0) {
+        productImages = ["https://images.unsplash.com/photo-1586023492125-27b2c045efd7?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80"];
+      }
+
       const transformedProduct: ProductDetails = {
         id: productData._id,
         name: productData.name,
         sku: productData.sku,
-        images: productData.images.map((img: ProductImage) => img.url),
+        images: productImages,
         category: typeof productData.category_id === 'object' 
           ? productData.category_id.name 
           : 'Unknown Category',
@@ -51,6 +69,10 @@ export const useProduct = (id: string): UseProductResult => {
         })),
         description: productData.description,
         note: "The color of the product might differ due to production and your monitor screen settings. It's essential to ensure proper color calibration to accurately represent our products.",
+        // Store raw variant data for variant-specific image selection
+        rawVariants: productData.variants,
+        // Store product-level images as fallback
+        productLevelImages: productData.images.map((img: ProductImage) => img.url),
         variants: {
           size: {
             name: "Size",

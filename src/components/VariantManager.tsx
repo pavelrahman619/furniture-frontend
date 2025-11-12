@@ -1,8 +1,10 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { Plus, X, Edit2, Check, AlertCircle } from "lucide-react";
-import { ProductVariant } from "@/types/product.types";
+import Image from "next/image";
+import { Plus, X, Edit2, Check, AlertCircle, Upload, Loader2 } from "lucide-react";
+import { ProductVariant, ProductImage } from "@/types/product.types";
+import { uploadImageToCloudinary, validateImageFile } from "@/lib/cloudinary-utils";
 
 interface VariantManagerProps {
   variants: ProductVariant[];
@@ -18,6 +20,7 @@ interface VariantFormData {
   price: number;
   stock: number;
   sku: string;
+  images?: ProductImage[];
 }
 
 interface VariantErrors {
@@ -27,6 +30,7 @@ interface VariantErrors {
   price?: string;
   stock?: string;
   sku?: string;
+  images?: string;
 }
 
 const initialVariantData: VariantFormData = {
@@ -36,6 +40,7 @@ const initialVariantData: VariantFormData = {
   price: 0,
   stock: 0,
   sku: "",
+  images: [],
 };
 
 export default function VariantManager({
@@ -49,6 +54,7 @@ export default function VariantManager({
   const [newVariant, setNewVariant] = useState<VariantFormData>(initialVariantData);
   const [editingVariant, setEditingVariant] = useState<VariantFormData>(initialVariantData);
   const [variantErrors, setVariantErrors] = useState<VariantErrors>({});
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
 
   // Generate unique SKU for variant
   const generateVariantSku = useCallback((baseVariant: VariantFormData): string => {
@@ -143,6 +149,7 @@ export default function VariantManager({
       price: newVariant.price,
       stock: newVariant.stock,
       sku: newVariant.sku,
+      images: newVariant.images || [],
     };
 
     onVariantsChange([...variants, variant]);
@@ -161,6 +168,7 @@ export default function VariantManager({
       price: variant.price,
       stock: variant.stock,
       sku: variant.sku,
+      images: variant.images || [],
     });
     setEditingIndex(index);
     setVariantErrors({});
@@ -184,6 +192,7 @@ export default function VariantManager({
       price: editingVariant.price,
       stock: editingVariant.stock,
       sku: editingVariant.sku,
+      images: editingVariant.images || [],
     };
 
     onVariantsChange(updatedVariants);
@@ -214,6 +223,114 @@ export default function VariantManager({
     setIsAddingVariant(false);
     setNewVariant(initialVariantData);
     setVariantErrors({});
+  }, []);
+
+  // Handle image upload for new variant
+  const handleNewVariantImageUpload = useCallback(async (file: File) => {
+    const validation = validateImageFile(file);
+    if (!validation.valid) {
+      setVariantErrors((prev) => ({ ...prev, images: validation.error }));
+      return;
+    }
+
+    setIsUploadingImage(true);
+    try {
+      const result = await uploadImageToCloudinary(file, {
+        folder: 'PRODUCT_IMAGES',
+        tags: ['product', 'variant', 'admin'],
+      });
+
+      if (result.success && result.url) {
+        const newImage: ProductImage = {
+          url: result.url,
+          alt: newVariant.size || 'Variant image',
+          is_primary: (newVariant.images?.length || 0) === 0,
+        };
+
+        setNewVariant((prev) => ({
+          ...prev,
+          images: [...(prev.images || []), newImage],
+        }));
+
+        setVariantErrors((prev) => ({ ...prev, images: undefined }));
+      } else {
+        setVariantErrors((prev) => ({ ...prev, images: result.error || 'Failed to upload image' }));
+      }
+    } catch (error) {
+      setVariantErrors((prev) => ({ ...prev, images: 'Failed to upload image' }));
+    } finally {
+      setIsUploadingImage(false);
+    }
+  }, [newVariant]);
+
+  // Handle image upload for editing variant
+  const handleEditingVariantImageUpload = useCallback(async (file: File) => {
+    const validation = validateImageFile(file);
+    if (!validation.valid) {
+      setVariantErrors((prev) => ({ ...prev, images: validation.error }));
+      return;
+    }
+
+    setIsUploadingImage(true);
+    try {
+      const result = await uploadImageToCloudinary(file, {
+        folder: 'PRODUCT_IMAGES',
+        tags: ['product', 'variant', 'admin'],
+      });
+
+      if (result.success && result.url) {
+        const newImage: ProductImage = {
+          url: result.url,
+          alt: editingVariant.size || 'Variant image',
+          is_primary: (editingVariant.images?.length || 0) === 0,
+        };
+
+        setEditingVariant((prev) => ({
+          ...prev,
+          images: [...(prev.images || []), newImage],
+        }));
+
+        setVariantErrors((prev) => ({ ...prev, images: undefined }));
+      } else {
+        setVariantErrors((prev) => ({ ...prev, images: result.error || 'Failed to upload image' }));
+      }
+    } catch (error) {
+      setVariantErrors((prev) => ({ ...prev, images: 'Failed to upload image' }));
+    } finally {
+      setIsUploadingImage(false);
+    }
+  }, [editingVariant]);
+
+  // Remove image from new variant
+  const handleRemoveNewVariantImage = useCallback((index: number) => {
+    setNewVariant((prev) => ({
+      ...prev,
+      images: prev.images?.filter((_, i) => i !== index) || [],
+    }));
+  }, []);
+
+  // Remove image from editing variant
+  const handleRemoveEditingVariantImage = useCallback((index: number) => {
+    setEditingVariant((prev) => ({
+      ...prev,
+      images: prev.images?.filter((_, i) => i !== index) || [],
+    }));
+  }, []);
+
+  // Set primary image for new variant
+  const handleSetNewVariantPrimaryImage = useCallback((index: number) => {
+    setNewVariant((prev) => ({
+      ...prev,
+      images: prev.images?.map((img, i) => ({ ...img, is_primary: i === index })) || [],
+    }));
+  }, []);
+
+  // Set primary image for editing variant
+  const handleSetEditingVariantPrimaryImage = useCallback((index: number) => {
+    setEditingVariant((prev) => ({
+      ...prev,
+      images: prev.images?.map((img, i) => ({ ...img, is_primary: i === index })) || [],
+    }));
   }, []);
 
   if (!isEditing) {
@@ -312,6 +429,10 @@ export default function VariantManager({
                   onSave={() => handleSaveVariant(index)}
                   onCancel={handleCancelEdit}
                   isEditing={true}
+                  onImageUpload={handleEditingVariantImageUpload}
+                  onRemoveImage={handleRemoveEditingVariantImage}
+                  onSetPrimaryImage={handleSetEditingVariantPrimaryImage}
+                  isUploadingImage={isUploadingImage}
                 />
               ) : (
                 // Display mode
@@ -390,6 +511,10 @@ export default function VariantManager({
             onSave={handleAddVariant}
             onCancel={handleCancelAdd}
             isEditing={false}
+            onImageUpload={handleNewVariantImageUpload}
+            onRemoveImage={handleRemoveNewVariantImage}
+            onSetPrimaryImage={handleSetNewVariantPrimaryImage}
+            isUploadingImage={isUploadingImage}
           />
         </div>
       )}
@@ -412,9 +537,13 @@ interface VariantFormProps {
   onSave: () => void;
   onCancel: () => void;
   isEditing: boolean;
+  onImageUpload: (file: File) => Promise<void>;
+  onRemoveImage: (index: number) => void;
+  onSetPrimaryImage: (index: number) => void;
+  isUploadingImage: boolean;
 }
 
-function VariantForm({ variant, onChange, errors, onSave, onCancel, isEditing }: VariantFormProps) {
+function VariantForm({ variant, onChange, errors, onSave, onCancel, isEditing, onImageUpload, onRemoveImage, onSetPrimaryImage, isUploadingImage }: VariantFormProps) {
   return (
     <div className="space-y-4">
       {/* Variant properties */}
@@ -472,6 +601,103 @@ function VariantForm({ variant, onChange, errors, onSave, onCancel, isEditing }:
           {errors.size && (
             <p className="mt-1 text-sm text-red-600">{errors.size}</p>
           )}
+        </div>
+      </div>
+
+      {/* Variant Images */}
+      <div className="border-t border-gray-200 pt-4">
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Variant Images
+        </label>
+        
+        {errors.images && (
+          <div className="mb-3 p-2 bg-red-50 border border-red-200 rounded-md">
+            <p className="text-sm text-red-600">{errors.images}</p>
+          </div>
+        )}
+
+        {(!variant.images || variant.images.length === 0) && (
+          <div className="mb-3 p-2 bg-yellow-50 border border-yellow-200 rounded-md">
+            <p className="text-sm text-yellow-700">⚠️ No images added for this variant. Images are recommended for better customer experience.</p>
+          </div>
+        )}
+
+        <div className="space-y-3">
+          {variant.images && variant.images.length > 0 && (
+            <div className="space-y-2">
+              {variant.images.map((image, index) => (
+                <div key={index} className="flex items-center space-x-3 p-2 border border-gray-200 rounded-md bg-white">
+                  <div className="w-16 h-16 border border-gray-300 rounded-md overflow-hidden bg-gray-50 flex-shrink-0">
+                    <Image
+                      src={image.url}
+                      alt={image.alt || `Variant image ${index + 1}`}
+                      width={64}
+                      height={64}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-gray-500 truncate">{image.alt || 'No description'}</p>
+                    <label className="flex items-center mt-1">
+                      <input
+                        type="radio"
+                        name={`primary-${isEditing ? 'edit' : 'new'}`}
+                        checked={image.is_primary || false}
+                        onChange={() => onSetPrimaryImage(index)}
+                        className="h-3 w-3 text-blue-600 focus:ring-blue-500 border-gray-300"
+                      />
+                      <span className="ml-1 text-xs text-gray-600">Primary</span>
+                    </label>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => onRemoveImage(index)}
+                    className="p-1 text-red-600 hover:bg-red-50 rounded-md transition-colors flex-shrink-0"
+                    title="Remove image"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Upload button */}
+          <label
+            htmlFor={`variant-image-upload-${isEditing ? 'edit' : 'new'}`}
+            className={`block border-2 border-dashed border-gray-300 rounded-md p-4 cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors text-center ${
+              isUploadingImage ? 'pointer-events-none opacity-50' : ''
+            }`}
+          >
+            <div className="flex flex-col items-center">
+              {isUploadingImage ? (
+                <>
+                  <Loader2 className="h-8 w-8 text-blue-600 animate-spin mb-2" />
+                  <span className="text-sm text-gray-600">Uploading...</span>
+                </>
+              ) : (
+                <>
+                  <Upload className="h-8 w-8 text-gray-400 mb-2" />
+                  <span className="text-sm font-medium text-gray-700">Upload image</span>
+                  <span className="text-xs text-gray-500 mt-1">PNG, JPG, WebP up to 10MB</span>
+                </>
+              )}
+            </div>
+            <input
+              id={`variant-image-upload-${isEditing ? 'edit' : 'new'}`}
+              type="file"
+              accept="image/*"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  onImageUpload(file);
+                  e.target.value = ''; // Reset input
+                }
+              }}
+              className="sr-only"
+              disabled={isUploadingImage}
+            />
+          </label>
         </div>
       </div>
 

@@ -58,6 +58,9 @@ export default function ProductPage({ params }: ProductPageProps) {
     finish: displayProduct.variants.finish.options[0]?.value || '',
   });
 
+  // Get images for currently selected variant
+  const [displayImages, setDisplayImages] = useState<string[]>(displayProduct.images);
+
   // Update selected variants when product data loads
   useEffect(() => {
     if (productDetails) {
@@ -68,6 +71,37 @@ export default function ProductPage({ params }: ProductPageProps) {
       });
     }
   }, [productDetails]);
+
+  // Update displayed images based on selected variant
+  useEffect(() => {
+    if (!productDetails?.rawVariants) {
+      setDisplayImages(displayProduct.images);
+      return;
+    }
+
+    // Find the matching variant based on selected attributes
+    const matchingVariant = productDetails.rawVariants.find(variant => {
+      const sizeMatch = !selectedVariants.size || variant.size === selectedVariants.size;
+      const colorMatch = !selectedVariants.color || variant.color === selectedVariants.color;
+      const finishMatch = !selectedVariants.finish || variant.material === selectedVariants.finish;
+      return sizeMatch && colorMatch && finishMatch;
+    });
+
+    // If matching variant has images, use them; otherwise fall back
+    if (matchingVariant?.images && matchingVariant.images.length > 0) {
+      const variantImages = matchingVariant.images.map(img => img.url);
+      setDisplayImages(variantImages);
+      setSelectedImageIndex(0); // Reset to first image when variant changes
+    } else if (productDetails.productLevelImages && productDetails.productLevelImages.length > 0) {
+      // Fallback to product-level images
+      setDisplayImages(productDetails.productLevelImages);
+      setSelectedImageIndex(0);
+    } else {
+      // Use default images
+      setDisplayImages(displayProduct.images);
+      setSelectedImageIndex(0);
+    }
+  }, [selectedVariants, productDetails, displayProduct.images]);
 
   // Show loading state
   if (loading) {
@@ -160,7 +194,7 @@ export default function ProductPage({ params }: ProductPageProps) {
             {/* Main Image */}
             <div className="aspect-[4/3] relative bg-gray-50 border border-gray-200">
               <Image
-                src={displayProduct.images[selectedImageIndex] || "/placeholder-image.jpg"}
+                src={displayImages[selectedImageIndex] || "/placeholder-image.jpg"}
                 alt={displayProduct.name}
                 fill
                 className="object-cover"
@@ -170,7 +204,7 @@ export default function ProductPage({ params }: ProductPageProps) {
 
             {/* Thumbnail Images */}
             <div className="grid grid-cols-5 gap-2">
-              {displayProduct.images.map((image, index) => (
+              {displayImages.map((image, index) => (
                 <button
                   key={index}
                   onClick={() => setSelectedImageIndex(index)}
@@ -418,7 +452,7 @@ export default function ProductPage({ params }: ProductPageProps) {
                       id: displayProduct.id, // Original MongoDB ObjectId for backend lookup
                       cartId: `${displayProduct.id}-${selectedVariants.size}-${selectedVariants.color}-${selectedVariants.finish}`, // Unique cart identifier
                       name: `${displayProduct.name}${variantDescription ? ` (${variantDescription})` : ''}`,
-                      image: displayProduct.images[0] || "/placeholder-image.jpg",
+                      image: displayImages[0] || "/placeholder-image.jpg",
                       price: calculateTotalPrice(),
                       sku: displayProduct.sku,
                       category: displayProduct.category,
