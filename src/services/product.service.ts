@@ -146,8 +146,21 @@ export class ProductService {
     }
 
     const toDisplayProduct = (product: Product): DisplayProduct => {
-      const images = product.images || [];
-      // const primaryImage = images.find((img) => img.is_primary) || images[0];
+      // Priority: First variant's primary image > First variant's first image > Product-level images (fallback)
+      let displayImages: ProductImage[] = [];
+      
+      // Try to get images from first variant
+      if (product.variants && product.variants.length > 0) {
+        const firstVariant = product.variants[0];
+        if (firstVariant.images && firstVariant.images.length > 0) {
+          displayImages = firstVariant.images;
+        }
+      }
+      
+      // Fallback to product-level images (for backwards compatibility with existing products)
+      if (displayImages.length === 0) {
+        displayImages = product.images || [];
+      }
 
       // Calculate total stock from variants and base stock
       const totalStock = typeof product.stock === 'number' && !Number.isNaN(product.stock)
@@ -163,7 +176,7 @@ export class ProductService {
         sku: product.sku,
         description: product.description,
         variants: product.variants || [],
-        images: images,
+        images: displayImages,
         stock: totalStock,
         availability: totalStock > 0 ? "in-stock" : "out-of-stock",
       };

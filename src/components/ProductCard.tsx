@@ -45,13 +45,18 @@ const ProductCard = ({ product }: ProductCardProps) => {
         {/* Product Image */}
         <div className="aspect-square relative">
           <Image
-            src={product.images[0].url}
+            src={
+              product.images && product.images.length > 0 && product.images[0]?.url
+                ? product.images[0].url
+                : "https://placehold.co/300x300"
+            }
             alt={product.name}
             fill
             className={`object-cover transition-all duration-300 ${
               imageLoaded ? "opacity-100" : "opacity-0"
             }`}
             onLoad={() => setImageLoaded(true)}
+            onError={() => setImageLoaded(true)} // Handle image load errors gracefully
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
           />
 
