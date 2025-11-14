@@ -5,6 +5,7 @@ import { useQuery, useQueryClient, useInfiniteQuery } from '@tanstack/react-quer
 import { ProductService } from '@/services/product.service';
 import {
   ProductsQueryParams,
+  ProductImage,
 } from '@/types/product.types';
 
 /**
@@ -120,8 +121,22 @@ export function useInfiniteProductsForDisplay(baseParams?: Omit<ProductsQueryPar
 
       // Transform products to DisplayProduct format
       return products.map(product => {
-        const images = product.images || [];
-        // const categoryField = product.category_id;
+        // Priority: First variant's images > Product-level images (fallback)
+        let displayImages: ProductImage[] = [];
+        
+        // Try to get images from first variant
+        if (product.variants && product.variants.length > 0) {
+          const firstVariant = product.variants[0];
+          if (firstVariant.images && firstVariant.images.length > 0) {
+            displayImages = firstVariant.images;
+          }
+        }
+        
+        // Fallback to product-level images (for backwards compatibility with existing products)
+        if (displayImages.length === 0) {
+          displayImages = product.images || [];
+        }
+
         const totalStock = typeof product.stock === 'number' && !Number.isNaN(product.stock)
           ? product.stock
           : (product.variants || []).reduce((sum, variant) => sum + (variant.stock || 0), 0);
@@ -135,12 +150,12 @@ export function useInfiniteProductsForDisplay(baseParams?: Omit<ProductsQueryPar
           category_name: typeof product.category_id === 'object' && product.category_id?.name 
             ? product.category_id.name 
             : undefined,
-          price: product.price,
+          price: product.variants[0]?.price || product.price,
           featured: product.featured ?? false,
           sku: product.sku,
           description: product.description,
           variants: product.variants || [],
-          images: images,
+          images: displayImages,
           stock: totalStock,
           availability: (totalStock > 0 ? 'in-stock' : 'out-of-stock') as 'in-stock' | 'out-of-stock',
         };

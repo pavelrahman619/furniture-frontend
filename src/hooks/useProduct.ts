@@ -31,18 +31,49 @@ export const useProduct = (id: string): UseProductResult => {
       ]);
 
       // Transform backend product to frontend ProductDetails format
+      // Priority: First variant's images > Product-level images (fallback)
+      let productImages: string[] = [];
+      
+      // Try to get images from first variant
+      if (productData.variants && productData.variants.length > 0 && productData.variants[0].images && productData.variants[0].images.length > 0) {
+        productImages = productData.variants[0].images.map((img: ProductImage) => img.url);
+      }
+      
+      // Fallback to product-level images (backwards compatibility)
+      if (productImages.length === 0 && productData.images && productData.images.length > 0) {
+        productImages = productData.images.map((img: ProductImage) => img.url);
+      }
+      
+      // Default placeholder if no images found
+      if (productImages.length === 0) {
+        productImages = ["https://images.unsplash.com/photo-1586023492125-27b2c045efd7?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80"];
+      }
+
+      // Dynamic variant structure based on product variation type
+      // Use attribute field instead of hardcoded size/color/material
+      const variantOptions = productData.variants
+        .filter((v: ProductVariant) => v.attribute)
+        .map((v: ProductVariant) => ({
+          value: v.attribute || '',
+          label: v.attribute || '',
+          priceModifier: v.price - (productData.variants[0]?.price || productData.price)
+        }))
+        .filter((v: { value: string }, index: number, self: { value: string }[]) => 
+          index === self.findIndex((t: { value: string }) => t.value === v.value)
+        );
+
       const transformedProduct: ProductDetails = {
         id: productData._id,
         name: productData.name,
         sku: productData.sku,
-        images: productData.images.map((img: ProductImage) => img.url),
+        images: productImages,
         category: typeof productData.category_id === 'object' 
           ? productData.category_id.name 
           : 'Unknown Category',
         availability: productData.stock && productData.stock > 0 ? 'in-stock' : 'out-of-stock',
         // features: [], // Commented out - not available in backend
         // shape: 'rectangular', // Commented out - not available in backend
-        price: productData.price,
+        price: productData.variants[0]?.price || productData.price,
         isFirstLook: productData.featured || false,
         stockInfo: stockData.locations.map((location: StockResponse['locations'][0]) => ({
           location: location.location,
@@ -51,46 +82,26 @@ export const useProduct = (id: string): UseProductResult => {
         })),
         description: productData.description,
         note: "The color of the product might differ due to production and your monitor screen settings. It's essential to ensure proper color calibration to accurately represent our products.",
+        // Store raw variant data for variant-specific image selection
+        rawVariants: productData.variants,
+        // Store product-level images as fallback
+        productLevelImages: productData.images.map((img: ProductImage) => img.url),
+        // Dynamic variation name from product data (e.g., "Size", "Dimensions", "Color")
+        variationName: productData.variation || "Size",
         variants: {
+          // Size field kept for backwards compatibility but now uses attribute data
           size: {
-            name: "Size",
-            options: productData.variants
-              .filter((v: ProductVariant) => v.size)
-              .map((v: ProductVariant) => ({
-                value: v.size || '',
-                label: v.size || '',
-                priceModifier: v.price - productData.price
-              }))
-              .filter((v: { value: string }, index: number, self: { value: string }[]) => 
-                index === self.findIndex((t: { value: string }) => t.value === v.value)
-              )
+            name: productData.variation || "Size",
+            options: variantOptions
           },
+          // Color and Material kept empty for backwards compatibility
           color: {
             name: "Color",
-            options: productData.variants
-              .filter((v: ProductVariant) => v.color)
-              .map((v: ProductVariant) => ({
-                value: v.color || '',
-                label: v.color || '',
-                colorCode: getColorCode(v.color || ''),
-                priceModifier: v.price - productData.price
-              }))
-              .filter((v: { value: string }, index: number, self: { value: string }[]) => 
-                index === self.findIndex((t: { value: string }) => t.value === v.value)
-              )
+            options: []
           },
           finish: {
             name: "Material",
-            options: productData.variants
-              .filter((v: ProductVariant) => v.material)
-              .map((v: ProductVariant) => ({
-                value: v.material || '',
-                label: v.material || '',
-                priceModifier: v.price - productData.price
-              }))
-              .filter((v: { value: string }, index: number, self: { value: string }[]) => 
-                index === self.findIndex((t: { value: string }) => t.value === v.value)
-              )
+            options: []
           }
         }
       };

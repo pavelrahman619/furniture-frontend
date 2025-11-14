@@ -2,14 +2,20 @@
  * Product types matching backend API structure
  */
 
+// Variation type constants
+export const VARIATION_TYPES = ['Size', 'Dimensions', 'Weight', 'Color', 'Material', 'Style'] as const;
+export type VariationType = typeof VARIATION_TYPES[number];
+
 export interface ProductVariant {
   _id?: string;
   color?: string;
   material?: string;
   size?: string;
+  attribute?: string; // Dynamic attribute value for the product's variation type
   price: number;
   stock: number;
   sku: string;
+  images?: ProductImage[];
 }
 
 export interface ProductImage {
@@ -32,6 +38,7 @@ export interface Product {
   category_id: string | Category; // Can be populated or not
   price: number;
   description?: string;
+  variation?: string; // Type of variation (e.g., Size, Dimensions, Color)
   variants: ProductVariant[];
   images: ProductImage[];
   featured?: boolean;
@@ -151,6 +158,9 @@ export interface ProductDetails {
   }[];
   description?: string;
   note?: string;
+  rawVariants?: ProductVariant[]; // Raw variant data for variant-specific image selection
+  productLevelImages?: string[]; // Product-level images as fallback
+  variationName?: string; // Dynamic variation name (e.g., "Size", "Dimensions", "Color")
   variants: {
     size: {
       name: string;
@@ -179,6 +189,7 @@ export interface CreateProductRequest {
   category_id: string;
   price: number;
   description?: string;
+  variation?: string;
   variants?: ProductVariant[];
   images?: ProductImage[];
   featured?: boolean;

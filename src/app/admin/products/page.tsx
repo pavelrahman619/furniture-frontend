@@ -158,8 +158,31 @@ const transformApiProduct = (apiProduct: ApiProduct): Product => {
     ? apiProduct.stock
     : (apiProduct.variants || []).reduce((sum, variant) => sum + (variant.stock || 0), 0);
 
-  const primaryImage = apiProduct.images?.find(img => img.is_primary) || apiProduct.images?.[0];
-  const imageUrl = primaryImage?.url || "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80";
+  // Priority: First variant's primary image > First variant's first image > Product-level images (fallback for backwards compatibility)
+  let imageUrl = "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80";
+  
+  // Try to get image from first variant
+  if (apiProduct.variants && apiProduct.variants.length > 0) {
+    const firstVariant = apiProduct.variants[0];
+    if (firstVariant.images && firstVariant.images.length > 0) {
+      const variantPrimaryImage = firstVariant.images.find(img => img.is_primary);
+      const variantFirstImage = firstVariant.images[0];
+      
+      if (variantPrimaryImage?.url) {
+        imageUrl = variantPrimaryImage.url;
+      } else if (variantFirstImage?.url) {
+        imageUrl = variantFirstImage.url;
+      }
+    }
+  }
+  
+  // Fallback to product-level images (for backwards compatibility with existing products)
+  if (imageUrl === "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80") {
+    const primaryImage = apiProduct.images?.find(img => img.is_primary) || apiProduct.images?.[0];
+    if (primaryImage?.url) {
+      imageUrl = primaryImage.url;
+    }
+  }
 
   // Extract category ID only
   let categoryId = '';
@@ -174,7 +197,7 @@ const transformApiProduct = (apiProduct: ApiProduct): Product => {
     name: apiProduct.name,
     sku: apiProduct.sku,
     categoryId: categoryId,
-    price: apiProduct.price,
+    price: apiProduct.variants[0]?.price || apiProduct.price,
     availability: totalStock > 0 ? "in-stock" : "out-of-stock",
     totalStock,
     image: imageUrl,

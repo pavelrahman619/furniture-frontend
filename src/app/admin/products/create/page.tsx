@@ -22,6 +22,7 @@ interface ProductFormData {
   category_id: string;
   price: number;
   description: string;
+  variation: string;
   images: ProductImage[];
   featured: boolean;
   stock: number;
@@ -35,6 +36,7 @@ interface FormErrors {
   category_id?: string;
   price?: string;
   description?: string;
+  variation?: string;
   images?: string;
   stock?: string;
   featured?: string;
@@ -48,6 +50,7 @@ const initialFormData: ProductFormData = {
   category_id: "",
   price: 0,
   description: "",
+  variation: "",
   images: [],
   featured: false,
   stock: 0,
@@ -207,24 +210,30 @@ export default function CreateProductPage() {
       newErrors.category_id = 'Category is required';
     }
 
-    if (formData.price <= 0) {
-      newErrors.price = 'Price must be greater than 0';
-    }
-
     if (!formData.description.trim()) {
       newErrors.description = 'Description is required';
     }
 
-    if (formData.images.length === 0) {
-      newErrors.images = 'At least one product image is required';
-    }
+    // DEPRECATED: Product-level images validation removed
+    // Images are now validated at variant level
+    // if (formData.images.length === 0) {
+    //   newErrors.images = 'At least one product image is required';
+    // }
 
     if (formData.stock < 0) {
       newErrors.stock = 'Stock cannot be negative';
     }
 
-    // Validate variants if any exist
-    if (formData.variants.length > 0) {
+    // Require at least one variant
+    if (formData.variants.length === 0) {
+      newErrors.variants = 'At least one product variant is required';
+    } else {
+      // Validate that variation type is selected if variants exist
+      if (!formData.variation || !formData.variation.trim()) {
+        newErrors.variation = 'Variation type is required when variants exist';
+      }
+
+      // Validate variants if any exist
       const variantSkus = formData.variants.map(v => v.sku);
       const duplicateSkus = variantSkus.filter((sku, index) => variantSkus.indexOf(sku) !== index);
       
@@ -266,8 +275,9 @@ export default function CreateProductPage() {
         name: formData.name.trim(),
         sku: formData.sku.trim(),
         category_id: formData.category_id,
-        price: formData.price,
+        price: 0, // Price is set at variant level only
         description: formData.description.trim(),
+        variation: formData.variation.trim(),
         images: formData.images,
         featured: formData.featured,
         stock: formData.stock,
@@ -387,7 +397,7 @@ export default function CreateProductPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Category *
@@ -411,28 +421,6 @@ export default function CreateProductPage() {
                 </select>
                 {errors.category_id && (
                   <p className="mt-1 text-sm text-red-600">{errors.category_id}</p>
-                )}
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Price *
-                </label>
-                <input
-                  type="number"
-                  value={formData.price || ''}
-                  onChange={(e) => {
-                    const value = e.target.value === '' ? 0 : Number(e.target.value);
-                    handleFieldChange("price", value);
-                  }}
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                    errors.price ? 'border-red-300' : 'border-gray-300'
-                  }`}
-                  placeholder="0"
-                  min="0"
-                  step="0.1"
-                />
-                {errors.price && (
-                  <p className="mt-1 text-sm text-red-600">{errors.price}</p>
                 )}
               </div>
               <div>
@@ -492,8 +480,13 @@ export default function CreateProductPage() {
             </div>
           </div>
 
-          {/* Product Images */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          {/* 
+            DEPRECATED: Product-level Images (kept for backwards compatibility)
+            Images are now managed at the variant level for better product organization.
+            Please add images to each product variant in the "Product Variants" section below.
+          */}
+          {/* Product Images - DEPRECATED */}
+          {/* <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <h2 className="text-lg font-semibold text-gray-900 mb-6">
               Product Images *
             </h2>
@@ -558,7 +551,6 @@ export default function CreateProductPage() {
                 </div>
               ))}
 
-              {/* Upload new image */}
               <label
                 htmlFor="image-upload"
                 className={`block border-2 border-dashed border-gray-300 rounded-lg p-6 cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors ${
@@ -597,6 +589,23 @@ export default function CreateProductPage() {
                 />
               </label>
             </div>
+          </div> */}
+
+          {/* Notice about image upload location */}
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+            <div className="flex items-start">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-blue-800">Product Images</h3>
+                <p className="mt-1 text-sm text-blue-700">
+                  Product images are now managed at the variant level. Please add images to each variant in the <strong>Product Variants</strong> section below. This allows each variant (size, color, material) to have its own specific images.
+                </p>
+              </div>
+            </div>
           </div>
 
           {/* Product Variants */}
@@ -604,8 +613,13 @@ export default function CreateProductPage() {
             <VariantManager
               variants={formData.variants}
               onVariantsChange={handleVariantsChange}
+              selectedVariation={formData.variation}
+              onVariationChange={(variation) => handleFieldChange("variation", variation)}
               isEditing={true}
-              errors={errors.variants ? { variants: errors.variants } : {}}
+              errors={{
+                ...(errors.variants ? { variants: errors.variants } : {}),
+                ...(errors.variation ? { variation: errors.variation } : {}),
+              }}
             />
           </div>
         </form>
