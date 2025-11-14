@@ -33,13 +33,11 @@ interface ProductFormData {
 // Form validation errors
 interface FormErrors {
   name?: string;
-  sku?: string;
   category_id?: string;
   price?: string;
   description?: string;
   variation?: string;
   images?: string;
-  stock?: string;
   featured?: string;
   variants?: string;
 }
@@ -115,8 +113,8 @@ export default function EditProductPage() {
       [field]: value,
     }) : null);
 
-    // Clear error for this field
-    if (errors[field]) {
+    // Clear error for this field if it exists in FormErrors
+    if (field in errors) {
       setErrors((prev) => ({
         ...prev,
         [field]: undefined,
@@ -225,10 +223,6 @@ export default function EditProductPage() {
       newErrors.name = 'Product name is required';
     }
 
-    if (!formData.sku.trim()) {
-      newErrors.sku = 'SKU is required';
-    }
-
     if (!formData.category_id) {
       newErrors.category_id = 'Category is required';
     }
@@ -242,10 +236,6 @@ export default function EditProductPage() {
     // if (formData.images.length === 0) {
     //   newErrors.images = 'At least one product image is required';
     // }
-
-    if (formData.stock < 0) {
-      newErrors.stock = 'Stock cannot be negative';
-    }
 
     // Require at least one variant
     if (formData.variants.length === 0) {
@@ -296,14 +286,14 @@ export default function EditProductPage() {
     try {
       const productData: UpdateProductRequest = {
         name: formData.name.trim(),
-        sku: formData.sku.trim(),
+        sku: formData.sku.trim(), // Keep existing SKU for backend compatibility
         category_id: formData.category_id,
         price: 0, // Price is set at variant level only
         description: formData.description.trim(),
         variation: formData.variation.trim(),
         images: formData.images,
         featured: formData.featured,
-        stock: formData.stock,
+        stock: 0, // Stock is managed at variant level only
         variants: formData.variants,
       };
 
@@ -425,87 +415,55 @@ export default function EditProductPage() {
           <form id="product-form" onSubmit={handleSubmit} className="space-y-8">
             {/* Basic Information */}
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-6">
-                Basic Information
-              </h2>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Product Name *
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.name}
-                    onChange={(e) => handleFieldChange("name", e.target.value)}
-                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors.name ? 'border-red-300' : 'border-gray-300'
-                      }`}
-                    placeholder="Enter product name"
-                  />
-                  {errors.name && (
-                    <p className="mt-1 text-sm text-red-600">{errors.name}</p>
-                  )}
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    SKU *
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.sku}
-                    onChange={(e) => handleFieldChange("sku", e.target.value)}
-                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors.sku ? 'border-red-300' : 'border-gray-300'
-                      }`}
-                    placeholder="Enter SKU"
-                  />
-                  {errors.sku && (
-                    <p className="mt-1 text-sm text-red-600">{errors.sku}</p>
-                  )}
-                </div>
+              <div className="mb-6">
+                <h2 className="text-lg font-semibold text-gray-900">
+                  Basic Information
+                </h2>
+                <p className="text-sm text-gray-600 mt-1">
+                  Edit the core product details. SKU, price, and stock are managed at the variant level.
+                </p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Category *
-                  </label>
-                  <select
-                    value={formData.category_id}
-                    onChange={(e) => handleFieldChange("category_id", e.target.value)}
-                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors.category_id ? 'border-red-300' : 'border-gray-300'
-                      }`}
-                    disabled={isCategoriesLoading}
-                  >
-                    <option value="">
-                      {isCategoriesLoading ? "Loading categories..." : "Select category"}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Product Name *
+                </label>
+                <input
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) => handleFieldChange("name", e.target.value)}
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors.name ? 'border-red-300' : 'border-gray-300'
+                    }`}
+                  placeholder="Enter product name"
+                />
+                {errors.name && (
+                  <p className="mt-1 text-sm text-red-600">{errors.name}</p>
+                )}
+              </div>
+
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Category *
+                </label>
+                <select
+                  value={formData.category_id}
+                  onChange={(e) => handleFieldChange("category_id", e.target.value)}
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors.category_id ? 'border-red-300' : 'border-gray-300'
+                    }`}
+                  disabled={isCategoriesLoading}
+                >
+                  <option value="">
+                    {isCategoriesLoading ? "Loading categories..." : "Select category"}
+                  </option>
+                  {categories.map((category) => (
+                    <option key={category.id} value={category.id}>
+                      {category.name}
                     </option>
-                    {categories.map((category) => (
-                      <option key={category.id} value={category.id}>
-                        {category.name}
-                      </option>
-                    ))}
-                  </select>
-                  {errors.category_id && (
-                    <p className="mt-1 text-sm text-red-600">{errors.category_id}</p>
-                  )}
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Stock Quantity
-                  </label>
-                  <input
-                    type="number"
-                    value={formData.stock}
-                    onChange={(e) => handleFieldChange("stock", Number(e.target.value))}
-                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors.stock ? 'border-red-300' : 'border-gray-300'
-                      }`}
-                    placeholder="0"
-                    min="0"
-                  />
-                  {errors.stock && (
-                    <p className="mt-1 text-sm text-red-600">{errors.stock}</p>
-                  )}
-                </div>
+                  ))}
+                </select>
+                {errors.category_id && (
+                  <p className="mt-1 text-sm text-red-600">{errors.category_id}</p>
+                )}
               </div>
 
               {/* <div className="mb-6">

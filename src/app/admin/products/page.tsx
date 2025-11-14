@@ -7,7 +7,6 @@ import {
   Search,
   Filter,
   Plus,
-  Minus,
   Eye,
   Edit,
   Trash2,
@@ -20,7 +19,7 @@ import {
   Download,
 } from "lucide-react";
 import { useAdmin } from "@/contexts/AdminContext";
-import { useAdminProducts, useUpdateProductStock, useDeleteProduct } from "@/hooks/useAdminProducts";
+import { useAdminProducts, useDeleteProduct } from "@/hooks/useAdminProducts";
 import AdminGuard from "@/components/AdminGuard";
 import { ProductTableSkeleton } from "@/components/ProductTableSkeleton";
 import { ProductsError } from "@/components/ProductsError";
@@ -41,115 +40,6 @@ interface Product {
   image: string;
   isFirstLook: boolean;
   createdAt: string;
-}
-
-// Stock Management Component
-interface StockManagementProps {
-  product: Product;
-  onUpdateStock: (productId: string, change: number) => void;
-  isUpdating: boolean;
-}
-
-function StockManagement({ product, onUpdateStock, isUpdating }: StockManagementProps) {
-  const [isEditing, setIsEditing] = useState(false);
-  const [stockValue, setStockValue] = useState(product.totalStock.toString());
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  // Update local state when product stock changes
-  useEffect(() => {
-    setStockValue(product.totalStock.toString());
-  }, [product.totalStock]);
-
-  const handleDirectStockUpdate = useCallback(async () => {
-    const newStock = parseInt(stockValue, 10);
-
-    // Validate input
-    if (isNaN(newStock) || newStock < 0) {
-      setStockValue(product.totalStock.toString());
-      setIsEditing(false);
-      return;
-    }
-
-    const change = newStock - product.totalStock;
-    if (change !== 0) {
-      await onUpdateStock(product.id, change);
-    }
-
-    setIsEditing(false);
-  }, [stockValue, product.totalStock, product.id, onUpdateStock]);
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleDirectStockUpdate();
-    } else if (e.key === 'Escape') {
-      setStockValue(product.totalStock.toString());
-      setIsEditing(false);
-    }
-  };
-
-  const handleStockInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    // Only allow non-negative integers
-    if (value === '' || (/^\d+$/.test(value) && parseInt(value, 10) >= 0)) {
-      setStockValue(value);
-    }
-  };
-
-  return (
-    <div className="flex items-center space-x-2">
-      <button
-        onClick={() => onUpdateStock(product.id, -1)}
-        disabled={product.totalStock === 0 || isUpdating}
-        className="p-1 rounded-md text-red-600 hover:bg-red-50 disabled:text-gray-300 disabled:hover:bg-transparent transition-colors"
-        title="Decrease stock by 1"
-      >
-        {isUpdating ? (
-          <Loader2 className="h-4 w-4 animate-spin" />
-        ) : (
-          <Minus className="h-4 w-4" />
-        )}
-      </button>
-
-      {isEditing ? (
-        <input
-          ref={inputRef}
-          type="text"
-          value={stockValue}
-          onChange={handleStockInputChange}
-          onBlur={handleDirectStockUpdate}
-          onKeyDown={handleKeyPress}
-          className="w-16 px-2 py-1 text-sm text-center border border-blue-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          autoFocus
-          disabled={isUpdating}
-        />
-      ) : (
-        <button
-          onClick={() => {
-            setIsEditing(true);
-            setTimeout(() => inputRef.current?.select(), 0);
-          }}
-          disabled={isUpdating}
-          className="w-16 px-2 py-1 text-sm text-center border border-gray-300 rounded hover:border-blue-300 hover:bg-blue-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          title="Click to edit stock directly"
-        >
-          {product.totalStock}
-        </button>
-      )}
-
-      <button
-        onClick={() => onUpdateStock(product.id, 1)}
-        disabled={isUpdating}
-        className="p-1 rounded-md text-green-600 hover:bg-green-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-        title="Increase stock by 1"
-      >
-        {isUpdating ? (
-          <Loader2 className="h-4 w-4 animate-spin" />
-        ) : (
-          <Plus className="h-4 w-4" />
-        )}
-      </button>
-    </div>
-  );
 }
 
 // Transform API product to display product
@@ -192,10 +82,15 @@ const transformApiProduct = (apiProduct: ApiProduct): Product => {
     categoryId = apiProduct.category_id;
   }
 
+  // Get SKU from first variant, fallback to product SKU
+  const sku = apiProduct.variants && apiProduct.variants.length > 0
+    ? apiProduct.variants[0].sku
+    : apiProduct.sku;
+
   return {
     id: apiProduct._id,
     name: apiProduct.name,
-    sku: apiProduct.sku,
+    sku: sku,
     categoryId: categoryId,
     price: apiProduct.variants[0]?.price || apiProduct.price,
     availability: totalStock > 0 ? "in-stock" : "out-of-stock",
@@ -289,7 +184,6 @@ export default function ProductsPage() {
   } = useAdminProducts(queryParams, token || undefined);
 
   // Mutations for product operations
-  const updateStockMutation = useUpdateProductStock();
   const deleteProductMutation = useDeleteProduct();
 
   // Transform API products to display format
@@ -313,38 +207,6 @@ export default function ProductsPage() {
     const category = categories.find(cat => cat.id === categoryId);
     return category?.name || 'Uncategorized';
   }, [categories]);
-
-  // Handle stock changes
-  const updateStock = useCallback(async (productId: string, change: number) => {
-    if (!token) return;
-
-    const product = products.find(p => p.id === productId);
-    if (!product) return;
-
-    const newStock = Math.max(0, product.totalStock + change);
-    const productName = product.name;
-
-    try {
-      await updateStockMutation.mutateAsync({
-        id: productId,
-        stockData: { stock: newStock },
-        token,
-      });
-
-      // Show success notification
-      success(
-        "Stock updated successfully",
-        `${productName} stock updated to ${newStock} units`
-      );
-    } catch (err) {
-      console.error('Failed to update stock:', err);
-      // Show error notification
-      error(
-        "Failed to update stock",
-        `Could not update stock for ${productName}. Please try again.`
-      );
-    }
-  }, [products, token, updateStockMutation, success, error]);
 
   // Handle product deletion
   const handleDeleteProduct = useCallback((productId: string) => {
@@ -857,9 +719,6 @@ export default function ProductsPage() {
                         </div>
                       </th>
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">
-                        Stock Actions
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">
                         Actions
                       </th>
                     </tr>
@@ -916,13 +775,6 @@ export default function ProductsPage() {
                         </td>
                         <td className="px-4 py-3 text-sm text-gray-900 font-medium">
                           {product.totalStock}
-                        </td>
-                        <td className="px-4 py-3">
-                          <StockManagement
-                            product={product}
-                            onUpdateStock={updateStock}
-                            isUpdating={updateStockMutation.isPending && updateStockMutation.variables?.id === product.id}
-                          />
                         </td>
                         <td className="px-4 py-3 text-sm text-gray-500">
                           <div className="flex items-center space-x-2">
