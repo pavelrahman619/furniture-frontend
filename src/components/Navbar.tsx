@@ -13,6 +13,7 @@ import {
   Settings,
   LogOut,
   ChevronDown,
+  Key,
 } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { useAdmin } from "@/contexts/AdminContext";
@@ -264,6 +265,14 @@ const Navbar = () => {
                         <div className="text-xs">{admin.email}</div>
                         <div className="text-xs capitalize">{admin.role.replace('_', ' ')}</div>
                       </div>
+                      <Link
+                        href="/admin/change-password"
+                        onClick={() => setShowAdminDropdown(false)}
+                        className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                      >
+                        <Key className="h-4 w-4 mr-2" />
+                        Change Password
+                      </Link>
                       <button
                         onClick={handleLogout}
                         className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"

@@ -103,6 +103,7 @@ export const API_ENDPOINTS = {
     REFRESH: '/auth/refresh', // Note: Backend doesn't support refresh tokens
     PROFILE: '/admin/profile',
     VERIFY: '/auth/verify',
+    CHANGE_PASSWORD: '/auth/change-password',
     PRODUCTS: '/products',
     PRODUCTS_EXPORT: '/admin/products/export',
     ORDERS: '/orders',
