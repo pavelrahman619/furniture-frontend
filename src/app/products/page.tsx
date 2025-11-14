@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import ProductFilter from "@/components/ProductFilter";
 import ProductGrid from "@/components/ProductGrid";
 import LoadingSpinner from "@/components/LoadingSpinner";
@@ -14,6 +15,8 @@ import { ProductsQueryParams } from "@/types/product.types";
 
 function ProductsPageContent() {
   const [isClient, setIsClient] = useState(false);
+  const searchParams = useSearchParams();
+  const searchQuery = searchParams.get("search") || "";
   
   // Get filters and sort from Zustand store
   const filters = useFilters();
@@ -29,6 +32,11 @@ function ProductsPageContent() {
     const params: Omit<ProductsQueryParams, 'page'> = {
       limit: 10,
     };
+
+    // Add search query from URL if present
+    if (searchQuery) {
+      params.search = searchQuery;
+    }
 
     // Add category filter - send multiple categories as comma-separated string
     if (filters.category && filters.category.length > 0) {
@@ -54,7 +62,7 @@ function ProductsPageContent() {
     }
 
     return params;
-  }, [filters]);
+  }, [filters, searchQuery]);
 
   // Fetch products using infinite query
   const { 
@@ -174,6 +182,18 @@ function ProductsPageContent() {
 
   return (
     <>
+      {/* Search Results Header */}
+      {searchQuery && (
+        <div className="mb-6 p-4 bg-gray-50 border border-gray-200 rounded-md">
+          <h2 className="text-lg font-medium text-gray-900">
+            Search results for: <span className="text-gray-600">"{searchQuery}"</span>
+          </h2>
+          <p className="text-sm text-gray-500 mt-1">
+            Found {sortedProducts.length} {sortedProducts.length === 1 ? 'product' : 'products'}
+          </p>
+        </div>
+      )}
+
       {/* Filter Component */}
       <ProductFilter productCount={sortedProducts.length} />
 
@@ -221,19 +241,43 @@ function ProductsPageContent() {
   );
 }
 
+function ProductsPageHeader() {
+  const searchParams = useSearchParams();
+  const searchQuery = searchParams.get("search") || "";
+
+  return (
+    <div className="mb-8">
+      <h1 className="text-3xl md:text-4xl font-light tracking-[0.2em] text-gray-900 mb-4">
+        {searchQuery ? "SEARCH RESULTS" : "ALL PRODUCTS"}
+      </h1>
+      <p className="text-gray-600 text-lg">
+        {searchQuery
+          ? `Searching for "${searchQuery}" in our furniture collection`
+          : "Discover our complete collection of handcrafted furniture"}
+      </p>
+    </div>
+  );
+}
+
 export default function ProductsPage() {
   return (
     <main className="min-h-screen bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Page Header - shown once for all states */}
-        <div className="mb-8">
-          <h1 className="text-3xl md:text-4xl font-light tracking-[0.2em] text-gray-900 mb-4">
-            ALL PRODUCTS
-          </h1>
-          <p className="text-gray-600 text-lg">
-            Discover our complete collection of handcrafted furniture
-          </p>
-        </div>
+        <Suspense
+          fallback={
+            <div className="mb-8">
+              <h1 className="text-3xl md:text-4xl font-light tracking-[0.2em] text-gray-900 mb-4">
+                ALL PRODUCTS
+              </h1>
+              <p className="text-gray-600 text-lg">
+                Discover our complete collection of handcrafted furniture
+              </p>
+            </div>
+          }
+        >
+          <ProductsPageHeader />
+        </Suspense>
 
         {/* Content with Error Boundary */}
         <ErrorBoundary
@@ -246,7 +290,22 @@ export default function ProductsPage() {
             />
           }
         >
-          <ProductsPageContent />
+          <Suspense
+            fallback={
+              <div className="mb-8">
+                <div className="animate-pulse">
+                  <div className="h-16 bg-gray-200 rounded mb-8"></div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    {Array.from({ length: 12 }).map((_, i) => (
+                      <div key={i} className="bg-gray-200 h-80 rounded"></div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            }
+          >
+            <ProductsPageContent />
+          </Suspense>
         </ErrorBoundary>
       </div>
     </main>

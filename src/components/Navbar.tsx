@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import Image from "next/image";
+import { useRouter, usePathname } from "next/navigation";
 import {
   Search,
   User,
@@ -14,14 +16,31 @@ import {
 } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { useAdmin } from "@/contexts/AdminContext";
+import { useDebounce } from "@/hooks/useDebounce";
+import SearchDropdown from "./SearchDropdown";
+import { ProductService } from "@/services/product.service";
+import { Product } from "@/types/product.types";
 
 const Navbar = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [showAdminDropdown, setShowAdminDropdown] = useState(false);
+  const [showSearchDropdown, setShowSearchDropdown] = useState(false);
+  const [searchResults, setSearchResults] = useState<Product[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [totalSearchCount, setTotalSearchCount] = useState(0);
+  
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const searchDropdownRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  
   const { getTotalItems } = useCart();
   const { admin, isAuthenticated, logout } = useAdmin();
+  const router = useRouter();
+  const pathname = usePathname();
   const cartItemCount = getTotalItems();
+  
+  // Debounce search query
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
   const mainNavItems = [
     { name: "ALL PRODUCTS", href: "/products" },
@@ -49,11 +68,81 @@ const Navbar = () => {
     }
   };
 
-  // Close dropdown when clicking outside
+  const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearchQuery(value);
+    if (value.trim()) {
+      setShowSearchDropdown(true);
+    } else {
+      setShowSearchDropdown(false);
+      setSearchResults([]);
+    }
+  };
+
+  const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" && searchQuery.trim()) {
+      navigateToSearchResults();
+    } else if (e.key === "Escape") {
+      setShowSearchDropdown(false);
+      searchInputRef.current?.blur();
+    }
+  };
+
+  const navigateToSearchResults = () => {
+    if (searchQuery.trim()) {
+      setShowSearchDropdown(false);
+      router.push(`/products?search=${encodeURIComponent(searchQuery.trim())}`);
+    }
+  };
+
+  const closeSearchDropdown = () => {
+    setShowSearchDropdown(false);
+  };
+
+  // Perform search when debounced query changes
+  useEffect(() => {
+    const performSearch = async () => {
+      if (debouncedSearchQuery.trim().length < 2) {
+        setSearchResults([]);
+        setIsSearching(false);
+        return;
+      }
+
+      setIsSearching(true);
+      try {
+        const response = await ProductService.searchProducts(debouncedSearchQuery);
+        setSearchResults(response.products);
+        setTotalSearchCount(response.pagination?.total_count || response.products.length);
+      } catch (error) {
+        console.error("Search error:", error);
+        setSearchResults([]);
+      } finally {
+        setIsSearching(false);
+      }
+    };
+
+    performSearch();
+  }, [debouncedSearchQuery]);
+
+  // Clear search when navigating away
+  useEffect(() => {
+    setSearchQuery("");
+    setShowSearchDropdown(false);
+  }, [pathname]);
+
+  // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setShowAdminDropdown(false);
+      }
+      if (
+        searchDropdownRef.current &&
+        !searchDropdownRef.current.contains(event.target as Node) &&
+        searchInputRef.current &&
+        !searchInputRef.current.contains(event.target as Node)
+      ) {
+        setShowSearchDropdown(false);
       }
     };
 
@@ -79,18 +168,32 @@ const Navbar = () => {
           </div>
 
           {/* Search Bar */}
-          <div className="flex-1 max-w-lg mx-8">
+          <div className="flex-1 max-w-lg mx-8" ref={searchDropdownRef}>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <Search className="h-5 w-5 text-gray-400" />
               </div>
               <input
+                ref={searchInputRef}
                 type="text"
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={handleSearchInputChange}
+                onKeyDown={handleSearchKeyDown}
                 className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-gray-500 focus:border-gray-500 sm:text-sm"
                 placeholder="Search by item number or keyword"
               />
+              
+              {/* Search Dropdown */}
+              {showSearchDropdown && (
+                <SearchDropdown
+                  products={searchResults}
+                  isLoading={isSearching}
+                  searchQuery={searchQuery}
+                  totalCount={totalSearchCount}
+                  onClose={closeSearchDropdown}
+                  onSeeAllResults={navigateToSearchResults}
+                />
+              )}
             </div>
           </div>
 
