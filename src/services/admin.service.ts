@@ -314,6 +314,49 @@ export class AdminService {
   }
 
   /**
+   * Change admin password
+   */
+  static async changePassword(
+    currentPassword: string,
+    newPassword: string
+  ): Promise<ApiResponse<{ message: string }>> {
+    const token = tokenStorage.getToken();
+
+    if (!token) {
+      return {
+        success: false,
+        error: 'No authentication token found. Please login again.',
+      };
+    }
+
+    try {
+      const response = await apiService.post<{ success: boolean; message: string }>(
+        API_ENDPOINTS.ADMIN.CHANGE_PASSWORD,
+        {
+          currentPassword,
+          newPassword,
+        },
+        token
+      );
+
+      if (response.success && response.data) {
+        return {
+          success: true,
+          data: { message: response.data.message },
+          message: response.data.message,
+        };
+      }
+
+      return {
+        success: false,
+        error: response.error || 'Failed to change password',
+      };
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  /**
    * Refresh admin token
    * NOTE: Backend doesn't support refresh tokens, so this always fails and clears the session
    */
