@@ -61,7 +61,7 @@ export default function VariantManager({
   const [newVariant, setNewVariant] = useState<VariantFormData>(initialVariantData);
   const [editingVariant, setEditingVariant] = useState<VariantFormData>(initialVariantData);
   const [variantErrors, setVariantErrors] = useState<VariantErrors>({});
-  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [uploadingImageCount, setUploadingImageCount] = useState(0);
 
   // Generate unique SKU for variant
   const generateVariantSku = useCallback((baseVariant: VariantFormData): string => {
@@ -234,78 +234,156 @@ export default function VariantManager({
   }, []);
 
   // Handle image upload for new variant
-  const handleNewVariantImageUpload = useCallback(async (file: File) => {
-    const validation = validateImageFile(file);
-    if (!validation.valid) {
-      setVariantErrors((prev) => ({ ...prev, images: validation.error }));
+  const handleNewVariantImageUpload = useCallback(async (files: File[]) => {
+    if (files.length === 0) return;
+
+    // Validate all files first
+    const validationErrors: string[] = [];
+    files.forEach((file, index) => {
+      const validation = validateImageFile(file);
+      if (!validation.valid) {
+        validationErrors.push(`File ${index + 1}: ${validation.error}`);
+      }
+    });
+
+    if (validationErrors.length > 0) {
+      setVariantErrors((prev) => ({ 
+        ...prev, 
+        images: validationErrors.join(', ') 
+      }));
       return;
     }
 
-    setIsUploadingImage(true);
+    setUploadingImageCount(files.length);
+    
     try {
-      const result = await uploadImageToCloudinary(file, {
-        folder: 'PRODUCT_IMAGES',
-        tags: ['product', 'variant', 'admin'],
+      // Upload all files in parallel
+      const uploadPromises = files.map(file => 
+        uploadImageToCloudinary(file, {
+          folder: 'PRODUCT_IMAGES',
+          tags: ['product', 'variant', 'admin'],
+        })
+      );
+
+      const results = await Promise.allSettled(uploadPromises);
+      
+      const successfulUploads: ProductImage[] = [];
+      const uploadErrors: string[] = [];
+
+      results.forEach((result, index) => {
+        if (result.status === 'fulfilled' && result.value.success && result.value.url) {
+          const isFirstImage = (newVariant.images?.length || 0) === 0 && successfulUploads.length === 0;
+          successfulUploads.push({
+            url: result.value.url,
+            alt: newVariant.attribute || 'Variant image',
+            is_primary: isFirstImage,
+          });
+        } else {
+          const errorMessage = result.status === 'fulfilled' 
+            ? result.value.error || 'Upload failed'
+            : 'Upload failed';
+          uploadErrors.push(`File ${index + 1}: ${errorMessage}`);
+        }
       });
 
-      if (result.success && result.url) {
-        const newImage: ProductImage = {
-          url: result.url,
-          alt: newVariant.attribute || 'Variant image',
-          is_primary: (newVariant.images?.length || 0) === 0,
-        };
-
+      // Add successful uploads to variant
+      if (successfulUploads.length > 0) {
         setNewVariant((prev) => ({
           ...prev,
-          images: [...(prev.images || []), newImage],
+          images: [...(prev.images || []), ...successfulUploads],
         }));
+      }
 
-        setVariantErrors((prev) => ({ ...prev, images: undefined }));
+      // Set errors if any uploads failed
+      if (uploadErrors.length > 0) {
+        const errorMessage = uploadErrors.length === files.length
+          ? `All uploads failed: ${uploadErrors.join(', ')}`
+          : `Some uploads failed: ${uploadErrors.join(', ')}`;
+        setVariantErrors((prev) => ({ ...prev, images: errorMessage }));
       } else {
-        setVariantErrors((prev) => ({ ...prev, images: result.error || 'Failed to upload image' }));
+        setVariantErrors((prev) => ({ ...prev, images: undefined }));
       }
     } catch (error) {
-      setVariantErrors((prev) => ({ ...prev, images: 'Failed to upload image' }));
+      setVariantErrors((prev) => ({ ...prev, images: 'Failed to upload images' }));
     } finally {
-      setIsUploadingImage(false);
+      setUploadingImageCount(0);
     }
   }, [newVariant]);
 
   // Handle image upload for editing variant
-  const handleEditingVariantImageUpload = useCallback(async (file: File) => {
-    const validation = validateImageFile(file);
-    if (!validation.valid) {
-      setVariantErrors((prev) => ({ ...prev, images: validation.error }));
+  const handleEditingVariantImageUpload = useCallback(async (files: File[]) => {
+    if (files.length === 0) return;
+
+    // Validate all files first
+    const validationErrors: string[] = [];
+    files.forEach((file, index) => {
+      const validation = validateImageFile(file);
+      if (!validation.valid) {
+        validationErrors.push(`File ${index + 1}: ${validation.error}`);
+      }
+    });
+
+    if (validationErrors.length > 0) {
+      setVariantErrors((prev) => ({ 
+        ...prev, 
+        images: validationErrors.join(', ') 
+      }));
       return;
     }
 
-    setIsUploadingImage(true);
+    setUploadingImageCount(files.length);
+    
     try {
-      const result = await uploadImageToCloudinary(file, {
-        folder: 'PRODUCT_IMAGES',
-        tags: ['product', 'variant', 'admin'],
+      // Upload all files in parallel
+      const uploadPromises = files.map(file => 
+        uploadImageToCloudinary(file, {
+          folder: 'PRODUCT_IMAGES',
+          tags: ['product', 'variant', 'admin'],
+        })
+      );
+
+      const results = await Promise.allSettled(uploadPromises);
+      
+      const successfulUploads: ProductImage[] = [];
+      const uploadErrors: string[] = [];
+
+      results.forEach((result, index) => {
+        if (result.status === 'fulfilled' && result.value.success && result.value.url) {
+          const isFirstImage = (editingVariant.images?.length || 0) === 0 && successfulUploads.length === 0;
+          successfulUploads.push({
+            url: result.value.url,
+            alt: editingVariant.attribute || 'Variant image',
+            is_primary: isFirstImage,
+          });
+        } else {
+          const errorMessage = result.status === 'fulfilled' 
+            ? result.value.error || 'Upload failed'
+            : 'Upload failed';
+          uploadErrors.push(`File ${index + 1}: ${errorMessage}`);
+        }
       });
 
-      if (result.success && result.url) {
-        const newImage: ProductImage = {
-          url: result.url,
-          alt: editingVariant.attribute || 'Variant image',
-          is_primary: (editingVariant.images?.length || 0) === 0,
-        };
-
+      // Add successful uploads to variant
+      if (successfulUploads.length > 0) {
         setEditingVariant((prev) => ({
           ...prev,
-          images: [...(prev.images || []), newImage],
+          images: [...(prev.images || []), ...successfulUploads],
         }));
+      }
 
-        setVariantErrors((prev) => ({ ...prev, images: undefined }));
+      // Set errors if any uploads failed
+      if (uploadErrors.length > 0) {
+        const errorMessage = uploadErrors.length === files.length
+          ? `All uploads failed: ${uploadErrors.join(', ')}`
+          : `Some uploads failed: ${uploadErrors.join(', ')}`;
+        setVariantErrors((prev) => ({ ...prev, images: errorMessage }));
       } else {
-        setVariantErrors((prev) => ({ ...prev, images: result.error || 'Failed to upload image' }));
+        setVariantErrors((prev) => ({ ...prev, images: undefined }));
       }
     } catch (error) {
-      setVariantErrors((prev) => ({ ...prev, images: 'Failed to upload image' }));
+      setVariantErrors((prev) => ({ ...prev, images: 'Failed to upload images' }));
     } finally {
-      setIsUploadingImage(false);
+      setUploadingImageCount(0);
     }
   }, [editingVariant]);
 
@@ -484,7 +562,7 @@ export default function VariantManager({
                   onImageUpload={handleEditingVariantImageUpload}
                   onRemoveImage={handleRemoveEditingVariantImage}
                   onSetPrimaryImage={handleSetEditingVariantPrimaryImage}
-                  isUploadingImage={isUploadingImage}
+                  uploadingImageCount={uploadingImageCount}
                 />
               ) : (
                 // Display mode
@@ -573,7 +651,7 @@ export default function VariantManager({
             onImageUpload={handleNewVariantImageUpload}
             onRemoveImage={handleRemoveNewVariantImage}
             onSetPrimaryImage={handleSetNewVariantPrimaryImage}
-            isUploadingImage={isUploadingImage}
+            uploadingImageCount={uploadingImageCount}
           />
         </div>
       )}
@@ -596,13 +674,13 @@ interface VariantFormProps {
   onSave: () => void;
   onCancel: () => void;
   isEditing: boolean;
-  onImageUpload: (file: File) => Promise<void>;
+  onImageUpload: (files: File[]) => Promise<void>;
   onRemoveImage: (index: number) => void;
   onSetPrimaryImage: (index: number) => void;
-  isUploadingImage: boolean;
+  uploadingImageCount: number;
 }
 
-function VariantForm({ variant, onChange, errors, onSave, onCancel, isEditing, onImageUpload, onRemoveImage, onSetPrimaryImage, isUploadingImage }: VariantFormProps) {
+function VariantForm({ variant, onChange, errors, onSave, onCancel, isEditing, onImageUpload, onRemoveImage, onSetPrimaryImage, uploadingImageCount }: VariantFormProps) {
   return (
     <div className="space-y-4">
       {/* Variant properties */}
@@ -747,20 +825,22 @@ function VariantForm({ variant, onChange, errors, onSave, onCancel, isEditing, o
           <label
             htmlFor={`variant-image-upload-${isEditing ? 'edit' : 'new'}`}
             className={`block border-2 border-dashed border-gray-300 rounded-md p-4 cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors text-center ${
-              isUploadingImage ? 'pointer-events-none opacity-50' : ''
+              uploadingImageCount > 0 ? 'pointer-events-none opacity-50' : ''
             }`}
           >
             <div className="flex flex-col items-center">
-              {isUploadingImage ? (
+              {uploadingImageCount > 0 ? (
                 <>
                   <Loader2 className="h-8 w-8 text-blue-600 animate-spin mb-2" />
-                  <span className="text-sm text-gray-600">Uploading...</span>
+                  <span className="text-sm text-gray-600">
+                    Uploading {uploadingImageCount} {uploadingImageCount === 1 ? 'image' : 'images'}...
+                  </span>
                 </>
               ) : (
                 <>
                   <Upload className="h-8 w-8 text-gray-400 mb-2" />
-                  <span className="text-sm font-medium text-gray-700">Upload image</span>
-                  <span className="text-xs text-gray-500 mt-1">PNG, JPG, WebP up to 10MB</span>
+                  <span className="text-sm font-medium text-gray-700">Upload images</span>
+                  <span className="text-xs text-gray-500 mt-1">Select one or multiple images • PNG, JPG, WebP up to 10MB each</span>
                 </>
               )}
             </div>
@@ -768,15 +848,17 @@ function VariantForm({ variant, onChange, errors, onSave, onCancel, isEditing, o
               id={`variant-image-upload-${isEditing ? 'edit' : 'new'}`}
               type="file"
               accept="image/*"
+              multiple
               onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) {
-                  onImageUpload(file);
+                const files = e.target.files;
+                if (files && files.length > 0) {
+                  const fileArray = Array.from(files);
+                  onImageUpload(fileArray);
                   e.target.value = ''; // Reset input
                 }
               }}
               className="sr-only"
-              disabled={isUploadingImage}
+              disabled={uploadingImageCount > 0}
             />
           </label>
         </div>
