@@ -22,6 +22,7 @@ interface ProductFormData {
   category_id: string;
   price: number;
   description: string;
+  variation: string;
   images: ProductImage[];
   featured: boolean;
   stock: number;
@@ -35,6 +36,7 @@ interface FormErrors {
   category_id?: string;
   price?: string;
   description?: string;
+  variation?: string;
   images?: string;
   stock?: string;
   featured?: string;
@@ -48,6 +50,7 @@ const initialFormData: ProductFormData = {
   category_id: "",
   price: 0,
   description: "",
+  variation: "",
   images: [],
   featured: false,
   stock: 0,
@@ -225,6 +228,11 @@ export default function CreateProductPage() {
     if (formData.variants.length === 0) {
       newErrors.variants = 'At least one product variant is required';
     } else {
+      // Validate that variation type is selected if variants exist
+      if (!formData.variation || !formData.variation.trim()) {
+        newErrors.variation = 'Variation type is required when variants exist';
+      }
+
       // Validate variants if any exist
       const variantSkus = formData.variants.map(v => v.sku);
       const duplicateSkus = variantSkus.filter((sku, index) => variantSkus.indexOf(sku) !== index);
@@ -269,6 +277,7 @@ export default function CreateProductPage() {
         category_id: formData.category_id,
         price: 0, // Price is set at variant level only
         description: formData.description.trim(),
+        variation: formData.variation.trim(),
         images: formData.images,
         featured: formData.featured,
         stock: formData.stock,
@@ -604,8 +613,13 @@ export default function CreateProductPage() {
             <VariantManager
               variants={formData.variants}
               onVariantsChange={handleVariantsChange}
+              selectedVariation={formData.variation}
+              onVariationChange={(variation) => handleFieldChange("variation", variation)}
               isEditing={true}
-              errors={errors.variants ? { variants: errors.variants } : {}}
+              errors={{
+                ...(errors.variants ? { variants: errors.variants } : {}),
+                ...(errors.variation ? { variation: errors.variation } : {}),
+              }}
             />
           </div>
         </form>

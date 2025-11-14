@@ -3,12 +3,14 @@
 import { useState, useCallback } from "react";
 import Image from "next/image";
 import { Plus, X, Edit2, Check, AlertCircle, Upload, Loader2 } from "lucide-react";
-import { ProductVariant, ProductImage } from "@/types/product.types";
+import { ProductVariant, ProductImage, VARIATION_TYPES } from "@/types/product.types";
 import { uploadImageToCloudinary, validateImageFile } from "@/lib/cloudinary-utils";
 
 interface VariantManagerProps {
   variants: ProductVariant[];
   onVariantsChange: (variants: ProductVariant[]) => void;
+  selectedVariation?: string;
+  onVariationChange?: (variation: string) => void;
   isEditing?: boolean;
   errors?: Record<string, string>;
 }
@@ -17,6 +19,7 @@ interface VariantFormData {
   color?: string;
   material?: string;
   size?: string;
+  attribute?: string; // Replaces size - dynamic attribute based on variation type
   price: number;
   stock: number;
   sku: string;
@@ -27,6 +30,7 @@ interface VariantErrors {
   color?: string;
   material?: string;
   size?: string;
+  attribute?: string;
   price?: string;
   stock?: string;
   sku?: string;
@@ -37,6 +41,7 @@ const initialVariantData: VariantFormData = {
   color: "",
   material: "",
   size: "",
+  attribute: "",
   price: 0,
   stock: 0,
   sku: "",
@@ -46,6 +51,8 @@ const initialVariantData: VariantFormData = {
 export default function VariantManager({
   variants,
   onVariantsChange,
+  selectedVariation,
+  onVariationChange,
   isEditing = true,
   errors = {},
 }: VariantManagerProps) {
@@ -61,11 +68,9 @@ export default function VariantManager({
     const timestamp = Date.now().toString().slice(-6);
     const randomNum = Math.floor(Math.random() * 100).toString().padStart(2, "0");
     
-    // Create SKU based on variant properties
+    // Create SKU based on variant properties (use attribute instead of size/color/material)
     const parts = [];
-    if (baseVariant.color) parts.push(baseVariant.color.substring(0, 3).toUpperCase());
-    if (baseVariant.material) parts.push(baseVariant.material.substring(0, 3).toUpperCase());
-    if (baseVariant.size) parts.push(baseVariant.size.substring(0, 2).toUpperCase());
+    if (baseVariant.attribute) parts.push(baseVariant.attribute.substring(0, 3).toUpperCase());
     
     const prefix = parts.length > 0 ? parts.join("-") : "VAR";
     return `${prefix}-${timestamp}${randomNum}`;
@@ -109,8 +114,8 @@ export default function VariantManager({
     setNewVariant(prev => {
       const updated = { ...prev, [field]: value };
       
-      // Auto-generate SKU when variant properties change
-      if (field === 'color' || field === 'material' || field === 'size') {
+      // Auto-generate SKU when variant attribute changes
+      if (field === 'attribute') {
         updated.sku = generateVariantSku(updated);
       }
       
@@ -146,6 +151,7 @@ export default function VariantManager({
       color: newVariant.color || undefined,
       material: newVariant.material || undefined,
       size: newVariant.size || undefined,
+      attribute: newVariant.attribute || undefined,
       price: newVariant.price,
       stock: newVariant.stock,
       sku: newVariant.sku,
@@ -165,6 +171,7 @@ export default function VariantManager({
       color: variant.color || "",
       material: variant.material || "",
       size: variant.size || "",
+      attribute: variant.attribute || "",
       price: variant.price,
       stock: variant.stock,
       sku: variant.sku,
@@ -189,6 +196,7 @@ export default function VariantManager({
       color: editingVariant.color || undefined,
       material: editingVariant.material || undefined,
       size: editingVariant.size || undefined,
+      attribute: editingVariant.attribute || undefined,
       price: editingVariant.price,
       stock: editingVariant.stock,
       sku: editingVariant.sku,
@@ -243,7 +251,7 @@ export default function VariantManager({
       if (result.success && result.url) {
         const newImage: ProductImage = {
           url: result.url,
-          alt: newVariant.size || 'Variant image',
+          alt: newVariant.attribute || 'Variant image',
           is_primary: (newVariant.images?.length || 0) === 0,
         };
 
@@ -281,7 +289,7 @@ export default function VariantManager({
       if (result.success && result.url) {
         const newImage: ProductImage = {
           url: result.url,
-          alt: editingVariant.size || 'Variant image',
+          alt: editingVariant.attribute || 'Variant image',
           is_primary: (editingVariant.images?.length || 0) === 0,
         };
 
@@ -364,10 +372,17 @@ export default function VariantManager({
                       <p className="text-gray-900">{variant.material}</p>
                     </div>
                   )} */}
-                  {variant.size && (
+                  {/* Size field is deprecated - using attribute instead */}
+                  {/* {variant.size && (
                     <div>
                       <span className="font-medium text-gray-700">Size:</span>
                       <p className="text-gray-900">{variant.size}</p>
+                    </div>
+                  )} */}
+                  {variant.attribute && (
+                    <div>
+                      <span className="font-medium text-gray-700">Attribute:</span>
+                      <p className="text-gray-900">{variant.attribute}</p>
                     </div>
                   )}
                   <div>
@@ -395,10 +410,47 @@ export default function VariantManager({
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-medium text-gray-900">Product Variants</h3>
+      </div>
+
+      {/* Variation Type Selector */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <label className="block text-sm font-medium text-gray-900 mb-2">
+          Variation Type *
+        </label>
+        <p className="text-xs text-gray-600 mb-3">
+          Select the type of variation for this product (e.g., Size, Dimensions). This determines what attribute your variants will represent.
+        </p>
+        <select
+          value={selectedVariation || ""}
+          onChange={(e) => onVariationChange?.(e.target.value)}
+          className="w-full md:w-1/2 px-3 py-2 border border-blue-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+          disabled={!onVariationChange}
+        >
+          <option value="">Select variation type...</option>
+          {VARIATION_TYPES.map((type) => (
+            <option key={type} value={type}>
+              {type}
+            </option>
+          ))}
+        </select>
+        {!selectedVariation && variants.length === 0 && (
+          <p className="mt-2 text-sm text-orange-600">
+            ⚠️ Please select a variation type before adding variants.
+          </p>
+        )}
+      </div>
+
+      {/* Add Variant Button */}
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-gray-600">
+          {selectedVariation ? `Add ${selectedVariation.toLowerCase()} variants for this product` : 'Select a variation type to add variants'}
+        </p>
         <button
           type="button"
           onClick={() => setIsAddingVariant(true)}
-          className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+          disabled={!selectedVariation}
+          className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+          title={!selectedVariation ? 'Select a variation type first' : 'Add new variant'}
         >
           <Plus className="h-4 w-4 mr-2" />
           Add Variant
@@ -451,10 +503,17 @@ export default function VariantManager({
                         <p className="text-gray-900">{variant.material}</p>
                       </div>
                     )} */}
-                    {variant.size && (
+                    {/* Size field is deprecated - using attribute instead */}
+                    {/* {variant.size && (
                       <div>
                         <span className="font-medium text-gray-700">Size:</span>
                         <p className="text-gray-900">{variant.size}</p>
+                      </div>
+                    )} */}
+                    {variant.attribute && (
+                      <div>
+                        <span className="font-medium text-gray-700">Attribute:</span>
+                        <p className="text-gray-900">{variant.attribute}</p>
                       </div>
                     )}
                     <div>
@@ -547,7 +606,7 @@ function VariantForm({ variant, onChange, errors, onSave, onCancel, isEditing, o
   return (
     <div className="space-y-4">
       {/* Variant properties */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
         {/* Color and Material input fields hidden - UI only (logic kept) */}
         {/* <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -585,7 +644,8 @@ function VariantForm({ variant, onChange, errors, onSave, onCancel, isEditing, o
           )}
         </div> */}
 
-        <div>
+        {/* Size field is deprecated - replaced with attribute field */}
+        {/* <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Size
           </label>
@@ -600,6 +660,27 @@ function VariantForm({ variant, onChange, errors, onSave, onCancel, isEditing, o
           />
           {errors.size && (
             <p className="mt-1 text-sm text-red-600">{errors.size}</p>
+          )}
+        </div> */}
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Attribute *
+          </label>
+          <p className="text-xs text-gray-500 mb-2">
+            Enter the specific value for this variant (e.g., "Small", "Large", "48x24", etc.)
+          </p>
+          <input
+            type="text"
+            value={variant.attribute || ""}
+            onChange={(e) => onChange("attribute", e.target.value)}
+            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+              errors.attribute ? 'border-red-300' : 'border-gray-300'
+            }`}
+            placeholder="e.g., Small, Medium, Large"
+          />
+          {errors.attribute && (
+            <p className="mt-1 text-sm text-red-600">{errors.attribute}</p>
           )}
         </div>
       </div>

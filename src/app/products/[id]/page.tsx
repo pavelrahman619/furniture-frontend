@@ -79,12 +79,15 @@ export default function ProductPage({ params }: ProductPageProps) {
       return;
     }
 
-    // Find the matching variant based on selected attributes
+    // Find the matching variant based on selected attribute (instead of size/color/finish)
+    // The attribute field is now used instead of the deprecated size/color/material fields
     const matchingVariant = productDetails.rawVariants.find(variant => {
-      const sizeMatch = !selectedVariants.size || variant.size === selectedVariants.size;
-      const colorMatch = !selectedVariants.color || variant.color === selectedVariants.color;
-      const finishMatch = !selectedVariants.finish || variant.material === selectedVariants.finish;
-      return sizeMatch && colorMatch && finishMatch;
+      // Match based on attribute field (new dynamic system)
+      if (variant.attribute) {
+        return variant.attribute === selectedVariants.size; // size field contains attribute value for backwards compatibility
+      }
+      // Fallback to old size field for backwards compatibility with existing products
+      return !selectedVariants.size || variant.size === selectedVariants.size;
     });
 
     // If matching variant has images, use them; otherwise fall back
