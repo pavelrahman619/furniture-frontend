@@ -44,9 +44,7 @@ interface Product {
 
 // Transform API product to display product
 const transformApiProduct = (apiProduct: ApiProduct): Product => {
-  const totalStock = typeof apiProduct.stock === 'number' && !Number.isNaN(apiProduct.stock)
-    ? apiProduct.stock
-    : (apiProduct.variants || []).reduce((sum, variant) => sum + (variant.stock || 0), 0);
+  const totalStock = (apiProduct.variants || []).reduce((sum, variant) => sum + (variant.stock || 0), 0);
 
   // Priority: First variant's primary image > First variant's first image > Product-level images (fallback for backwards compatibility)
   let imageUrl = "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80";

@@ -137,9 +137,7 @@ export function useInfiniteProductsForDisplay(baseParams?: Omit<ProductsQueryPar
           displayImages = product.images || [];
         }
 
-        const totalStock = typeof product.stock === 'number' && !Number.isNaN(product.stock)
-          ? product.stock
-          : (product.variants || []).reduce((sum, variant) => sum + (variant.stock || 0), 0);
+        const totalStock = (product.variants || []).reduce((sum, variant) => sum + (variant.stock || 0), 0);
 
         return {
           id: product._id,
