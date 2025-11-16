@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -13,8 +12,6 @@ interface ExtendedCartItem extends CartItem {
   depth?: string;
   width?: string;
   color?: string;
-  memberPrice?: number;
-  regularPrice?: number;
   deliveryDate?: string;
   isSpecialOrder?: boolean;
 }
@@ -24,8 +21,6 @@ const CartPage = () => {
     useCart();
   const router = useRouter();
 
-  const [showMemberSavings, setShowMemberSavings] = useState(true);
-
   // Convert basic cart items to extended format for display
   const extendedCartItems: ExtendedCartItem[] = cartItems.map((item) => ({
     ...item,
@@ -33,17 +28,9 @@ const CartPage = () => {
     depth: "Classic",
     width: "Standard",
     color: "Natural",
-    memberPrice: Math.round(item.price * 0.7), // 30% member discount
-    regularPrice: item.price,
     deliveryDate: "Available for delivery",
     isSpecialOrder: item.availability === "on-order",
   }));
-
-  const totalSavings = extendedCartItems.reduce((total, item) => {
-    const memberPrice = item.memberPrice || item.price;
-    const regularPrice = item.regularPrice || item.price;
-    return total + (regularPrice - memberPrice) * item.quantity;
-  }, 0);
 
   return (
     <main className="min-h-screen bg-gray-50">
@@ -53,35 +40,6 @@ const CartPage = () => {
           <h1 className="text-4xl font-light text-gray-900 tracking-wider mb-8">
             CART
           </h1>
-
-          {/* Membership Program Section */}
-          {showMemberSavings && (
-            <div className="bg-white border border-gray-200 p-6 mb-8">
-              <div className="text-center mb-6">
-                <p className="text-gray-700 mb-4">
-                  The <span className="underline">RH MEMBERS PROGRAM</span> has
-                  been added to your cart. You&apos;ll save{" "}
-                  <span className="font-semibold">
-                    ${totalSavings.toLocaleString()}
-                  </span>{" "}
-                  on this order.
-                </p>
-
-                <button className="border border-gray-400 px-8 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors mb-4">
-                  ACCOUNT / MEMBER SIGN IN
-                </button>
-
-                <div>
-                  <button
-                    onClick={() => setShowMemberSavings(false)}
-                    className="text-sm text-gray-600 underline hover:text-gray-800 transition-colors"
-                  >
-                    Remove Member Savings
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
 
           {/* Cart Items */}
           <div className="space-y-8">
@@ -158,12 +116,7 @@ const CartPage = () => {
                     {/* Pricing */}
                     <div className="text-right">
                       <div className="text-2xl font-light text-gray-900">
-                        ${(item.memberPrice || item.price).toLocaleString()}{" "}
-                        <span className="text-sm">Member</span>
-                      </div>
-                      <div className="text-sm text-gray-500 line-through">
-                        ${(item.regularPrice || item.price).toLocaleString()}{" "}
-                        Regular
+                        ${item.price.toLocaleString()}
                       </div>
                     </div>
 
@@ -212,15 +165,11 @@ const CartPage = () => {
           {/* Checkout Section */}
           {cartItems.length > 0 && (
             <div className="bg-white border border-gray-200 p-8 mt-8">
-              <div className="flex justify-between items-center mb-4">
+              <div className="flex justify-between items-center mb-6">
                 <span className="text-lg font-medium">Subtotal:</span>
                 <span className="text-2xl font-light">
                   ${getTotalPrice().toLocaleString()}
                 </span>
-              </div>
-              <div className="flex justify-between items-center mb-6 text-sm text-gray-600">
-                <span>Member Savings:</span>
-                <span>-${totalSavings.toLocaleString()}</span>
               </div>
               <button
                 onClick={() => router.push("/checkout")}

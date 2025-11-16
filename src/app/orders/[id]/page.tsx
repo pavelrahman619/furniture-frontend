@@ -49,7 +49,6 @@ interface Order {
   subtotal?: number;
   shippingCost?: number;
   tax?: number;
-  discount?: number;
   deliveryInstructions?: string;
 }
 
@@ -94,8 +93,7 @@ const sampleCustomerOrders: Record<string, Order> = {
     trackingNumber: "1Z999AA1234567890",
     subtotal: 2599,
     shippingCost: 0,
-    tax: 208,
-    discount: 0,
+    // tax: 208, // Backend doesn't support tax
     deliveryInstructions:
       "Please call before delivery and use the side entrance.",
   },
@@ -128,8 +126,7 @@ const sampleCustomerOrders: Record<string, Order> = {
     trackingNumber: "1Z999AA1234567891",
     subtotal: 1299,
     shippingCost: 0,
-    tax: 104,
-    discount: 50,
+    // tax: 104, // Backend doesn't support tax
   },
 };
 
@@ -470,15 +467,6 @@ export default function CustomerOrderDetailsPage() {
                 </div>
               )}
 
-              {order.discount && order.discount > 0 && (
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Discount:</span>
-                  <span className="text-green-600">
-                    -${order.discount.toLocaleString()}
-                  </span>
-                </div>
-              )}
-
               {order.shippingCost !== undefined && (
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">Shipping:</span>
@@ -490,14 +478,15 @@ export default function CustomerOrderDetailsPage() {
                 </div>
               )}
 
-              {order.tax && (
+              {/* Tax is not supported by backend - commented out until backend adds tax field and calculation */}
+              {/* {order.tax && (
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">Tax:</span>
                   <span className="text-gray-900">
                     ${order.tax.toLocaleString()}
                   </span>
                 </div>
-              )}
+              )} */}
 
               <div className="border-t border-gray-200 pt-4">
                 <div className="flex justify-between items-center">

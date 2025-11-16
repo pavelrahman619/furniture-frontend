@@ -85,11 +85,6 @@ const CheckoutPage = () => {
 
   // Calculate pricing
   const subtotal = getTotalPrice();
-  const memberSavings = cartItems.reduce((total, item) => {
-    const memberPrice = Math.round(item.price * 0.7);
-    const regularPrice = item.price;
-    return total + (regularPrice - memberPrice) * item.quantity;
-  }, 0);
 
   // Use final delivery info if available, otherwise use estimate
   const currentShippingInfo = deliveryInfo || shippingEstimate;
@@ -100,8 +95,10 @@ const CheckoutPage = () => {
   const shipping = currentShippingInfo && !isErrorState
     ? (currentShippingInfo.isFree ? 0 : currentShippingInfo.cost)
     : 0;
-  const tax = Math.round(subtotal * 0.08); // 8% tax
-  const total = subtotal + shipping + tax;
+  
+  // Backend formula: total = subtotal + delivery_cost (no tax)
+  // Tax is not supported by the backend system
+  const total = subtotal + shipping;
 
   const handleShippingChange = (field: keyof ShippingInfo, value: string) => {
     setShippingInfo((prev) => ({ ...prev, [field]: value }));
@@ -299,6 +296,22 @@ const CheckoutPage = () => {
 
         try {
         // Prepare order data
+        // Use the same shipping info that's displayed to the user
+        const shippingCost = currentShippingInfo && !isErrorState
+          ? (currentShippingInfo.isFree ? 0 : currentShippingInfo.cost)
+          : 0;
+        const distanceMiles = (deliveryInfo?.distanceMiles || currentShippingInfo?.distanceMiles || validationResult.distance_miles);
+        
+        console.log('📦 Order submission data:', {
+          deliveryInfo,
+          currentShippingInfo,
+          shippingCost,
+          distanceMiles,
+          shipping: shipping,
+          subtotal,
+          total
+        });
+        
         const orderData = {
           items: cartItems.map((item) => ({
             product_id: item.id, // Use the original MongoDB ObjectId
@@ -323,8 +336,8 @@ const CheckoutPage = () => {
           payment_method: "Credit Card", // You can add payment method selection later
           customer_email: shippingInfo.email,
           customer_phone: shippingInfo.phone,
-          delivery_cost: deliveryInfo?.cost || 0,
-          distance_miles: deliveryInfo?.distanceMiles || validationResult.distance_miles,
+          delivery_cost: shippingCost,
+          distance_miles: distanceMiles,
           delivery_zone_validated: true,
         };
 
@@ -668,7 +681,6 @@ const CheckoutPage = () => {
               {/* Order Items */}
               <div className="space-y-6 mb-8">
                 {cartItems.map((item) => {
-                  const memberPrice = Math.round(item.price * 0.7);
                   return (
                     <div key={item.id} className="flex space-x-4">
                       <div className="relative w-16 h-16 bg-gray-100 flex-shrink-0">
@@ -690,7 +702,7 @@ const CheckoutPage = () => {
                         <p className="text-sm text-gray-500">SKU: {item.sku}</p>
                         <div className="flex justify-between items-center mt-2">
                           <span className="text-sm font-medium">
-                            ${memberPrice.toLocaleString()} Member
+                            ${item.price.toLocaleString()}
                           </span>
                         </div>
                       </div>
@@ -705,12 +717,6 @@ const CheckoutPage = () => {
                   <span className="text-gray-600">Subtotal</span>
                   <span className="text-gray-900">
                     ${subtotal.toLocaleString()}
-                  </span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Member Savings</span>
-                  <span className="text-green-600">
-                    -${memberSavings.toLocaleString()}
                   </span>
                 </div>
                 <div className="flex justify-between text-sm">
@@ -731,10 +737,7 @@ const CheckoutPage = () => {
                           : "Enter ZIP code for shipping estimate"}
                   </span>
                 </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Tax</span>
-                  <span className="text-gray-900">${tax.toLocaleString()}</span>
-                </div>
+                {/* Tax is not supported by backend - removed from checkout */}
                 <div className="border-t border-gray-200 pt-4">
                   <div className="flex justify-between text-lg font-medium">
                     <span className="text-gray-900">Total</span>
