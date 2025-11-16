@@ -280,11 +280,11 @@ export default function ProductPage({ params }: ProductPageProps) {
                           <span className="text-sm text-gray-900">
                             {option.label}
                           </span>
-                          {option.priceModifier && option.priceModifier > 0 && (
+                          {/* {option.priceModifier && option.priceModifier > 0 && (
                             <span className="text-sm text-green-600">
                               +${option.priceModifier}
                             </span>
-                          )}
+                          )} */}
                         </div>
                       </button>
                     ))}
