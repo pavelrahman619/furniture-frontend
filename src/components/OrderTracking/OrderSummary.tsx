@@ -42,14 +42,15 @@ export function OrderSummary({ order }: OrderSummaryProps) {
             </div>
           )}
 
-          {order.tax && order.tax > 0 && (
+          {/* Tax is not supported by backend - commented out until backend adds tax field and calculation */}
+          {/* {order.tax && order.tax > 0 && (
             <div className="flex justify-between items-center">
               <span className="text-gray-600">Tax:</span>
               <span className="text-gray-900">
                 ${order.tax.toLocaleString()}
               </span>
             </div>
-          )}
+          )} */}
 
           <div className="border-t border-gray-200 pt-4">
             <div className="flex justify-between items-center">

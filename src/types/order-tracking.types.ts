@@ -45,6 +45,8 @@ export interface BackendOrderResponse {
     estimated_delivery?: string;
     subtotal: number;
     delivery_cost: number;
+    distance_miles?: number;
+    delivery_zone_validated?: boolean;
     total: number;
     created_at: string;
     updated_at: string;

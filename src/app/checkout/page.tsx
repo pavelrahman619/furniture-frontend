@@ -95,8 +95,10 @@ const CheckoutPage = () => {
   const shipping = currentShippingInfo && !isErrorState
     ? (currentShippingInfo.isFree ? 0 : currentShippingInfo.cost)
     : 0;
-  const tax = Math.round(subtotal * 0.08); // 8% tax
-  const total = subtotal + shipping + tax;
+  
+  // Backend formula: total = subtotal + delivery_cost (no tax)
+  // Tax is not supported by the backend system
+  const total = subtotal + shipping;
 
   const handleShippingChange = (field: keyof ShippingInfo, value: string) => {
     setShippingInfo((prev) => ({ ...prev, [field]: value }));
@@ -294,6 +296,22 @@ const CheckoutPage = () => {
 
         try {
         // Prepare order data
+        // Use the same shipping info that's displayed to the user
+        const shippingCost = currentShippingInfo && !isErrorState
+          ? (currentShippingInfo.isFree ? 0 : currentShippingInfo.cost)
+          : 0;
+        const distanceMiles = (deliveryInfo?.distanceMiles || currentShippingInfo?.distanceMiles || validationResult.distance_miles);
+        
+        console.log('📦 Order submission data:', {
+          deliveryInfo,
+          currentShippingInfo,
+          shippingCost,
+          distanceMiles,
+          shipping: shipping,
+          subtotal,
+          total
+        });
+        
         const orderData = {
           items: cartItems.map((item) => ({
             product_id: item.id, // Use the original MongoDB ObjectId
@@ -318,8 +336,8 @@ const CheckoutPage = () => {
           payment_method: "Credit Card", // You can add payment method selection later
           customer_email: shippingInfo.email,
           customer_phone: shippingInfo.phone,
-          delivery_cost: deliveryInfo?.cost || 0,
-          distance_miles: deliveryInfo?.distanceMiles || validationResult.distance_miles,
+          delivery_cost: shippingCost,
+          distance_miles: distanceMiles,
           delivery_zone_validated: true,
         };
 
@@ -719,10 +737,7 @@ const CheckoutPage = () => {
                           : "Enter ZIP code for shipping estimate"}
                   </span>
                 </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Tax</span>
-                  <span className="text-gray-900">${tax.toLocaleString()}</span>
-                </div>
+                {/* Tax is not supported by backend - removed from checkout */}
                 <div className="border-t border-gray-200 pt-4">
                   <div className="flex justify-between text-lg font-medium">
                     <span className="text-gray-900">Total</span>
