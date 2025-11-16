@@ -85,11 +85,6 @@ const CheckoutPage = () => {
 
   // Calculate pricing
   const subtotal = getTotalPrice();
-  const memberSavings = cartItems.reduce((total, item) => {
-    const memberPrice = Math.round(item.price * 0.7);
-    const regularPrice = item.price;
-    return total + (regularPrice - memberPrice) * item.quantity;
-  }, 0);
 
   // Use final delivery info if available, otherwise use estimate
   const currentShippingInfo = deliveryInfo || shippingEstimate;
@@ -668,7 +663,6 @@ const CheckoutPage = () => {
               {/* Order Items */}
               <div className="space-y-6 mb-8">
                 {cartItems.map((item) => {
-                  const memberPrice = Math.round(item.price * 0.7);
                   return (
                     <div key={item.id} className="flex space-x-4">
                       <div className="relative w-16 h-16 bg-gray-100 flex-shrink-0">
@@ -690,7 +684,7 @@ const CheckoutPage = () => {
                         <p className="text-sm text-gray-500">SKU: {item.sku}</p>
                         <div className="flex justify-between items-center mt-2">
                           <span className="text-sm font-medium">
-                            ${memberPrice.toLocaleString()} Member
+                            ${item.price.toLocaleString()}
                           </span>
                         </div>
                       </div>
@@ -705,12 +699,6 @@ const CheckoutPage = () => {
                   <span className="text-gray-600">Subtotal</span>
                   <span className="text-gray-900">
                     ${subtotal.toLocaleString()}
-                  </span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Member Savings</span>
-                  <span className="text-green-600">
-                    -${memberSavings.toLocaleString()}
                   </span>
                 </div>
                 <div className="flex justify-between text-sm">

@@ -22,7 +22,6 @@ interface OrderDetails {
   orderDate: string;
   estimatedDelivery?: string;
   subtotal: number;
-  memberSavings: number;
   total: number;
   items: OrderItem[];
   shippingAddress: {
@@ -76,7 +75,6 @@ const OrderSuccessContent = () => {
               })
             : "December 15-20, 2024", // Fallback
           subtotal: order.subtotal,
-          memberSavings: 0, // Backend doesn't have member savings in the current structure
           total: order.total,
           items: order.items ? order.items.map((item) => ({
             id: item.product_id,
@@ -265,13 +263,6 @@ const OrderSuccessContent = () => {
                 <span className="text-gray-600">Subtotal:</span>
                 <span className="text-gray-900">
                   ${orderDetails.subtotal.toLocaleString()}
-                </span>
-              </div>
-
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600">Member Savings:</span>
-                <span className="text-green-600">
-                  -${orderDetails.memberSavings.toLocaleString()}
                 </span>
               </div>
 

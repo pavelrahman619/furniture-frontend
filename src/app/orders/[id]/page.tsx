@@ -49,7 +49,6 @@ interface Order {
   subtotal?: number;
   shippingCost?: number;
   tax?: number;
-  discount?: number;
   deliveryInstructions?: string;
 }
 
@@ -95,7 +94,6 @@ const sampleCustomerOrders: Record<string, Order> = {
     subtotal: 2599,
     shippingCost: 0,
     tax: 208,
-    discount: 0,
     deliveryInstructions:
       "Please call before delivery and use the side entrance.",
   },
@@ -129,7 +127,6 @@ const sampleCustomerOrders: Record<string, Order> = {
     subtotal: 1299,
     shippingCost: 0,
     tax: 104,
-    discount: 50,
   },
 };
 
@@ -466,15 +463,6 @@ export default function CustomerOrderDetailsPage() {
                   <span className="text-gray-600">Subtotal:</span>
                   <span className="text-gray-900">
                     ${order.subtotal.toLocaleString()}
-                  </span>
-                </div>
-              )}
-
-              {order.discount && order.discount > 0 && (
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Discount:</span>
-                  <span className="text-green-600">
-                    -${order.discount.toLocaleString()}
                   </span>
                 </div>
               )}

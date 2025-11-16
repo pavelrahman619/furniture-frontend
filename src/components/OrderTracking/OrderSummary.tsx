@@ -31,15 +31,6 @@ export function OrderSummary({ order }: OrderSummaryProps) {
             </div>
           )}
 
-          {order.discount && order.discount > 0 && (
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600">Discount:</span>
-              <span className="text-green-600">
-                -${order.discount.toLocaleString()}
-              </span>
-            </div>
-          )}
-
           {order.shippingCost !== undefined && (
             <div className="flex justify-between items-center">
               <span className="text-gray-600">Shipping:</span>

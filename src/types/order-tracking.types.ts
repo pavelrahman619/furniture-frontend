@@ -100,7 +100,6 @@ export interface Order {
   subtotal?: number;
   shippingCost?: number;
   tax?: number;
-  discount?: number;
   deliveryInstructions?: string;
   timeline?: TimelineEvent[];
 }
