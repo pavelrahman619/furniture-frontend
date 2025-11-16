@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 import { ProductFilters } from '@/types/product.types';
-import { fetchCategories, transformCategoriesToFilterOptions, CategoryResponse } from '@/services/category.service';
+import { fetchCategories, transformCategoriesToFilterOptions } from '@/services/category.service';
 
 // Filter state interface
 interface FilterState {
@@ -73,25 +73,9 @@ const STATIC_FILTER_OPTIONS = {
     { value: "storage", label: "Storage", slug: "storage" },
   ],
   
-  colors: [
-    { value: "brown", label: "Brown" },
-    { value: "black", label: "Black" },
-    { value: "white", label: "White" },
-    { value: "gray", label: "Gray" },
-    { value: "natural", label: "Natural" },
-    { value: "blue", label: "Blue" },
-    { value: "green", label: "Green" },
-  ],
-  
-  materials: [
-    { value: "wood", label: "Wood" },
-    { value: "metal", label: "Metal" },
-    { value: "leather", label: "Leather" },
-    { value: "fabric", label: "Fabric" },
-    { value: "glass", label: "Glass" },
-    { value: "plastic", label: "Plastic" },
-    { value: "marble", label: "Marble" },
-  ],
+  // Empty arrays - backend returns no colors/materials
+  colors: [],
+  materials: [],
   
   // features: [
   //   { value: "reclaimed-wood", label: "Reclaimed Wood" },

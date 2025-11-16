@@ -3,10 +3,12 @@
 import { useState, useRef } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 
 interface Category {
   id: string;
   title: string;
+  slug: string;
   description: string;
   image: string;
 }
@@ -16,17 +18,10 @@ const CategorySlider = () => {
   const sliderRef = useRef<HTMLDivElement>(null);
 
   const categories: Category[] = [
-    // {
-    //   id: "artisan-house",
-    //   title: "ARTISAN HOUSE",
-    //   description:
-    //     "Where craftsmanship meets timeless beauty. Each curated, found piece is an heirloom of artisanal design, meticulously hand-carved from reclaimed wood to reveal layers of character and history.",
-    //   image:
-    //     "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-    // },
     {
       id: "living-room",
       title: "LIVING ROOM",
+      slug: "living-room",
       description:
         "Discover the living room section, where sophisticated design meets modern luxury. From statement seating to elegant accents, elevate your home with enduring style",
       image:
@@ -35,6 +30,7 @@ const CategorySlider = () => {
     {
       id: "dining-room",
       title: "DINING ROOM",
+      slug: "dining-room",
       description:
         "Our dining room section brings elegance to every occasion. Discover refined tables and seating designed for timeless gatherings",
       image:
@@ -43,30 +39,16 @@ const CategorySlider = () => {
     {
       id: "bedroom",
       title: "BEDROOM",
+      slug: "bedroom",
       description:
         "Transform your bedroom into a sanctuary of comfort & style",
       image:
         "/furniture/bedroom.jpg",
     },
-    // {
-    //   id: "bedroom 1",
-    //   title: "BEDROOM 1",
-    //   description:
-    //     "Transform your bedroom into a sanctuary of comfort & style",
-    //   image:
-    //     "/furniture/bedroom 1.jpg",
-    // },
-    // {
-    //   id: "bedroom 2",
-    //   title: "BEDROOM 2",
-    //   description:
-    //     "Transform your bedroom into a sanctuary of comfort & style",
-    //   image:
-    //     "/furniture/bedroom 2.jpg",
-    // },
     {
       id: "office",
       title: "OFFICE",
+      slug: "office",
       description:
         "Curated office pieces that inspire success and style",
       image:
@@ -75,6 +57,7 @@ const CategorySlider = () => {
     {
       id: "entry-and-decor",
       title: "ENTRY & DECOR",
+      slug: "entry-and-decor",
       description:
         "Make a lasting first impression with entryway pieces and decor",
       image:
@@ -83,19 +66,12 @@ const CategorySlider = () => {
     {
       id: "outdoor",
       title: "OUTDOOR",
+      slug: "outdoor",
       description:
         "Outdoor living made easy with modern, weather-ready furniture",
       image:
         "/furniture/outdoor.jpg",
     },
-    // {
-    //   id: "lighting",
-    //   title: "LIGHTING",
-    //   description:
-    //     "From charming chandeliers to accent pieces, these handcrafted fixtures bring warmth, personality, and artisanal beauty to every space.",
-    //   image:
-    //     "https://images.unsplash.com/photo-1524484485831-a92ffc0de03f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-    // },
   ];
 
   const slideLeft = () => {
@@ -150,8 +126,9 @@ const CategorySlider = () => {
           style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
         >
           {categories.map((category) => (
-            <div
+            <Link
               key={category.id}
+              href={`/products?category=${category.slug}`}
               className="flex-none w-80 bg-white group cursor-pointer"
             >
               {/* Image Container */}
@@ -175,7 +152,7 @@ const CategorySlider = () => {
                   {category.description}
                 </p>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       </div>

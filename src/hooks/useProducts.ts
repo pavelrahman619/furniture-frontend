@@ -5,6 +5,7 @@ import { useQuery, useQueryClient, useInfiniteQuery } from '@tanstack/react-quer
 import { ProductService } from '@/services/product.service';
 import {
   ProductsQueryParams,
+  ProductImage,
 } from '@/types/product.types';
 
 /**
@@ -74,31 +75,69 @@ export function useInfiniteProductsForDisplay(baseParams?: Omit<ProductsQueryPar
     return query.data.pages.flatMap(page => {
       const { products, filters_available } = page;
       
-      // Update filter store with dynamic category data if available (only from first page)
-      if (filters_available?.categories && query.data.pages.indexOf(page) === 0) {
+      // Update filter store with dynamic filter data if available (only from first page)
+      if (filters_available && query.data.pages.indexOf(page) === 0) {
         try {
           import('../stores/filterStore').then(({ useFilterStore }) => {
             const store = useFilterStore.getState();
-            store.updateFilterOptions({
-              categories: filters_available.categories.map(cat => ({
+            const updateOptions: Partial<{
+              availability: Array<{ value: string; label: string }>;
+              categories: Array<{ value: string; label: string; slug: string }>;
+              colors: Array<{ value: string; label: string }>;
+              materials: Array<{ value: string; label: string }>;
+            }> = {};
+            
+            // Update categories if available
+            if (filters_available.categories) {
+              updateOptions.categories = filters_available.categories.map(cat => ({
                 value: cat.id,
                 label: cat.name,
                 slug: cat.name.toLowerCase().replace(/\s+/g, '-')
-              }))
-            });
+              }));
+            }
+            
+            // Update colors if available
+            if (filters_available.colors) {
+              updateOptions.colors = filters_available.colors.map(color => ({
+                value: color,
+                label: color
+              }));
+            }
+            
+            // Update materials if available
+            if (filters_available.materials) {
+              updateOptions.materials = filters_available.materials.map(material => ({
+                value: material,
+                label: material
+              }));
+            }
+            
+            store.updateFilterOptions(updateOptions);
           });
         } catch (error) {
-          console.warn('Failed to update filter store with category data:', error);
+          console.warn('Failed to update filter store with dynamic filter data:', error);
         }
       }
 
       // Transform products to DisplayProduct format
       return products.map(product => {
-        const images = product.images || [];
-        const categoryField = product.category_id;
-        const totalStock = typeof product.stock === 'number' && !Number.isNaN(product.stock)
-          ? product.stock
-          : (product.variants || []).reduce((sum, variant) => sum + (variant.stock || 0), 0);
+        // Priority: First variant's images > Product-level images (fallback)
+        let displayImages: ProductImage[] = [];
+        
+        // Try to get images from first variant
+        if (product.variants && product.variants.length > 0) {
+          const firstVariant = product.variants[0];
+          if (firstVariant.images && firstVariant.images.length > 0) {
+            displayImages = firstVariant.images;
+          }
+        }
+        
+        // Fallback to product-level images (for backwards compatibility with existing products)
+        if (displayImages.length === 0) {
+          displayImages = product.images || [];
+        }
+
+        const totalStock = (product.variants || []).reduce((sum, variant) => sum + (variant.stock || 0), 0);
 
         return {
           id: product._id,
@@ -109,12 +148,12 @@ export function useInfiniteProductsForDisplay(baseParams?: Omit<ProductsQueryPar
           category_name: typeof product.category_id === 'object' && product.category_id?.name 
             ? product.category_id.name 
             : undefined,
-          price: product.price,
+          price: product.variants[0]?.price || product.price,
           featured: product.featured ?? false,
           sku: product.sku,
           description: product.description,
           variants: product.variants || [],
-          images: images,
+          images: displayImages,
           stock: totalStock,
           availability: (totalStock > 0 ? 'in-stock' : 'out-of-stock') as 'in-stock' | 'out-of-stock',
         };

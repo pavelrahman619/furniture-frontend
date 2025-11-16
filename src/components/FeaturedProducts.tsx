@@ -1,10 +1,12 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 
 interface FeaturedItem {
   id: string;
   title: string;
+  slug: string;
   image: string;
 }
 
@@ -13,16 +15,19 @@ const FeaturedProducts = () => {
     {
       id: "living-room",
       title: "LIVING ROOM",
+      slug: "living-room",
       image: "/furniture/featured/living.png",
     },
     {
       id: "dining-room",
       title: "DINING ROOM",
+      slug: "dining-room",
       image: "/furniture/featured/dining.jpg",
     },
     {
       id: "bedroom",
       title: "BEDROOM",
+      slug: "bedroom",
       image: "/furniture/featured/bedroom.jpg",
     },
   ];
@@ -40,7 +45,11 @@ const FeaturedProducts = () => {
         {/* Three Column Layout */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {featuredItems.map((item) => (
-            <div key={item.id} className="group cursor-pointer">
+            <Link
+              key={item.id}
+              href={`/products?category=${item.slug}`}
+              className="group cursor-pointer"
+            >
               {/* Tall Image */}
               <div className="relative overflow-hidden mb-6 h-96 md:h-[500px]">
                 <Image
@@ -59,7 +68,7 @@ const FeaturedProducts = () => {
                   {item.title}
                 </h3>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       </div>

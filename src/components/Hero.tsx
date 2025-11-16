@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState, useEffect } from "react";
 
 // Content interface
@@ -76,9 +77,12 @@ const Hero = () => {
         </h1>
 
         {/* CTA Button */}
-        <button className="bg-black bg-opacity-80 hover:bg-opacity-100 text-white px-8 py-3 text-sm font-medium tracking-wider transition-all duration-300 hover:scale-105">
+        <Link
+          href="/products"
+          className="bg-black bg-opacity-80 hover:bg-opacity-100 text-white px-8 py-3 text-sm font-medium tracking-wider transition-all duration-300 hover:scale-105"
+        >
           {content.buttonText}
-        </button>
+        </Link>
       </div>
 
       {/* Decorative Elements */}

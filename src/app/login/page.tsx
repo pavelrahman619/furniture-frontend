@@ -136,9 +136,8 @@ const LoginPage = () => {
                   autoComplete="email"
                   value={formData.email}
                   onChange={handleInputChange}
-                  className={`block w-full pl-10 pr-3 py-3 border ${
-                    errors.email ? "border-red-300" : "border-gray-300"
-                  } focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent text-gray-900 placeholder-gray-400`}
+                  className={`block w-full pl-10 pr-3 py-3 border ${errors.email ? "border-red-300" : "border-gray-300"
+                    } focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent text-gray-900 placeholder-gray-400`}
                   placeholder="Enter your email address"
                 />
               </div>
@@ -166,9 +165,8 @@ const LoginPage = () => {
                   autoComplete="current-password"
                   value={formData.password}
                   onChange={handleInputChange}
-                  className={`block w-full pl-10 pr-12 py-3 border ${
-                    errors.password ? "border-red-300" : "border-gray-300"
-                  } focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent text-gray-900 placeholder-gray-400`}
+                  className={`block w-full pl-10 pr-12 py-3 border ${errors.password ? "border-red-300" : "border-gray-300"
+                    } focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent text-gray-900 placeholder-gray-400`}
                   placeholder="Enter your password"
                 />
                 <button
@@ -222,11 +220,10 @@ const LoginPage = () => {
               <button
                 type="submit"
                 disabled={isLoading}
-                className={`w-full flex justify-center py-4 px-4 border border-transparent font-medium tracking-wider text-white ${
-                  isLoading
+                className={`w-full flex justify-center py-4 px-4 border border-transparent font-medium tracking-wider text-white ${isLoading
                     ? "bg-gray-400 cursor-not-allowed"
                     : "bg-gray-900 hover:bg-gray-800"
-                } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors`}
+                  } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors`}
               >
                 {isLoading ? (
                   <div className="flex items-center">

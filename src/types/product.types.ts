@@ -2,14 +2,20 @@
  * Product types matching backend API structure
  */
 
+// Variation type constants
+export const VARIATION_TYPES = ['Size', 'Dimensions', 'Weight', 'Color', 'Material', 'Style'] as const;
+export type VariationType = typeof VARIATION_TYPES[number];
+
 export interface ProductVariant {
   _id?: string;
   color?: string;
   material?: string;
   size?: string;
+  attribute?: string; // Dynamic attribute value for the product's variation type
   price: number;
   stock: number;
   sku: string;
+  images?: ProductImage[];
 }
 
 export interface ProductImage {
@@ -32,6 +38,7 @@ export interface Product {
   category_id: string | Category; // Can be populated or not
   price: number;
   description?: string;
+  variation?: string; // Type of variation (e.g., Size, Dimensions, Color)
   variants: ProductVariant[];
   images: ProductImage[];
   featured?: boolean;
@@ -87,6 +94,10 @@ export interface ProductsQueryParams {
   color?: string;
   material?: string;
   search?: string;
+  // Additional filters that could be supported
+  featured?: boolean;
+  sort?: string;
+  order?: 'asc' | 'desc';
 }
 
 // Filter types for frontend
@@ -147,6 +158,9 @@ export interface ProductDetails {
   }[];
   description?: string;
   note?: string;
+  rawVariants?: ProductVariant[]; // Raw variant data for variant-specific image selection
+  productLevelImages?: string[]; // Product-level images as fallback
+  variationName?: string; // Dynamic variation name (e.g., "Size", "Dimensions", "Color")
   variants: {
     size: {
       name: string;
@@ -166,4 +180,50 @@ export interface ProductDetails {
       options: { value: string; label: string; priceModifier?: number }[];
     };
   };
+}
+
+// Admin-specific types for product management
+export interface CreateProductRequest {
+  name: string;
+  sku: string;
+  category_id: string;
+  price: number;
+  description?: string;
+  variation?: string;
+  variants?: ProductVariant[];
+  images?: ProductImage[];
+  featured?: boolean;
+  stock?: number;
+}
+
+export type UpdateProductRequest = Partial<CreateProductRequest>;
+
+export interface StockInfo {
+  productId: string;
+  currentStock: number;
+  reservedStock?: number;
+  availableStock: number;
+  locations?: StockLocation[];
+}
+
+export interface UpdateStockRequest {
+  stock: number;
+  location?: string;
+}
+
+// Error types for better error handling
+export interface ProductError {
+  field?: string;
+  message: string;
+  code?: string;
+}
+
+export interface ProductValidationError {
+  errors: ProductError[];
+  message: string;
+}
+
+// Admin product list response (may differ from public product list)
+export interface AdminProductsResponse extends ProductsResponse {
+  products: Product[];
 }

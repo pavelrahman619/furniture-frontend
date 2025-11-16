@@ -3,7 +3,7 @@
  * Custom hook for managing categories data and integration with filter store
  */
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { 
   useFilterOptions, 
   useIsCategoriesLoading, 
@@ -20,17 +20,21 @@ export const useCategories = () => {
   const isLoading = useIsCategoriesLoading();
   const error = useCategoriesError();
   const fetchCategories = useFetchCategoriesFromBackend();
+  const hasFetchedRef = useRef(false);
 
   // Auto-fetch categories on mount
   useEffect(() => {
-    // Only fetch if we don't have categories or if we only have the static fallback
-    const hasOnlyStaticCategories = categories.length <= 5 && 
-      categories.some(cat => cat.value === 'console' || cat.value === 'table');
-    
-    if (categories.length === 0 || hasOnlyStaticCategories) {
-      fetchCategories();
+    // Only fetch once on mount if we don't have categories or if we only have the static fallback
+    if (!hasFetchedRef.current) {
+      const hasOnlyStaticCategories = categories.length <= 5 &&
+        categories.some(cat => cat.value === 'console' || cat.value === 'table');
+
+      if (categories.length === 0 || hasOnlyStaticCategories) {
+        fetchCategories();
+        hasFetchedRef.current = true;
+      }
     }
-  }, [fetchCategories, categories.length]);
+  }, [fetchCategories, categories]);
 
   return {
     categories,

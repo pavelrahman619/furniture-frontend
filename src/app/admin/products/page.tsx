@@ -7,7 +7,6 @@ import {
   Search,
   Filter,
   Plus,
-  Minus,
   Eye,
   Edit,
   Trash2,
@@ -15,14 +14,26 @@ import {
   ChevronUp,
   ArrowUpDown,
   Loader2,
+  Shield,
+  RefreshCw,
+  Download,
 } from "lucide-react";
+import { useAdmin } from "@/contexts/AdminContext";
+import { useAdminProducts, useDeleteProduct } from "@/hooks/useAdminProducts";
+import AdminGuard from "@/components/AdminGuard";
+import { ProductTableSkeleton } from "@/components/ProductTableSkeleton";
+import { ProductsError } from "@/components/ProductsError";
+import { DeleteProductDialog } from "@/components/DeleteProductDialog";
+import { useToast } from "@/contexts/ToastContext";
+import { Product as ApiProduct, ProductsQueryParams } from "@/types/product.types";
+import { ProductService } from "@/services/product.service";
 
-// Product interface for table display
+// Product interface for table display (transformed from API data)
 interface Product {
   id: string;
   name: string;
   sku: string;
-  category: string;
+  categoryId: string;
   price: number;
   availability: "in-stock" | "out-of-stock" | "on-order";
   totalStock: number;
@@ -31,255 +42,62 @@ interface Product {
   createdAt: string;
 }
 
-// Sample products data
-const sampleProducts: Product[] = [
-  {
-    id: "59972101",
-    name: "Luxury Living Room Sofa",
-    sku: "59972101",
-    category: "Living Room",
-    price: 3299,
-    availability: "in-stock",
-    totalStock: 3,
-    image:
-      "https://images.unsplash.com/photo-1494947665470-20322015e3a8?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-    isFirstLook: true,
-    createdAt: "2024-01-15",
-  },
-  {
-    id: "59972102",
-    name: "Elegant Dining Table Set",
-    sku: "59972102",
-    category: "Dining Room",
-    price: 2599,
-    availability: "in-stock",
-    totalStock: 5,
-    image:
-      "https://images.unsplash.com/photo-1549497538-303791108f95?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-    isFirstLook: false,
-    createdAt: "2024-01-10",
-  },
-  {
-    id: "59972103",
-    name: "Master Bedroom Headboard",
-    sku: "59972103",
-    category: "Bedroom",
-    price: 1899,
-    availability: "in-stock",
-    totalStock: 2,
-    image:
-      "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-    isFirstLook: false,
-    createdAt: "2024-01-08",
-  },
-  {
-    id: "59972104",
-    name: "Executive Office Desk",
-    sku: "59972104",
-    category: "Office",
-    price: 2199,
-    availability: "in-stock",
-    totalStock: 2,
-    image:
-      "https://images.unsplash.com/photo-1506439773649-6e0eb8cfb237?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-    isFirstLook: false,
-    createdAt: "2024-01-05",
-  },
-  {
-    id: "59972105",
-    name: "Entryway Console Table",
-    sku: "59972105",
-    category: "Entry & Decor",
-    price: 1299,
-    availability: "in-stock",
-    totalStock: 3,
-    image:
-      "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-    isFirstLook: true,
-    createdAt: "2024-01-03",
-  },
-  {
-    id: "59972106",
-    name: "Living Room Coffee Table",
-    sku: "59972106",
-    category: "Living Room",
-    price: 1599,
-    availability: "in-stock",
-    totalStock: 4,
-    image:
-      "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-    isFirstLook: false,
-    createdAt: "2024-01-01",
-  },
-  // Additional sample products for better infinite scroll demonstration
-  {
-    id: "59972107",
-    name: "Mid-Century Modern Sofa",
-    sku: "59972107",
-    category: "Chairs",
-    price: 2199,
-    availability: "in-stock",
-    totalStock: 3,
-    image:
-      "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-    isFirstLook: false,
-    createdAt: "2023-12-28",
-  },
-  {
-    id: "59972108",
-    name: "Rustic Wooden Desk",
-    sku: "59972108",
-    category: "Console Tables",
-    price: 899,
-    availability: "in-stock",
-    totalStock: 7,
-    image:
-      "https://images.unsplash.com/photo-1494947665470-20322015e3a8?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-    isFirstLook: true,
-    createdAt: "2023-12-25",
-  },
-  {
-    id: "59972109",
-    name: "Glass Top Side Table",
-    sku: "59972109",
-    category: "Coffee Tables",
-    price: 449,
-    availability: "on-order",
-    totalStock: 0,
-    image:
-      "https://images.unsplash.com/photo-1549497538-303791108f95?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-    isFirstLook: false,
-    createdAt: "2023-12-20",
-  },
-  {
-    id: "59972110",
-    name: "Velvet Ottoman",
-    sku: "59972110",
-    category: "Chairs",
-    price: 299,
-    availability: "in-stock",
-    totalStock: 20,
-    image:
-      "https://images.unsplash.com/photo-1506439773649-6e0eb8cfb237?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-    isFirstLook: false,
-    createdAt: "2023-12-18",
-  },
-  {
-    id: "59972111",
-    name: "Industrial Bar Stools Set",
-    sku: "59972111",
-    category: "Chairs",
-    price: 599,
-    availability: "in-stock",
-    totalStock: 12,
-    image:
-      "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-    isFirstLook: false,
-    createdAt: "2023-12-15",
-  },
-  {
-    id: "59972112",
-    name: "Farmhouse Dining Set",
-    sku: "59972112",
-    category: "Dining Tables",
-    price: 1899,
-    availability: "in-stock",
-    totalStock: 2,
-    image:
-      "https://images.unsplash.com/photo-1549497538-303791108f95?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-    isFirstLook: true,
-    createdAt: "2023-12-12",
-  },
-  {
-    id: "59972113",
-    name: "Floating Wall Shelf",
-    sku: "59972113",
-    category: "Storage",
-    price: 149,
-    availability: "in-stock",
-    totalStock: 25,
-    image:
-      "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-    isFirstLook: false,
-    createdAt: "2023-12-10",
-  },
-  {
-    id: "59972114",
-    name: "Marble Top Console",
-    sku: "59972114",
-    category: "Console Tables",
-    price: 1299,
-    availability: "out-of-stock",
-    totalStock: 0,
-    image:
-      "https://images.unsplash.com/photo-1494947665470-20322015e3a8?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-    isFirstLook: false,
-    createdAt: "2023-12-08",
-  },
-  {
-    id: "59972115",
-    name: "Leather Executive Chair",
-    sku: "59972115",
-    category: "Chairs",
-    price: 799,
-    availability: "in-stock",
-    totalStock: 6,
-    image:
-      "https://images.unsplash.com/photo-1506439773649-6e0eb8cfb237?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-    isFirstLook: false,
-    createdAt: "2023-12-05",
-  },
-  {
-    id: "59972116",
-    name: "Round Pedestal Table",
-    sku: "59972116",
-    category: "Dining Tables",
-    price: 1099,
-    availability: "in-stock",
-    totalStock: 4,
-    image:
-      "https://images.unsplash.com/photo-1549497538-303791108f95?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-    isFirstLook: true,
-    createdAt: "2023-12-03",
-  },
-  {
-    id: "59972117",
-    name: "Storage Bench",
-    sku: "59972117",
-    category: "Storage",
-    price: 399,
-    availability: "in-stock",
-    totalStock: 18,
-    image:
-      "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-    isFirstLook: false,
-    createdAt: "2023-12-01",
-  },
-  {
-    id: "59972118",
-    name: "Live Edge Coffee Table",
-    sku: "59972118",
-    category: "Coffee Tables",
-    price: 1599,
-    availability: "on-order",
-    totalStock: 0,
-    image:
-      "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-    isFirstLook: true,
-    createdAt: "2023-11-28",
-  },
-];
+// Transform API product to display product
+const transformApiProduct = (apiProduct: ApiProduct): Product => {
+  const totalStock = (apiProduct.variants || []).reduce((sum, variant) => sum + (variant.stock || 0), 0);
 
-// Duplicate sample products to create more data for infinite scroll demonstration
-const extendedSampleProducts = [
-  ...sampleProducts,
-  ...sampleProducts.map((product, index) => ({
-    ...product,
-    id: `${product.id}_${index + 100}`,
-    sku: `${product.sku}_${index + 100}`,
-    name: `${product.name} - Variant ${index + 1}`,
-  })),
-];
+  // Priority: First variant's primary image > First variant's first image > Product-level images (fallback for backwards compatibility)
+  let imageUrl = "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80";
+  
+  // Try to get image from first variant
+  if (apiProduct.variants && apiProduct.variants.length > 0) {
+    const firstVariant = apiProduct.variants[0];
+    if (firstVariant.images && firstVariant.images.length > 0) {
+      const variantPrimaryImage = firstVariant.images.find(img => img.is_primary);
+      const variantFirstImage = firstVariant.images[0];
+      
+      if (variantPrimaryImage?.url) {
+        imageUrl = variantPrimaryImage.url;
+      } else if (variantFirstImage?.url) {
+        imageUrl = variantFirstImage.url;
+      }
+    }
+  }
+  
+  // Fallback to product-level images (for backwards compatibility with existing products)
+  if (imageUrl === "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80") {
+    const primaryImage = apiProduct.images?.find(img => img.is_primary) || apiProduct.images?.[0];
+    if (primaryImage?.url) {
+      imageUrl = primaryImage.url;
+    }
+  }
+
+  // Extract category ID only
+  let categoryId = '';
+  if (typeof apiProduct.category_id === 'object' && apiProduct.category_id?._id) {
+    categoryId = apiProduct.category_id._id;
+  } else if (typeof apiProduct.category_id === 'string') {
+    categoryId = apiProduct.category_id;
+  }
+
+  // Get SKU from first variant, fallback to product SKU
+  const sku = apiProduct.variants && apiProduct.variants.length > 0
+    ? apiProduct.variants[0].sku
+    : apiProduct.sku;
+
+  return {
+    id: apiProduct._id,
+    name: apiProduct.name,
+    sku: sku,
+    categoryId: categoryId,
+    price: apiProduct.variants[0]?.price || apiProduct.price,
+    availability: totalStock > 0 ? "in-stock" : "out-of-stock",
+    totalStock,
+    image: imageUrl,
+    isFirstLook: apiProduct.featured || false,
+    createdAt: apiProduct.created_at || new Date().toISOString(),
+  };
+};
 
 type SortField = keyof Product;
 type SortDirection = "asc" | "desc";
@@ -288,36 +106,140 @@ const PRODUCTS_PER_BATCH = 10;
 const TABLE_HEIGHT = "calc(100vh - 400px)"; // Adjust based on header/filter heights
 
 export default function ProductsPage() {
-  const [products, setProducts] = useState<Product[]>(extendedSampleProducts);
+  // Prevent server/client markup mismatch by ensuring this client-only
+  // component renders the same root on both server and client. We mount
+  // the heavy client-only UI after the first render on the client.
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+  // Admin authentication
+  const { getToken, isAuthenticated } = useAdmin();
+  const token = getToken();
+
+  // Toast notifications
+  const { success, error } = useToast();
+
+  // Local state for filters and UI
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
   const [availabilityFilter, setAvailabilityFilter] = useState("");
-  const [priceRange, setPriceRange] = useState({ min: "", max: "" });
+  const [colorFilter, setColorFilter] = useState("");
+  const [materialFilter, setMaterialFilter] = useState("");
   const [sortField, setSortField] = useState<SortField>("createdAt");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const [showFilters, setShowFilters] = useState(false);
   const [displayedCount, setDisplayedCount] = useState(PRODUCTS_PER_BATCH);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [productToDelete, setProductToDelete] = useState<Product | null>(null);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  // Get unique categories for filter
-  const categories = Array.from(new Set(products.map((p) => p.category)));
+  // Build query parameters for API - let backend handle filtering
+  const queryParams = useMemo((): ProductsQueryParams => {
+    const params: ProductsQueryParams = {
+      page: 1,
+      limit: 50, // Use backend pagination instead of client-side
+    };
 
-  // Handle stock changes
-  const updateStock = (productId: string, change: number) => {
-    setProducts((prev) =>
-      prev.map((product) =>
-        product.id === productId
-          ? {
-              ...product,
-              totalStock: Math.max(0, product.totalStock + change),
-              availability:
-                product.totalStock + change > 0 ? "in-stock" : "out-of-stock",
-            }
-          : product
-      )
-    );
-  };
+    if (searchTerm.trim()) {
+      params.search = searchTerm.trim();
+    }
+
+    if (categoryFilter) {
+      params.category = categoryFilter;
+    }
+
+    if (colorFilter) {
+      params.color = colorFilter;
+    }
+
+    if (materialFilter) {
+      params.material = materialFilter;
+    }
+
+    return params;
+  }, [searchTerm, categoryFilter, colorFilter, materialFilter]);
+
+  // Fetch products from API
+  const {
+    data: apiResponse,
+    isLoading,
+    error: productsError,
+    refetch,
+    isRefetching,
+  } = useAdminProducts(queryParams, token || undefined);
+
+  // Mutations for product operations
+  const deleteProductMutation = useDeleteProduct();
+
+  // Transform API products to display format
+  const products = useMemo(() => {
+    if (!apiResponse?.products) return [];
+    return apiResponse.products.map(transformApiProduct);
+  }, [apiResponse]);
+
+  // Get categories with both ID and name for filter
+  const categories = useMemo(() => {
+    if (apiResponse?.filters_available?.categories) {
+      return apiResponse.filters_available.categories;
+    }
+    // Fallback: extract unique category IDs from products (without names)
+    const uniqueCategoryIds = Array.from(new Set(products.map(p => p.categoryId).filter(Boolean)));
+    return uniqueCategoryIds.map(id => ({ id, name: id })); // Use ID as name fallback
+  }, [apiResponse, products]);
+
+  // Helper function to get category name by ID
+  const getCategoryName = useCallback((categoryId: string) => {
+    const category = categories.find(cat => cat.id === categoryId);
+    return category?.name || 'Uncategorized';
+  }, [categories]);
+
+  // Handle product deletion
+  const handleDeleteProduct = useCallback((productId: string) => {
+    const product = products.find(p => p.id === productId);
+    if (!product) return;
+
+    // Create product object with category name for the dialog
+    const productWithCategoryName = {
+      ...product,
+      category: getCategoryName(product.categoryId)
+    };
+
+    setProductToDelete(productWithCategoryName);
+    setShowDeleteDialog(true);
+  }, [products, getCategoryName]);
+
+  // Confirm product deletion
+  const confirmDeleteProduct = useCallback(async (productId: string) => {
+    if (!token) return;
+
+    const product = products.find(p => p.id === productId);
+    const productName = product?.name || "Product";
+
+    try {
+      await deleteProductMutation.mutateAsync({
+        id: productId,
+        token,
+      });
+      setShowDeleteDialog(false);
+      setProductToDelete(null);
+      success("Product deleted successfully", `${productName} has been removed from your inventory.`);
+    } catch (err) {
+      console.error('Failed to delete product:', err);
+      error("Failed to delete product", "An error occurred while deleting the product. Please try again.");
+    }
+  }, [token, deleteProductMutation, products, success, error]);
+
+  // Close delete dialog
+  const closeDeleteDialog = useCallback(() => {
+    if (!deleteProductMutation.isPending) {
+      setShowDeleteDialog(false);
+      setProductToDelete(null);
+    }
+  }, [deleteProductMutation.isPending]);
 
   // Handle sorting
   const handleSort = (field: SortField) => {
@@ -329,31 +251,25 @@ export default function ProductsPage() {
     }
   };
 
-  // Filter and sort all products
+  // Filter and sort products (now only client-side availability filter and sorting)
   const allFilteredAndSortedProducts = useMemo(() => {
-    const filtered = products.filter((product) => {
-      const matchesSearch =
-        product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        product.sku.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesCategory =
-        !categoryFilter || product.category === categoryFilter;
-      const matchesAvailability =
-        !availabilityFilter || product.availability === availabilityFilter;
-      const matchesPrice =
-        (!priceRange.min || product.price >= Number(priceRange.min)) &&
-        (!priceRange.max || product.price <= Number(priceRange.max));
+    let filtered = [...products];
 
-      return (
-        matchesSearch && matchesCategory && matchesAvailability && matchesPrice
-      );
-    });
+    // Apply client-side availability filter (since backend doesn't support this)
+    if (availabilityFilter) {
+      filtered = filtered.filter((product) => product.availability === availabilityFilter);
+    }
 
-    // Sort products
+    // Sort products client-side
     filtered.sort((a, b) => {
       let aValue = a[sortField];
       let bValue = b[sortField];
 
-      if (typeof aValue === "string") {
+      // Special handling for categoryId - compare by category names
+      if (sortField === "categoryId") {
+        aValue = getCategoryName(a.categoryId).toLowerCase();
+        bValue = getCategoryName(b.categoryId).toLowerCase();
+      } else if (typeof aValue === "string") {
         aValue = aValue.toLowerCase();
         bValue = (bValue as string).toLowerCase();
       }
@@ -366,10 +282,7 @@ export default function ProductsPage() {
     return filtered;
   }, [
     products,
-    searchTerm,
-    categoryFilter,
     availabilityFilter,
-    priceRange,
     sortField,
     sortDirection,
   ]);
@@ -418,7 +331,8 @@ export default function ProductsPage() {
     searchTerm,
     categoryFilter,
     availabilityFilter,
-    priceRange,
+    colorFilter,
+    materialFilter,
     sortField,
     sortDirection,
   ]);
@@ -427,363 +341,486 @@ export default function ProductsPage() {
     setSearchTerm("");
     setCategoryFilter("");
     setAvailabilityFilter("");
-    setPriceRange({ min: "", max: "" });
+    setColorFilter("");
+    setMaterialFilter("");
     setDisplayedCount(PRODUCTS_PER_BATCH);
   };
 
+  // Handle Excel export
+  const handleExportProducts = useCallback(async () => {
+    if (!token) {
+      error("Export failed", "Authentication required. Please log in again.");
+      return;
+    }
+
+    setIsExporting(true);
+    try {
+      const blob = await ProductService.exportProductsToExcel(token);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'products.xlsx';
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      success("Export successful", "Products exported to Excel successfully.");
+    } catch (err) {
+      console.error('Export failed:', err);
+      error(
+        "Export failed",
+        err instanceof Error
+          ? err.message
+          : "Failed to export products. Please try again."
+      );
+    } finally {
+      setIsExporting(false);
+    }
+  }, [token, success, error]);
+
+  // Show a consistent placeholder on the server and initial client render
+  // to avoid hydration mismatches; once mounted we show the full UI.
+  if (!mounted) {
+    return (
+      <main className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="bg-white p-8 rounded-lg shadow-sm border border-gray-200">
+            <div className="flex justify-center mb-4">
+              <div className="bg-gray-900 p-3 rounded-full">
+                <Shield className="h-8 w-8 text-white" />
+              </div>
+            </div>
+            <div className="flex items-center justify-center mb-4">
+              <Loader2 className="h-6 w-6 animate-spin text-gray-600 mr-3" />
+              <span className="text-lg font-medium text-gray-900">Loading products...</span>
+            </div>
+            <p className="text-sm text-gray-600">Preparing admin products view...</p>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  // Show error state
+  if (productsError) {
+    return (
+      <main className="min-h-screen bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* Header */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">Products</h1>
+                <p className="text-gray-600 mt-1">
+                  Manage your product inventory and stock levels
+                </p>
+              </div>
+              <Link
+                href="/admin/products/create"
+                className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add Product
+              </Link>
+            </div>
+          </div>
+
+          {/* Error component */}
+          <ProductsError
+            error={productsError}
+            onRetry={refetch}
+            isRetrying={isRefetching}
+          />
+        </div>
+      </main>
+    );
+  }
+
   return (
-    <main className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Products</h1>
-              <p className="text-gray-600 mt-1">
-                Manage your product inventory and stock levels
-              </p>
-            </div>
-            <Link
-              href="/admin/products/create"
-              className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add Product
-            </Link>
-          </div>
-        </div>
-
-        {/* Search and Filters */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
-          <div className="flex flex-col lg:flex-row lg:items-center gap-4">
-            {/* Search */}
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <input
-                  type="text"
-                  placeholder="Search products by name or SKU..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
+    <AdminGuard>
+      <main className="min-h-screen bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* Header */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="flex items-center">
+                  <h1 className="text-2xl font-bold text-gray-900">Products</h1>
+                  {isRefetching && (
+                    <Loader2 className="h-5 w-5 animate-spin text-blue-600 ml-3" />
+                  )}
+                </div>
+                <p className="text-gray-600 mt-1">
+                  Manage your product inventory and stock levels
+                </p>
               </div>
-            </div>
-
-            {/* Filter Toggle */}
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className="flex items-center px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors"
-            >
-              <Filter className="h-4 w-4 mr-2" />
-              Filters
-              {showFilters ? (
-                <ChevronUp className="h-4 w-4 ml-2" />
-              ) : (
-                <ChevronDown className="h-4 w-4 ml-2" />
-              )}
-            </button>
-          </div>
-
-          {/* Expanded Filters */}
-          {showFilters && (
-            <div className="border-t border-gray-200 pt-4 mt-4">
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Category
-                  </label>
-                  <select
-                    value={categoryFilter}
-                    onChange={(e) => setCategoryFilter(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  >
-                    <option value="">All Categories</option>
-                    {categories.map((category) => (
-                      <option key={category} value={category}>
-                        {category}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Availability
-                  </label>
-                  <select
-                    value={availabilityFilter}
-                    onChange={(e) => setAvailabilityFilter(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  >
-                    <option value="">All Status</option>
-                    <option value="in-stock">In Stock</option>
-                    <option value="out-of-stock">Out of Stock</option>
-                    <option value="on-order">On Order</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Min Price
-                  </label>
-                  <input
-                    type="number"
-                    placeholder="$0"
-                    value={priceRange.min}
-                    onChange={(e) =>
-                      setPriceRange((prev) => ({
-                        ...prev,
-                        min: e.target.value,
-                      }))
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Max Price
-                  </label>
-                  <input
-                    type="number"
-                    placeholder="$10000"
-                    value={priceRange.max}
-                    onChange={(e) =>
-                      setPriceRange((prev) => ({
-                        ...prev,
-                        max: e.target.value,
-                      }))
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-              </div>
-
-              <div className="flex justify-end mt-4">
+              <div className="flex items-center space-x-3">
                 <button
-                  onClick={clearFilters}
-                  className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+                  onClick={() => refetch()}
+                  disabled={isRefetching}
+                  className="flex items-center px-3 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  title="Refresh products"
                 >
-                  Clear All Filters
+                  <RefreshCw className={`h-4 w-4 ${isRefetching ? 'animate-spin' : ''}`} />
                 </button>
+                <button
+                  onClick={handleExportProducts}
+                  disabled={isExporting}
+                  className="flex items-center px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  title="Export products to Excel"
+                >
+                  {isExporting ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Download className="h-4 w-4 mr-2" />
+                  )}
+                  {isExporting ? 'Exporting...' : 'Export to Excel'}
+                </button>
+                <Link
+                  href="/admin/products/create"
+                  className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Product
+                </Link>
               </div>
             </div>
-          )}
-        </div>
+          </div>
 
-        {/* Products Table */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-          <div className="overflow-x-auto">
-            {/* Fixed Header */}
-            <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">
-                    Product
-                  </th>
-                  <th
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 bg-gray-50"
-                    onClick={() => handleSort("category")}
-                  >
-                    <div className="flex items-center">
+          {/* Search and Filters */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
+            <div className="flex flex-col lg:flex-row lg:items-center gap-4">
+              {/* Search */}
+              <div className="flex-1">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                  <input
+                    type="text"
+                    placeholder="Search products by name or SKU..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+              </div>
+
+              {/* Filter Toggle */}
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                className="flex items-center px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors"
+              >
+                <Filter className="h-4 w-4 mr-2" />
+                Filters
+                {showFilters ? (
+                  <ChevronUp className="h-4 w-4 ml-2" />
+                ) : (
+                  <ChevronDown className="h-4 w-4 ml-2" />
+                )}
+              </button>
+            </div>
+
+            {/* Expanded Filters */}
+            {showFilters && (
+              <div className="border-t border-gray-200 pt-4 mt-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
                       Category
-                      <ArrowUpDown className="h-3 w-3 ml-1" />
-                    </div>
-                  </th>
-                  <th
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 bg-gray-50"
-                    onClick={() => handleSort("price")}
-                  >
-                    <div className="flex items-center">
-                      Price
-                      <ArrowUpDown className="h-3 w-3 ml-1" />
-                    </div>
-                  </th>
-                  <th
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 bg-gray-50"
-                    onClick={() => handleSort("availability")}
-                  >
-                    <div className="flex items-center">
-                      Status
-                      <ArrowUpDown className="h-3 w-3 ml-1" />
-                    </div>
-                  </th>
-                  <th
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 bg-gray-50"
-                    onClick={() => handleSort("totalStock")}
-                  >
-                    <div className="flex items-center">
-                      Stock
-                      <ArrowUpDown className="h-3 w-3 ml-1" />
-                    </div>
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">
-                    Stock Actions
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-            </table>
+                    </label>
+                    <select
+                      value={categoryFilter}
+                      onChange={(e) => setCategoryFilter(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="">All Categories</option>
+                      {categories.map((category) => (
+                        <option key={category.id} value={category.id}>
+                          {category.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
 
-            {/* Scrollable Body */}
-            <div
-              ref={scrollContainerRef}
-              onScroll={handleScroll}
-              className="overflow-y-auto"
-              style={{ height: TABLE_HEIGHT }}
-            >
-              <table className="w-full">
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {displayedProducts.map((product) => (
-                    <tr key={product.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
+                  {/* Color Filter - UI hidden (logic kept) */}
+                  {/* <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Color
+                    </label>
+                    <select
+                      value={colorFilter}
+                      onChange={(e) => setColorFilter(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="">All Colors</option>
+                      {apiResponse?.filters_available?.colors?.map((color) => (
+                        <option key={color} value={color}>
+                          {color}
+                        </option>
+                      ))}
+                    </select>
+                  </div> */}
+
+                  {/* Material Filter - UI hidden (logic kept) */}
+                  {/* <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Material
+                    </label>
+                    <select
+                      value={materialFilter}
+                      onChange={(e) => setMaterialFilter(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="">All Materials</option>
+                      {apiResponse?.filters_available?.materials?.map((material) => (
+                        <option key={material} value={material}>
+                          {material}
+                        </option>
+                      ))}
+                    </select>
+                  </div> */}
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Availability
+                    </label>
+                    <select
+                      value={availabilityFilter}
+                      onChange={(e) => setAvailabilityFilter(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="">All Status</option>
+                      <option value="in-stock">In Stock</option>
+                      <option value="out-of-stock">Out of Stock</option>
+                      <option value="on-order">On Order</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="flex justify-end mt-4">
+                  <button
+                    onClick={clearFilters}
+                    className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+                  >
+                    Clear All Filters
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Products Table */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+            <div className="overflow-x-auto">
+              <div
+                ref={scrollContainerRef}
+                onScroll={handleScroll}
+                className="overflow-y-auto"
+                style={{ height: TABLE_HEIGHT }}
+              >
+                <table className="w-full">
+                  <thead className="bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">
+                        Product
+                      </th>
+                      <th
+                        className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 bg-gray-50"
+                        onClick={() => handleSort("sku")}
+                      >
                         <div className="flex items-center">
-                          <div className="flex-shrink-0 h-16 w-16">
-                            <Image
-                              src={product.image}
-                              alt={product.name}
-                              width={64}
-                              height={64}
-                              className="h-16 w-16 rounded-lg object-cover"
-                            />
-                          </div>
-                          <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900">
-                              {product.name}
-                              {product.isFirstLook && (
-                                <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
-                                  First Look
-                                </span>
-                              )}
-                            </div>
-                            <div className="text-sm text-gray-500">
-                              SKU: {product.sku}
-                            </div>
-                          </div>
+                          SKU
+                          <ArrowUpDown className="h-3 w-3 ml-1" />
                         </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {product.category}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        ${product.price.toLocaleString()}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span
-                          className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                            product.availability === "in-stock"
+                      </th>
+                      <th
+                        className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 bg-gray-50"
+                        onClick={() => handleSort("categoryId")}
+                      >
+                        <div className="flex items-center">
+                          Category
+                          <ArrowUpDown className="h-3 w-3 ml-1" />
+                        </div>
+                      </th>
+                      <th
+                        className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 bg-gray-50"
+                        onClick={() => handleSort("price")}
+                      >
+                        <div className="flex items-center">
+                          Price
+                          <ArrowUpDown className="h-3 w-3 ml-1" />
+                        </div>
+                      </th>
+                      <th
+                        className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 bg-gray-50"
+                        onClick={() => handleSort("availability")}
+                      >
+                        <div className="flex items-center">
+                          Status
+                          <ArrowUpDown className="h-3 w-3 ml-1" />
+                        </div>
+                      </th>
+                      <th
+                        className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 bg-gray-50"
+                        onClick={() => handleSort("totalStock")}
+                      >
+                        <div className="flex items-center">
+                          Stock
+                          <ArrowUpDown className="h-3 w-3 ml-1" />
+                        </div>
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {displayedProducts.map((product) => (
+                      <tr key={product.id} className="hover:bg-gray-50">
+                        <td className="px-4 py-3 align-top">
+                          <div className="flex items-start">
+                            <div className="flex-shrink-0 h-12 w-12">
+                              <Image
+                                src={product.image}
+                                alt={product.name}
+                                width={48}
+                                height={48}
+                                className="h-12 w-12 rounded-lg object-cover"
+                              />
+                            </div>
+                            <div className="ml-3">
+                              <div className="text-sm font-medium text-gray-900 break-words max-w-[20rem]">
+                                {product.name}
+                                {product.isFirstLook && (
+                                  <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                                    First Look
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-900 break-words">
+                          {product.sku}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-900 break-words">
+                          {getCategoryName(product.categoryId)}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-900">
+                          ${product.price.toLocaleString()}
+                        </td>
+                        <td className="px-4 py-3">
+                          <span
+                            className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${product.availability === "in-stock"
                               ? "bg-green-100 text-green-800"
                               : product.availability === "out-of-stock"
-                              ? "bg-red-100 text-red-800"
-                              : "bg-yellow-100 text-yellow-800"
-                          }`}
-                        >
-                          {product.availability === "in-stock" && "In Stock"}
-                          {product.availability === "out-of-stock" &&
-                            "Out of Stock"}
-                          {product.availability === "on-order" && "On Order"}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
-                        {product.totalStock}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center space-x-2">
-                          <button
-                            onClick={() => updateStock(product.id, -1)}
-                            disabled={product.totalStock === 0}
-                            className="p-1 rounded-md text-red-600 hover:bg-red-50 disabled:text-gray-300 disabled:hover:bg-transparent transition-colors"
+                                ? "bg-red-100 text-red-800"
+                                : "bg-yellow-100 text-yellow-800"
+                              }`}
                           >
-                            <Minus className="h-4 w-4" />
-                          </button>
-                          <button
-                            onClick={() => updateStock(product.id, 1)}
-                            className="p-1 rounded-md text-green-600 hover:bg-green-50 transition-colors"
-                          >
-                            <Plus className="h-4 w-4" />
-                          </button>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        <div className="flex items-center space-x-2">
-                          <Link
-                            href={`/products/${product.id}`}
-                            className="p-1 rounded-md text-blue-600 hover:bg-blue-50 transition-colors"
-                            title="View Product"
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Link>
-                          <button
-                            className="p-1 rounded-md text-gray-600 hover:bg-gray-50 transition-colors"
-                            title="Edit Product"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </button>
-                          <button
-                            className="p-1 rounded-md text-red-600 hover:bg-red-50 transition-colors"
-                            title="Delete Product"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                            {product.availability === "in-stock" && "In Stock"}
+                            {product.availability === "out-of-stock" &&
+                              "Out of Stock"}
+                            {product.availability === "on-order" && "On Order"}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-900 font-medium">
+                          {product.totalStock}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-500">
+                          <div className="flex items-center space-x-2">
+                            <Link
+                              href={`/products/${product.id}`}
+                              className="p-1 rounded-md text-blue-600 hover:bg-blue-50 transition-colors"
+                              title="View Product"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Link>
+                            <Link
+                              href={`/admin/products/${product.id}/edit`}
+                              className="p-1 rounded-md text-gray-600 hover:bg-gray-50 transition-colors"
+                              title="Edit Product"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Link>
+                            <button
+                              onClick={() => handleDeleteProduct(product.id)}
+                              disabled={deleteProductMutation.isPending}
+                              className="p-1 rounded-md text-red-600 hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                              title="Delete Product"
+                            >
+                              {deleteProductMutation.isPending && deleteProductMutation.variables?.id === product.id ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <Trash2 className="h-4 w-4" />
+                              )}
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
 
-              {/* Loading indicator */}
-              {isLoadingMore && (
-                <div className="flex justify-center items-center py-4 bg-white">
-                  <Loader2 className="h-5 w-5 animate-spin text-blue-600 mr-2" />
-                  <span className="text-sm text-gray-600">
-                    Loading more products...
-                  </span>
-                </div>
-              )}
-
-              {/* End of results indicator */}
-              {displayedCount >= allFilteredAndSortedProducts.length &&
-                allFilteredAndSortedProducts.length > 0 &&
-                !isLoadingMore && (
-                  <div className="text-center py-4 bg-gray-50">
-                    <span className="text-sm text-gray-500">
-                      All products loaded ({allFilteredAndSortedProducts.length}{" "}
-                      total)
+                {/* Loading indicator */}
+                {isLoadingMore && (
+                  <div className="flex justify-center items-center py-4 bg-white">
+                    <Loader2 className="h-5 w-5 animate-spin text-blue-600 mr-2" />
+                    <span className="text-sm text-gray-600">
+                      Loading more products...
                     </span>
                   </div>
                 )}
+
+                {/* End of results indicator */}
+                {displayedCount >= allFilteredAndSortedProducts.length &&
+                  allFilteredAndSortedProducts.length > 0 &&
+                  !isLoadingMore && (
+                    <div className="text-center py-4 bg-gray-50">
+                      <span className="text-sm text-gray-500">
+                        All products loaded ({allFilteredAndSortedProducts.length}{" "}
+                        total)
+                      </span>
+                    </div>
+                  )}
+              </div>
             </div>
+
+            {/* No results message */}
+            {allFilteredAndSortedProducts.length === 0 && (
+              <div className="text-center py-12">
+                <div className="text-gray-500">
+                  <Search className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    No products found
+                  </h3>
+                  <p>Try adjusting your search or filter criteria.</p>
+                </div>
+              </div>
+            )}
+
+            {/* Results summary */}
+            {allFilteredAndSortedProducts.length > 0 && (
+              <div className="bg-gray-50 px-6 py-3 border-t border-gray-200">
+                <div className="text-sm text-gray-700">
+                  Showing {displayedCount} of{" "}
+                  {allFilteredAndSortedProducts.length} filtered products (
+                  {products.length} total)
+                </div>
+              </div>
+            )}
           </div>
 
-          {/* No results message */}
-          {allFilteredAndSortedProducts.length === 0 && (
-            <div className="text-center py-12">
-              <div className="text-gray-500">
-                <Search className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  No products found
-                </h3>
-                <p>Try adjusting your search or filter criteria.</p>
-              </div>
-            </div>
-          )}
-
-          {/* Results summary */}
-          {allFilteredAndSortedProducts.length > 0 && (
-            <div className="bg-gray-50 px-6 py-3 border-t border-gray-200">
-              <div className="text-sm text-gray-700">
-                Showing {displayedCount} of{" "}
-                {allFilteredAndSortedProducts.length} filtered products (
-                {products.length} total)
-              </div>
-            </div>
-          )}
+          {/* Delete Product Dialog */}
+          <DeleteProductDialog
+            product={productToDelete}
+            isOpen={showDeleteDialog}
+            isDeleting={deleteProductMutation.isPending}
+            onClose={closeDeleteDialog}
+            onConfirm={confirmDeleteProduct}
+          />
         </div>
-      </div>
-    </main>
+      </main>
+    </AdminGuard>
   );
 }

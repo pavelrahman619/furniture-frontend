@@ -35,19 +35,22 @@ export const API_ENDPOINTS = {
     DELETE_ADDRESS: '/user/delete-address',
   },
 
-  // Products - matching backend routes
+  // Products - matching backend routes (/api/products/*)
   PRODUCTS: {
     LIST: '/products',
     DETAIL: (id: string) => `/products/${id}`,
     SEARCH: '/products/search',
     STOCK: (id: string) => `/products/${id}/stock`,
     UPDATE_STOCK: (id: string) => `/products/${id}/stock`,
+    CREATE: '/products',
+    UPDATE: (id: string) => `/products/${id}`,
+    DELETE: (id: string) => `/products/${id}`,
   },
 
   // Categories
   CATEGORIES: {
-    LIST: '/category/list',
-    DETAIL: (id: string) => `/category/${id}`,
+    LIST: '/categories',
+    DETAIL: (id: string) => `/categories/${id}`,
   },
 
   // Cart
@@ -69,6 +72,7 @@ export const API_ENDPOINTS = {
     CREATE: '/orders',
     UPDATE_STATUS: (id: string) => `/orders/${id}/status`,
     TRACK: (id: string) => `/orders/${id}/track`,
+    EXPORT: '/admin/orders/export', // Admin endpoint for exporting orders
   },
 
   // Payment
@@ -82,6 +86,8 @@ export const API_ENDPOINTS = {
   CONTENT: {
     LIST: '/content/list',
     DETAIL: (id: string) => `/content/${id}`,
+    BANNER: '/content/banner',
+    SALE_SECTION: '/content/sale-section',
   },
 
   // Uploads
@@ -90,12 +96,25 @@ export const API_ENDPOINTS = {
     MULTIPLE: '/upload/multiple',
   },
 
-  // Admin (if needed)
+  // Admin Authentication
   ADMIN: {
-    PRODUCTS: '/admin/products',
-    ORDERS: '/admin/orders',
-    USERS: '/admin/users',
-    CONTENT: '/admin/content',
+    LOGIN: '/auth/login',
+    LOGOUT: '/auth/logout',
+    REFRESH: '/auth/refresh', // Note: Backend doesn't support refresh tokens
+    PROFILE: '/admin/profile',
+    VERIFY: '/auth/verify',
+    CHANGE_PASSWORD: '/auth/change-password',
+    PRODUCTS: '/products',
+    PRODUCTS_EXPORT: '/admin/products/export',
+    ORDERS: '/orders',
+    USERS: '/users',
+    CONTENT: '/content',
+  },
+
+  // Delivery
+  DELIVERY: {
+    VALIDATE_ADDRESS: '/delivery/validate-address',
+    CALCULATE_COST: '/delivery/calculate-cost',
   },
 
   // Test/Health

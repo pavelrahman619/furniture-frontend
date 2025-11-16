@@ -93,7 +93,7 @@ const apiRequest = async <T = unknown>(
     // Parse response
     let data;
     const contentType = response.headers.get('Content-Type');
-    
+
     if (contentType && contentType.includes('application/json')) {
       data = await response.json();
     } else {
@@ -113,7 +113,7 @@ const apiRequest = async <T = unknown>(
     if (data && typeof data === 'object' && 'success' in data) {
       return data as ApiResponse<T>;
     }
-    
+
     // For APIs that return data directly (like your backend), wrap it in ApiResponse format
     return {
       success: true,
@@ -121,22 +121,22 @@ const apiRequest = async <T = unknown>(
     } as ApiResponse<T>;
   } catch (error) {
     clearTimeout(timeoutId);
-    
+
     // Handle timeout
     if (error instanceof Error && error.name === 'AbortError') {
       throw new ApiException('Request timeout', 408);
     }
-    
+
     // Handle network errors
     if (error instanceof TypeError && error.message === 'Failed to fetch') {
       throw new ApiException('Network error - check your internet connection', 0);
     }
-    
+
     // Re-throw API exceptions
     if (error instanceof ApiException) {
       throw error;
     }
-    
+
     // Handle unknown errors
     throw new ApiException(
       error instanceof Error ? error.message : 'An unexpected error occurred',
