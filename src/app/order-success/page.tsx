@@ -7,6 +7,46 @@ import { CheckCircle, Truck, Calendar, CreditCard } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import OrderService from "@/services/order.service";
 
+// Product image interface
+interface ProductImage {
+  url: string;
+  alt?: string;
+  is_primary?: boolean;
+}
+
+// Product variant interface
+interface ProductVariant {
+  _id?: string;
+  id?: string;
+  sku: string;
+  images?: ProductImage[];
+  name?: string;
+  price?: number;
+  stock?: number;
+}
+
+// Populated product interface (when product_id is populated)
+interface PopulatedProduct {
+  _id?: string;
+  id?: string;
+  sku?: string;
+  name?: string;
+  description?: string;
+  price?: number;
+  images?: ProductImage[];
+  variants?: ProductVariant[];
+  category_ids?: string[];
+}
+
+// Backend order item interface
+interface BackendOrderItem {
+  product_id: PopulatedProduct | string;
+  variant_id?: string;
+  name: string;
+  quantity: number;
+  price: number;
+}
+
 // Order interfaces matching backend types
 interface OrderItem {
   id: string;
@@ -22,7 +62,7 @@ interface OrderDetails {
   orderDate: string;
   estimatedDelivery?: string;
   subtotal: number;
-  memberSavings: number;
+  shippingCost: number;
   total: number;
   items: OrderItem[];
   shippingAddress: {
@@ -60,6 +100,15 @@ const OrderSuccessContent = () => {
 
         const order = orderResponse.order;
 
+        console.log('📦 Order received from backend:', {
+          order_id: order._id,
+          subtotal: order.subtotal,
+          delivery_cost: order.delivery_cost,
+          distance_miles: order.distance_miles,
+          total: order.total,
+          full_order: order
+        });
+
         // Transform backend order data to match our interface
         const transformedOrder: OrderDetails = {
           orderNumber: order._id || orderId,
@@ -76,16 +125,112 @@ const OrderSuccessContent = () => {
               })
             : "December 15-20, 2024", // Fallback
           subtotal: order.subtotal,
-          memberSavings: 0, // Backend doesn't have member savings in the current structure
+          shippingCost: order.delivery_cost ?? 0,
           total: order.total,
-          items: order.items ? order.items.map((item) => ({
-            id: item.product_id,
-            name: item.name,
-            image: "https://images.unsplash.com/photo-1506439773649-6e0eb8cfb237?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80", // Default image
-            quantity: item.quantity,
-            price: item.price,
-            sku: `SKU-${item.product_id}`, // Backend doesn't provide SKU in order items
-          })) : [],
+          items: order.items ? order.items.map((item: BackendOrderItem) => {
+            // Handle populated product_id (could be object or string)
+            const productId = typeof item.product_id === 'object' && item.product_id !== null
+              ? (item.product_id._id || item.product_id.id || String(item.product_id))
+              : String(item.product_id);
+            
+            // Get product data if populated
+            const product: PopulatedProduct | null = typeof item.product_id === 'object' && item.product_id !== null
+              ? item.product_id as PopulatedProduct
+              : null;
+            
+            // Get image from product
+            const defaultImageUrl = "https://images.unsplash.com/photo-1506439773649-6e0eb8cfb237?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80";
+            let imageUrl = defaultImageUrl;
+            
+            if (product) {
+              // Debug logging (remove in production)
+              console.log('Product data:', {
+                productId,
+                variantId: item.variant_id,
+                product: product,
+                hasVariants: !!product.variants,
+                variantsCount: product.variants?.length || 0,
+                variants: product.variants,
+                hasImages: !!product.images,
+                imagesCount: product.images?.length || 0,
+                images: product.images,
+              });
+              
+              // Normalize variant_id to string for comparison
+              const variantIdStr = item.variant_id ? String(item.variant_id) : null;
+              
+              // Try to get image from variant if variant_id exists
+              if (variantIdStr && product.variants && Array.isArray(product.variants) && product.variants.length > 0) {
+                const variant = product.variants.find((v: ProductVariant) => {
+                  const vId = v._id ? String(v._id) : (v.id ? String(v.id) : null);
+                  return vId === variantIdStr;
+                });
+                
+                console.log('Variant match:', { 
+                  variantIdStr, 
+                  foundVariant: !!variant, 
+                  variant: variant,
+                  variantImages: variant?.images?.length || 0,
+                  variantImagesArray: variant?.images 
+                });
+                
+                if (variant && variant.images && Array.isArray(variant.images) && variant.images.length > 0) {
+                  // Get first available image (primary first, then first image)
+                  const primaryImage = variant.images.find((img: ProductImage) => img.is_primary);
+                  imageUrl = primaryImage?.url || variant.images[0]?.url || defaultImageUrl;
+                  console.log('Using variant image:', imageUrl);
+                }
+              }
+              
+              // If variant match failed or no variant_id, try first variant's image
+              if (imageUrl === defaultImageUrl && product.variants && Array.isArray(product.variants) && product.variants.length > 0) {
+                const firstVariant = product.variants[0];
+                console.log('Checking first variant:', { firstVariant, hasImages: !!firstVariant?.images, imagesCount: firstVariant?.images?.length });
+                if (firstVariant && firstVariant.images && Array.isArray(firstVariant.images) && firstVariant.images.length > 0) {
+                  const primaryImage = firstVariant.images.find((img: ProductImage) => img.is_primary);
+                  imageUrl = primaryImage?.url || firstVariant.images[0]?.url || defaultImageUrl;
+                  console.log('Using first variant image:', imageUrl);
+                }
+              }
+              
+              // Fallback to product-level images if we still have the default image
+              if (imageUrl === defaultImageUrl && product.images && Array.isArray(product.images) && product.images.length > 0) {
+                const primaryImage = product.images.find((img: ProductImage) => img.is_primary);
+                imageUrl = primaryImage?.url || product.images[0]?.url || defaultImageUrl;
+                console.log('Using product-level image:', imageUrl);
+              }
+            } else {
+              console.log('Product not populated or is null');
+            }
+            
+            // Get SKU from product or variant
+            let sku = `SKU-${productId}`; // Default fallback
+            if (product) {
+              // Normalize variant_id to string for comparison
+              const variantIdStr = item.variant_id ? String(item.variant_id) : null;
+              
+              if (variantIdStr && product.variants && Array.isArray(product.variants) && product.variants.length > 0) {
+                const variant = product.variants.find((v: ProductVariant) => {
+                  const vId = v._id ? String(v._id) : (v.id ? String(v.id) : null);
+                  return vId === variantIdStr;
+                });
+                if (variant && variant.sku) {
+                  sku = variant.sku;
+                }
+              } else if (product.sku) {
+                sku = product.sku;
+              }
+            }
+            
+            return {
+              id: productId,
+              name: item.name,
+              image: imageUrl,
+              quantity: item.quantity,
+              price: item.price,
+              sku: sku,
+            };
+          }) : [],
           shippingAddress: {
             name: "Customer", // Backend doesn't store customer name separately
             street: order.shipping_address.street,
@@ -132,18 +277,6 @@ const OrderSuccessContent = () => {
           >
             CONTINUE SHOPPING
           </Link>
-        </div>
-      </div>
-    );
-  }
-
-
-  if (!orderDetails) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading order details...</p>
         </div>
       </div>
     );
@@ -269,16 +402,23 @@ const OrderSuccessContent = () => {
               </div>
 
               <div className="flex justify-between items-center">
-                <span className="text-gray-600">Member Savings:</span>
-                <span className="text-green-600">
-                  -${orderDetails.memberSavings.toLocaleString()}
+                <span className="text-gray-600">Shipping:</span>
+                <span className="text-gray-900">
+                  {orderDetails.shippingCost === 0
+                    ? 'Complimentary'
+                    : `$${orderDetails.shippingCost.toLocaleString()}`}
                 </span>
               </div>
 
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600">Shipping:</span>
-                <span className="text-gray-900">Complimentary</span>
-              </div>
+              {/* Tax is not supported by backend - commented out until backend adds tax field and calculation */}
+              {/* {orderDetails.tax && orderDetails.tax > 0 && (
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">Tax:</span>
+                  <span className="text-gray-900">
+                    ${orderDetails.tax.toLocaleString()}
+                  </span>
+                </div>
+              )} */}
 
               <div className="border-t border-gray-200 pt-4">
                 <div className="flex justify-between items-center">

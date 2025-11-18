@@ -127,7 +127,6 @@ export default function ProductsPage() {
   const [availabilityFilter, setAvailabilityFilter] = useState("");
   const [colorFilter, setColorFilter] = useState("");
   const [materialFilter, setMaterialFilter] = useState("");
-  const [priceRange, setPriceRange] = useState({ min: "", max: "" });
   const [sortField, setSortField] = useState<SortField>("createdAt");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const [showFilters, setShowFilters] = useState(false);
@@ -153,14 +152,6 @@ export default function ProductsPage() {
       params.category = categoryFilter;
     }
 
-    if (priceRange.min) {
-      params.price_min = Number(priceRange.min);
-    }
-
-    if (priceRange.max) {
-      params.price_max = Number(priceRange.max);
-    }
-
     if (colorFilter) {
       params.color = colorFilter;
     }
@@ -170,7 +161,7 @@ export default function ProductsPage() {
     }
 
     return params;
-  }, [searchTerm, categoryFilter, priceRange, colorFilter, materialFilter]);
+  }, [searchTerm, categoryFilter, colorFilter, materialFilter]);
 
   // Fetch products from API
   const {
@@ -342,7 +333,6 @@ export default function ProductsPage() {
     availabilityFilter,
     colorFilter,
     materialFilter,
-    priceRange,
     sortField,
     sortDirection,
   ]);
@@ -353,7 +343,6 @@ export default function ProductsPage() {
     setAvailabilityFilter("");
     setColorFilter("");
     setMaterialFilter("");
-    setPriceRange({ min: "", max: "" });
     setDisplayedCount(PRODUCTS_PER_BATCH);
   };
 
@@ -605,42 +594,6 @@ export default function ProductsPage() {
                       <option value="out-of-stock">Out of Stock</option>
                       <option value="on-order">On Order</option>
                     </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Min Price
-                    </label>
-                    <input
-                      type="number"
-                      placeholder="$0"
-                      value={priceRange.min}
-                      onChange={(e) =>
-                        setPriceRange((prev) => ({
-                          ...prev,
-                          min: e.target.value,
-                        }))
-                      }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Max Price
-                    </label>
-                    <input
-                      type="number"
-                      placeholder="$10000"
-                      value={priceRange.max}
-                      onChange={(e) =>
-                        setPriceRange((prev) => ({
-                          ...prev,
-                          max: e.target.value,
-                        }))
-                      }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
                   </div>
                 </div>
 

@@ -339,17 +339,22 @@ export class AdminService {
         token
       );
 
-      if (response.success && response.data) {
+      if (response.success) {
+        // Backend returns { success: true, message: "..." } directly
+        // apiService wraps it, so response.data might be { success: true, message: "..." }
+        // or response.message might be set directly
+        const message = response.data?.message || response.message || 'Password changed successfully';
+        
         return {
           success: true,
-          data: { message: response.data.message },
-          message: response.data.message,
+          data: { message },
+          message,
         };
       }
 
       return {
         success: false,
-        error: response.error || 'Failed to change password',
+        error: response.error || response.data?.message || response.message || 'Failed to change password',
       };
     } catch (error) {
       throw error;
