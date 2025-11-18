@@ -293,66 +293,60 @@ const CheckoutPage = () => {
           setValidationSuccess(`✓ Address validated! Your location is ${validationResult.distance_miles.toFixed(1)} miles from our warehouse.`);
         }
 
-        // Proceed with order processing
+        // Proceed to payment processing
         setIsValidatingAddress(false);
         setIsProcessing(true);
 
         try {
-        // Prepare order data
-        const orderData = {
-          items: cartItems.map((item) => ({
-            product_id: item.id, // Use the original MongoDB ObjectId
-            quantity: item.quantity,
-            price: item.price,
-            name: item.name,
-          })),
-          shipping_address: {
-            street: shippingInfo.address,
-            city: shippingInfo.city,
-            state: shippingInfo.state,
-            zip_code: shippingInfo.zipCode,
-            country: shippingInfo.country,
-          },
-          billing_address: {
-            street: shippingInfo.address,
-            city: shippingInfo.city,
-            state: shippingInfo.state,
-            zip_code: shippingInfo.zipCode,
-            country: shippingInfo.country,
-          },
-          payment_method: "Credit Card", // You can add payment method selection later
-          customer_email: shippingInfo.email,
-          customer_phone: shippingInfo.phone,
-          delivery_cost: deliveryInfo?.cost || 0,
-          distance_miles: deliveryInfo?.distanceMiles || validationResult.distance_miles,
-          delivery_zone_validated: true,
-        };
+          // Prepare order data for payment processing
+          const orderData = {
+            items: cartItems.map((item) => ({
+              product_id: item.id, // Use the original MongoDB ObjectId
+              quantity: item.quantity,
+              price: item.price,
+              name: item.name,
+            })),
+            shipping_address: {
+              street: shippingInfo.address,
+              city: shippingInfo.city,
+              state: shippingInfo.state,
+              zip_code: shippingInfo.zipCode,
+              country: shippingInfo.country,
+              firstName: shippingInfo.firstName,
+              lastName: shippingInfo.lastName,
+            },
+            billing_address: {
+              street: shippingInfo.address,
+              city: shippingInfo.city,
+              state: shippingInfo.state,
+              zip_code: shippingInfo.zipCode,
+              country: shippingInfo.country,
+              firstName: shippingInfo.firstName,
+              lastName: shippingInfo.lastName,
+            },
+            customer_email: shippingInfo.email,
+            customer_phone: shippingInfo.phone,
+            subtotal,
+            delivery_cost: deliveryInfo?.cost || 0,
+            total,
+            distance_miles: deliveryInfo?.distanceMiles || validationResult.distance_miles,
+            delivery_zone_validated: true,
+            timeline: [{
+              status: 'pending',
+              timestamp: new Date(),
+              notes: 'Order created - pending payment'
+            }],
+          };
 
-        // Create order through backend
-        const orderId = await OrderService.createOrder(orderData);
+          // Store order data in session storage for payment page
+          sessionStorage.setItem('pendingOrder', JSON.stringify(orderData));
 
-          // Redirect to order success page with order ID
-          router.push(`/order-success?orderId=${orderId}`);
-        } catch (orderError) {
-          console.error("Failed to create order:", orderError);
+          // Redirect to secure payment processing
+          router.push('/payment');
+        } catch (error) {
+          console.error("Failed to prepare order for payment:", error);
           setIsProcessing(false);
-
-          // Handle different types of order creation errors
-          let errorMessage = "Failed to place order. Please try again.";
-
-          if (orderError instanceof Error) {
-            if (orderError.message.includes('Network error')) {
-              errorMessage = "Network error. Please check your internet connection and try again.";
-            } else if (orderError.message.includes('400')) {
-              errorMessage = "Invalid order data. Please check your information and try again.";
-            } else if (orderError.message.includes('500')) {
-              errorMessage = "Server error. Please try again later.";
-            } else {
-              errorMessage = orderError.message;
-            }
-          }
-
-          setOrderError(errorMessage);
+          setOrderError("Failed to proceed to payment. Please try again.");
         }
       } catch (validationError) {
         console.error("Address validation failed:", validationError);
