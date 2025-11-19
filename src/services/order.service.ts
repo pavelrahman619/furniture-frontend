@@ -74,6 +74,7 @@ export interface OrderResponse {
     delivery_cost: number;
     distance_miles?: number;
     delivery_zone_validated?: boolean;
+    tax?: number;
     total: number;
     created_at: string;
     updated_at: string;
@@ -121,6 +122,7 @@ export interface OrderListResponse {
     delivery_cost: number;
     distance_miles?: number;
     delivery_zone_validated?: boolean;
+    tax?: number;
     total: number;
     created_at: string;
     updated_at: string;

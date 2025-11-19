@@ -103,9 +103,10 @@ const CheckoutPage = () => {
         : currentShippingInfo.cost
       : 0;
 
-  // Backend formula: total = subtotal + delivery_cost (no tax)
-  // Tax is not supported by the backend system
-  const total = subtotal + shipping;
+  // Calculate tax (8% flat rate)
+  const tax = Math.round(subtotal * 0.08);
+  // Backend formula: total = subtotal + delivery_cost + tax
+  const total = subtotal + shipping + tax;
 
   const handleShippingChange = (field: keyof ShippingInfo, value: string) => {
     setShippingInfo((prev) => ({ ...prev, [field]: value }));
@@ -355,6 +356,39 @@ const CheckoutPage = () => {
             subtotal,
             total,
           });
+
+          const orderData = {
+            items: cartItems.map((item) => ({
+              product_id: item.id, // Use the original MongoDB ObjectId
+              quantity: item.quantity,
+              price: item.price,
+              name: item.name,
+            })),
+            shipping_address: {
+              street: shippingInfo.address,
+              city: shippingInfo.city,
+              state: shippingInfo.state,
+              zip_code: shippingInfo.zipCode,
+              country: shippingInfo.country,
+            },
+            billing_address: {
+              street: shippingInfo.address,
+              city: shippingInfo.city,
+              state: shippingInfo.state,
+              zip_code: shippingInfo.zipCode,
+              country: shippingInfo.country,
+            },
+            payment_method: "Credit Card", // You can add payment method selection later
+            customer_email: shippingInfo.email,
+            customer_phone: shippingInfo.phone,
+            delivery_cost: shippingCost,
+            distance_miles: distanceMiles,
+            delivery_zone_validated: true,
+            tax: tax,
+          };
+
+        // Create order through backend
+        const orderId = await OrderService.createOrder(orderData);
 
           const orderData = {
             items: cartItems.map((item) => ({
@@ -786,7 +820,10 @@ const CheckoutPage = () => {
                       : "Enter ZIP code for shipping estimate"}
                   </span>
                 </div>
-                {/* Tax is not supported by backend - removed from checkout */}
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Tax</span>
+                  <span className="text-gray-900">${tax.toLocaleString()}</span>
+                </div>
                 <div className="border-t border-gray-200 pt-4">
                   <div className="flex justify-between text-lg font-medium">
                     <span className="text-gray-900">Total</span>
