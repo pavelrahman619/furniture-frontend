@@ -151,7 +151,7 @@ const CartPage = () => {
                       </p>
                       <button
                         onClick={() => removeFromCart(item.cartId)}
-                        className="text-gray-600 underline hover:text-gray-800 transition-colors"
+                        className="text-red-600 underline hover:text-red-800 transition-colors"
                       >
                         Remove
                       </button>
