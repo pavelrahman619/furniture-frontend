@@ -245,7 +245,7 @@ export default function ProductPage({ params }: ProductPageProps) {
               <h1 className="text-3xl font-light text-gray-900 mb-2">
                 {displayProduct.name}
               </h1>
-              <p className="text-sm text-gray-500">SKU {displayProduct.sku}</p>
+              {/* <p className="text-sm text-gray-500">SKU {displayProduct.sku}</p> */}
             </div>
 
             {/* Status */}
