@@ -63,6 +63,7 @@ interface OrderDetails {
   estimatedDelivery?: string;
   subtotal: number;
   shippingCost: number;
+  tax?: number;
   total: number;
   items: OrderItem[];
   shippingAddress: {
@@ -126,6 +127,7 @@ const OrderSuccessContent = () => {
             : "December 15-20, 2024", // Fallback
           subtotal: order.subtotal,
           shippingCost: order.delivery_cost ?? 0,
+          tax: order.tax ?? 0,
           total: order.total,
           items: order.items ? order.items.map((item: BackendOrderItem) => {
             // Handle populated product_id (could be object or string)
@@ -410,15 +412,14 @@ const OrderSuccessContent = () => {
                 </span>
               </div>
 
-              {/* Tax is not supported by backend - commented out until backend adds tax field and calculation */}
-              {/* {orderDetails.tax && orderDetails.tax > 0 && (
+              {orderDetails.tax !== undefined && orderDetails.tax > 0 && (
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">Tax:</span>
                   <span className="text-gray-900">
                     ${orderDetails.tax.toLocaleString()}
                   </span>
                 </div>
-              )} */}
+              )}
 
               <div className="border-t border-gray-200 pt-4">
                 <div className="flex justify-between items-center">

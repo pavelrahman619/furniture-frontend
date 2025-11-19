@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, use, useEffect } from "react";
+import { useState, use, useEffect, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ChevronRight, Plus, Minus } from "lucide-react";
@@ -49,8 +49,14 @@ export default function ProductPage({ params }: ProductPageProps) {
   const [showAddedMessage, setShowAddedMessage] = useState(false);
   const { addToCart } = useCart();
 
+  // Memoize fallback product to prevent recreation on every render
+  const fallbackProduct = useMemo(
+    () => getFallbackProduct(resolvedParams.id),
+    [resolvedParams.id]
+  );
+
   // Use productDetails if available, otherwise fallback
-  const displayProduct = productDetails || getFallbackProduct(resolvedParams.id);
+  const displayProduct = productDetails || fallbackProduct;
   
   const [selectedVariants, setSelectedVariants] = useState({
     size: displayProduct.variants.size.options[0]?.value || '',
@@ -58,8 +64,14 @@ export default function ProductPage({ params }: ProductPageProps) {
     finish: displayProduct.variants.finish.options[0]?.value || '',
   });
 
+  // Memoize default images to prevent recreation on every render
+  const defaultImages = useMemo(
+    () => productDetails?.images || fallbackProduct.images,
+    [productDetails?.images, fallbackProduct.images]
+  );
+
   // Get images for currently selected variant
-  const [displayImages, setDisplayImages] = useState<string[]>(displayProduct.images);
+  const [displayImages, setDisplayImages] = useState<string[]>(defaultImages);
 
   // Update selected variants when product data loads
   useEffect(() => {
@@ -75,7 +87,7 @@ export default function ProductPage({ params }: ProductPageProps) {
   // Update displayed images based on selected variant
   useEffect(() => {
     if (!productDetails?.rawVariants) {
-      setDisplayImages(displayProduct.images);
+      setDisplayImages(defaultImages);
       return;
     }
 
@@ -101,10 +113,10 @@ export default function ProductPage({ params }: ProductPageProps) {
       setSelectedImageIndex(0);
     } else {
       // Use default images
-      setDisplayImages(displayProduct.images);
+      setDisplayImages(defaultImages);
       setSelectedImageIndex(0);
     }
-  }, [selectedVariants, productDetails, displayProduct.images]);
+  }, [selectedVariants, productDetails, defaultImages]);
 
   // Show loading state
   if (loading) {
@@ -245,7 +257,7 @@ export default function ProductPage({ params }: ProductPageProps) {
               <h1 className="text-3xl font-light text-gray-900 mb-2">
                 {displayProduct.name}
               </h1>
-              <p className="text-sm text-gray-500">SKU {displayProduct.sku}</p>
+              {/* <p className="text-sm text-gray-500">SKU {displayProduct.sku}</p> */}
             </div>
 
             {/* Status */}
@@ -450,6 +462,12 @@ export default function ProductPage({ params }: ProductPageProps) {
                     selectedFinishOption?.label,
                   ].filter(Boolean).join(", ");
 
+                  // Find the matching variant to get its _id and sku
+                  const matchingVariant = productDetails?.rawVariants?.find(v => {
+                    if (v.attribute) return v.attribute === selectedVariants.size;
+                    return v.size === selectedVariants.size;
+                  });
+
                   addToCart(
                     {
                       id: displayProduct.id,
@@ -460,6 +478,8 @@ export default function ProductPage({ params }: ProductPageProps) {
                       sku: displayProduct.sku,
                       category: displayProduct.category,
                       availability: displayProduct.availability,
+                      variant_id: matchingVariant?._id, // MongoDB ObjectId of the variant
+                      variant_sku: matchingVariant?.sku, // SKU of the variant
                       variants: {
                         size: selectedVariants.size,
                         color: selectedVariants.color,
