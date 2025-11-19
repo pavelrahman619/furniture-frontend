@@ -462,6 +462,12 @@ export default function ProductPage({ params }: ProductPageProps) {
                     selectedFinishOption?.label,
                   ].filter(Boolean).join(", ");
 
+                  // Find the matching variant to get its _id and sku
+                  const matchingVariant = productDetails?.rawVariants?.find(v => {
+                    if (v.attribute) return v.attribute === selectedVariants.size;
+                    return v.size === selectedVariants.size;
+                  });
+
                   addToCart(
                     {
                       id: displayProduct.id, // Original MongoDB ObjectId for backend lookup
@@ -472,6 +478,8 @@ export default function ProductPage({ params }: ProductPageProps) {
                       sku: displayProduct.sku,
                       category: displayProduct.category,
                       availability: displayProduct.availability,
+                      variant_id: matchingVariant?._id, // MongoDB ObjectId of the variant
+                      variant_sku: matchingVariant?.sku, // SKU of the variant
                       variants: {
                         size: selectedVariants.size,
                         color: selectedVariants.color,

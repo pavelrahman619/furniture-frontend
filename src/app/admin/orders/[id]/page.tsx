@@ -4,8 +4,11 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useParams } from "next/navigation";
+import { useEffect, useState } from "react";
 import AdminGuard from "@/components/AdminGuard";
 import { useAdminOrder, useUpdateOrderStatus } from "@/hooks/useAdminOrders";
+import { ProductService } from "@/services/product.service";
+import { Product, ProductImage } from "@/types/product.types";
 import {
   ArrowLeft,
   Package,
@@ -80,6 +83,195 @@ function formatAddress(address: {
 // Helper function to generate order number from ID
 function generateOrderNumber(id: string): string {
   return `ORD-${id.slice(-6).toUpperCase()}`;
+}
+
+// Order item display component with product/variant data
+interface OrderItemDisplayProps {
+  item: {
+    product_id: string | { _id: string; [key: string]: string | number };
+    variant_id?: string;
+    variant_image?: string;
+    variant_sku?: string;
+    variant_attribute?: string;
+    variation_type?: string;
+    name: string;
+    price: number;
+    quantity: number;
+  };
+  index: number;
+}
+
+function OrderItemDisplay({ item, index }: OrderItemDisplayProps) {
+  const [productData, setProductData] = useState<Product | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Extract product ID - handle both string and populated object cases
+  const getProductId = (): string => {
+    if (typeof item.product_id === 'string') {
+      return item.product_id;
+    }
+    // If product_id is populated (object), extract _id
+    if (item.product_id && typeof item.product_id === 'object' && '_id' in item.product_id) {
+      return String(item.product_id._id);
+    }
+    // Fallback: try to stringify if it's an object
+    if (item.product_id && typeof item.product_id === 'object') {
+      return String(item.product_id);
+    }
+    return String(item.product_id);
+  };
+
+  const productId = getProductId();
+
+  // Only fetch product data if snapshot is incomplete
+  useEffect(() => {
+    const needsProductData = !item.variant_image || !item.variant_attribute;
+    
+    if (!needsProductData) {
+      // We have complete snapshot data, no need to fetch
+      setLoading(false);
+      return;
+    }
+
+    const fetchProductData = async () => {
+      if (!productId) {
+        setLoading(false);
+        setError('Product ID is missing');
+        return;
+      }
+
+      try {
+        setLoading(true);
+        const product = await ProductService.getProduct(productId);
+        setProductData(product);
+        setError(null);
+      } catch (err) {
+        console.error(`Error fetching product ${productId}:`, err);
+        setError(err instanceof Error ? err.message : 'Failed to fetch product');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProductData();
+  }, [productId, item.variant_image, item.variant_attribute]);
+
+  // Get the correct image based on snapshot with fallback to fetched data
+  const getItemImage = (): string => {
+    // Priority 1: Use snapshot image (historical accuracy)
+    if (item.variant_image) {
+      return item.variant_image;
+    }
+
+    // Priority 2: Try to find variant in fetched product data
+    if (item.variant_id && productData?.variants && productData.variants.length > 0) {
+      const variant = productData.variants.find((v) => v._id === item.variant_id);
+      if (variant && variant.images && variant.images.length > 0) {
+        const primaryImage = variant.images.find((img) => img.is_primary);
+        return primaryImage?.url || variant.images[0].url;
+      }
+    }
+
+    // Priority 3: Fallback to product images
+    if (productData && productData.images && productData.images.length > 0) {
+      const primaryImage = productData.images.find((img) => img.is_primary);
+      return primaryImage?.url || productData.images[0].url;
+    }
+
+    // Priority 4: Final fallback
+    return "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80";
+  };
+
+  // Get variant details from snapshot with fallback to fetched data
+  const getVariantDetails = (): string | null => {
+    // Priority 1: Use snapshot data (historical accuracy)
+    if (item.variant_attribute) {
+      const variationType = item.variation_type || 'Variant';
+      return `${variationType}: ${item.variant_attribute}`;
+    }
+
+    // Priority 2: Fallback to fetched variant data if snapshot is missing
+    if (item.variant_id && productData?.variants) {
+      const variant = productData.variants.find((v) => v._id === item.variant_id);
+      if (variant && variant.attribute) {
+        const variationType = productData.variation || 'Variant';
+        return `${variationType}: ${variant.attribute}`;
+      }
+    }
+
+    return null;
+  };
+
+  const imageUrl = getItemImage();
+  const variantDetails = getVariantDetails();
+
+  return (
+    <div
+      key={`${item.product_id}-${index}`}
+      className="flex items-center space-x-4 pb-6 border-b border-gray-200 last:border-b-0 last:pb-0"
+    >
+      <div className="flex-shrink-0">
+        <div className="w-20 h-20 relative bg-gray-100 rounded-lg overflow-hidden">
+          {loading ? (
+            <div className="flex items-center justify-center h-full">
+              <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+            </div>
+          ) : (
+            <Image
+              src={imageUrl}
+              alt={item.name}
+              fill
+              className="object-cover"
+              sizes="80px"
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.src = "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80";
+              }}
+            />
+          )}
+        </div>
+      </div>
+      <div className="flex-grow">
+        <h3 className="text-lg font-medium text-gray-900 mb-1">
+          {String(item.name || 'Unknown Product')}
+        </h3>
+        {variantDetails && (
+          <p className="text-sm text-gray-600 mb-1">
+            {variantDetails}
+          </p>
+        )}
+        {item.variant_sku && (
+          <p className="text-sm text-gray-500 mb-1">
+            SKU: {item.variant_sku}
+          </p>
+        )}
+        <p className="text-sm text-gray-500 mb-1">
+          Product ID: {productId || 'N/A'}
+        </p>
+        {item.variant_id && (
+          <p className="text-sm text-gray-500 mb-2">
+            Variant ID: {String(item.variant_id)}
+          </p>
+        )}
+        {error && (
+          <p className="text-xs text-red-500 mb-1">
+            Failed to load product details
+          </p>
+        )}
+        <div className="flex items-center space-x-4 text-sm text-gray-600">
+          <span>Qty: {Number(item.quantity || 0)}</span>
+          <span>•</span>
+          <span>${Number(item.price || 0).toLocaleString()} each</span>
+        </div>
+      </div>
+      <div className="text-right">
+        <p className="text-lg font-semibold text-gray-900">
+          ${(Number(item.price || 0) * Number(item.quantity || 0)).toLocaleString()}
+        </p>
+      </div>
+    </div>
+  );
 }
 
 export default function OrderDetailsPage() {
@@ -224,7 +416,7 @@ export default function OrderDetailsPage() {
                 </p>
               </div>
             </div>
-            <div className="flex items-center space-x-3">
+            {/* <div className="flex items-center space-x-3">
               <button className="flex items-center px-3 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors">
                 <Printer className="h-4 w-4 mr-2" />
                 Print
@@ -233,7 +425,7 @@ export default function OrderDetailsPage() {
                 <Download className="h-4 w-4 mr-2" />
                 Export
               </button>
-            </div>
+            </div> */}
           </div>
         </div>
 
@@ -338,45 +530,7 @@ export default function OrderDetailsPage() {
               <div className="p-6">
                 <div className="space-y-6">
                   {order.items.map((item, index) => (
-                    <div
-                      key={`${item.product_id}-${index}`}
-                      className="flex items-center space-x-4 pb-6 border-b border-gray-200 last:border-b-0 last:pb-0"
-                    >
-                      <div className="flex-shrink-0">
-                        <div className="w-20 h-20 relative bg-gray-100 rounded-lg overflow-hidden">
-                          <Image
-                            src="https://images.unsplash.com/photo-1586023492125-27b2c045efd7?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80"
-                            alt={item.name}
-                            fill
-                            className="object-cover"
-                            sizes="80px"
-                          />
-                        </div>
-                      </div>
-                      <div className="flex-grow">
-                        <h3 className="text-lg font-medium text-gray-900 mb-1">
-                          {String(item.name || 'Unknown Product')}
-                        </h3>
-                        <p className="text-sm text-gray-500 mb-1">
-                          Product ID: {String(item.product_id || 'N/A')}
-                        </p>
-                        {item.variant_id && (
-                          <p className="text-sm text-gray-500 mb-2">
-                            Variant ID: {String(item.variant_id)}
-                          </p>
-                        )}
-                        <div className="flex items-center space-x-4 text-sm text-gray-600">
-                          <span>Qty: {Number(item.quantity || 0)}</span>
-                          <span>•</span>
-                          <span>${Number(item.price || 0).toLocaleString()} each</span>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-lg font-semibold text-gray-900">
-                          ${(Number(item.price || 0) * Number(item.quantity || 0)).toLocaleString()}
-                        </p>
-                      </div>
-                    </div>
+                    <OrderItemDisplay key={`${item.product_id}-${index}`} item={item} index={index} />
                   ))}
                 </div>
               </div>

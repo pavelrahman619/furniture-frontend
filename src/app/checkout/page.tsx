@@ -325,6 +325,11 @@ const CheckoutPage = () => {
           const orderData = {
             items: cartItems.map((item) => ({
               product_id: item.id, // Use the original MongoDB ObjectId
+              variant_id: item.variant_id, // MongoDB ObjectId of the variant
+              variant_image: item.image, // Snapshot of the image shown at checkout
+              variant_sku: item.variant_sku, // Snapshot of variant SKU
+              variant_attribute: item.variants?.size, // Snapshot of attribute value (e.g., "King", "Large")
+              // variation_type is set from product.variation in backend
               quantity: item.quantity,
               price: item.price,
               name: item.name,
