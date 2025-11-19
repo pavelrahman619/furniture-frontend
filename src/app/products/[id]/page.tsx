@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, use, useEffect } from "react";
+import { useState, use, useEffect, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ChevronRight, Plus, Minus } from "lucide-react";
@@ -49,8 +49,14 @@ export default function ProductPage({ params }: ProductPageProps) {
   const [showAddedMessage, setShowAddedMessage] = useState(false);
   const { addToCart } = useCart();
 
+  // Memoize fallback product to prevent recreation on every render
+  const fallbackProduct = useMemo(
+    () => getFallbackProduct(resolvedParams.id),
+    [resolvedParams.id]
+  );
+
   // Use productDetails if available, otherwise fallback
-  const displayProduct = productDetails || getFallbackProduct(resolvedParams.id);
+  const displayProduct = productDetails || fallbackProduct;
   
   const [selectedVariants, setSelectedVariants] = useState({
     size: displayProduct.variants.size.options[0]?.value || '',
@@ -58,8 +64,14 @@ export default function ProductPage({ params }: ProductPageProps) {
     finish: displayProduct.variants.finish.options[0]?.value || '',
   });
 
+  // Memoize default images to prevent recreation on every render
+  const defaultImages = useMemo(
+    () => productDetails?.images || fallbackProduct.images,
+    [productDetails?.images, fallbackProduct.images]
+  );
+
   // Get images for currently selected variant
-  const [displayImages, setDisplayImages] = useState<string[]>(displayProduct.images);
+  const [displayImages, setDisplayImages] = useState<string[]>(defaultImages);
 
   // Update selected variants when product data loads
   useEffect(() => {
@@ -75,7 +87,7 @@ export default function ProductPage({ params }: ProductPageProps) {
   // Update displayed images based on selected variant
   useEffect(() => {
     if (!productDetails?.rawVariants) {
-      setDisplayImages(displayProduct.images);
+      setDisplayImages(defaultImages);
       return;
     }
 
@@ -101,10 +113,10 @@ export default function ProductPage({ params }: ProductPageProps) {
       setSelectedImageIndex(0);
     } else {
       // Use default images
-      setDisplayImages(displayProduct.images);
+      setDisplayImages(defaultImages);
       setSelectedImageIndex(0);
     }
-  }, [selectedVariants, productDetails, displayProduct.images]);
+  }, [selectedVariants, productDetails, defaultImages]);
 
   // Show loading state
   if (loading) {
