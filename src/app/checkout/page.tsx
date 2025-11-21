@@ -99,8 +99,9 @@ const CheckoutPage = () => {
         : currentShippingInfo.cost
       : 0;
 
-  // Calculate tax (9.5% flat rate)
-  const tax = Math.round(subtotal * 0.095);
+  // Calculate tax (9.75% on subtotal + shipping)
+  const taxableAmount = subtotal + shipping;
+  const tax = Math.round(taxableAmount * 0.0975);
   // Backend formula: total = subtotal + delivery_cost + tax
   const total = subtotal + shipping + tax;
 
