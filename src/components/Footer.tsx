@@ -15,14 +15,14 @@ const Footer = () => {
 
   // Second column links
   const secondColumnLinks = [
-    "Delivery status",
-    "Admin login"
-  ];
-
-  // Third column links
-  const thirdColumnLinks = [
     "Privacy policy",
     "Delivery policy"
+  ];
+
+  // Third column links - email links
+  const thirdColumnLinks = [
+    { text: "Collaborate with us", email: "info@palacioshomeco.com" },
+    { text: "Press inquiries", email: "info@palacioshomeco.com" }
   ];
 
   // Commented out - not needed
@@ -106,7 +106,7 @@ const Footer = () => {
             </div>
           </div>
 
-          {/* Second Column - Delivery status, Admin login */}
+          {/* Second Column - Privacy policy, Delivery policy */}
           <div className="space-y-4">
             <ul className="space-y-3">
               {secondColumnLinks.map((link, index) => (
@@ -122,16 +122,16 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Third Column - Privacy policy, Delivery policy */}
+          {/* Third Column - Collaborate with us, Press inquiries */}
           <div className="space-y-4">
             <ul className="space-y-3">
               {thirdColumnLinks.map((link, index) => (
                 <li key={index}>
                   <a
-                    href="#"
+                    href={`mailto:${link.email}`}
                     className="text-sm text-gray-400 hover:text-white transition-colors duration-200"
                   >
-                    {link}
+                    {link.text}
                   </a>
                 </li>
               ))}

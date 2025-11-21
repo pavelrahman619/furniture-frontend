@@ -92,13 +92,18 @@ const CheckoutPage = () => {
   const isErrorState = currentShippingInfo && currentShippingInfo.cost === 0 &&
     (shippingEstimate ? !shippingEstimate.isEstimate : false);
   // Don't charge shipping for invalid locations (error state)
-  const shipping = currentShippingInfo && !isErrorState
-    ? (currentShippingInfo.isFree ? 0 : currentShippingInfo.cost)
-    : 0;
-  
-  // Backend formula: total = subtotal + delivery_cost (no tax)
-  // Tax is not supported by the backend system
-  const total = subtotal + shipping;
+  const shipping =
+    currentShippingInfo && !isErrorState
+      ? currentShippingInfo.isFree
+        ? 0
+        : currentShippingInfo.cost
+      : 0;
+
+  // Calculate tax (9.75% on subtotal + shipping)
+  const taxableAmount = subtotal + shipping;
+  const tax = Math.round(taxableAmount * 0.0975);
+  // Backend formula: total = subtotal + delivery_cost + tax
+  const total = subtotal + shipping + tax;
 
   const handleShippingChange = (field: keyof ShippingInfo, value: string) => {
     setShippingInfo((prev) => ({ ...prev, [field]: value }));
@@ -295,51 +300,63 @@ const CheckoutPage = () => {
         setIsProcessing(true);
 
         try {
-        // Prepare order data
-        // Use the same shipping info that's displayed to the user
-        const shippingCost = currentShippingInfo && !isErrorState
-          ? (currentShippingInfo.isFree ? 0 : currentShippingInfo.cost)
-          : 0;
-        const distanceMiles = (deliveryInfo?.distanceMiles || currentShippingInfo?.distanceMiles || validationResult.distance_miles);
-        
-        console.log('📦 Order submission data:', {
-          deliveryInfo,
-          currentShippingInfo,
-          shippingCost,
-          distanceMiles,
-          shipping: shipping,
-          subtotal,
-          total
-        });
-        
-        const orderData = {
-          items: cartItems.map((item) => ({
-            product_id: item.id, // Use the original MongoDB ObjectId
-            quantity: item.quantity,
-            price: item.price,
-            name: item.name,
-          })),
-          shipping_address: {
-            street: shippingInfo.address,
-            city: shippingInfo.city,
-            state: shippingInfo.state,
-            zip_code: shippingInfo.zipCode,
-            country: shippingInfo.country,
-          },
-          billing_address: {
-            street: shippingInfo.address,
-            city: shippingInfo.city,
-            state: shippingInfo.state,
-            zip_code: shippingInfo.zipCode,
-            country: shippingInfo.country,
-          },
-          payment_method: "Credit Card", // You can add payment method selection later
-          customer_email: shippingInfo.email,
-          customer_phone: shippingInfo.phone,
-          delivery_cost: shippingCost,
-          distance_miles: distanceMiles,
-          delivery_zone_validated: true,
-        };
+          // Prepare order data
+          // Use the same shipping info that's displayed to the user
+          const shippingCost =
+            currentShippingInfo && !isErrorState
+              ? currentShippingInfo.isFree
+                ? 0
+                : currentShippingInfo.cost
+              : 0;
+          const distanceMiles =
+            deliveryInfo?.distanceMiles ||
+            currentShippingInfo?.distanceMiles ||
+            validationResult.distance_miles;
+
+          console.log("📦 Order submission data:", {
+            deliveryInfo,
+            currentShippingInfo,
+            shippingCost,
+            distanceMiles,
+            shipping: shipping,
+            subtotal,
+            total,
+          });
+
+          const orderData = {
+            items: cartItems.map((item) => ({
+              product_id: item.id, // Use the original MongoDB ObjectId
+              variant_id: item.variant_id, // MongoDB ObjectId of the variant
+              variant_image: item.image, // Snapshot of the image shown at checkout
+              variant_sku: item.variant_sku, // Snapshot of variant SKU
+              variant_attribute: item.variants?.size, // Snapshot of attribute value (e.g., "King", "Large")
+              // variation_type is set from product.variation in backend
+              quantity: item.quantity,
+              price: item.price,
+              name: item.name,
+            })),
+            shipping_address: {
+              street: shippingInfo.address,
+              city: shippingInfo.city,
+              state: shippingInfo.state,
+              zip_code: shippingInfo.zipCode,
+              country: shippingInfo.country,
+            },
+            billing_address: {
+              street: shippingInfo.address,
+              city: shippingInfo.city,
+              state: shippingInfo.state,
+              zip_code: shippingInfo.zipCode,
+              country: shippingInfo.country,
+            },
+            payment_method: "Credit Card", // You can add payment method selection later
+            customer_email: shippingInfo.email,
+            customer_phone: shippingInfo.phone,
+            delivery_cost: shippingCost,
+            distance_miles: distanceMiles,
+            delivery_zone_validated: true,
+            tax: tax,
+          };
 
         // Create order through backend
         const orderId = await OrderService.createOrder(orderData);
@@ -737,7 +754,10 @@ const CheckoutPage = () => {
                           : "Enter ZIP code for shipping estimate"}
                   </span>
                 </div>
-                {/* Tax is not supported by backend - removed from checkout */}
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Tax</span>
+                  <span className="text-gray-900">${tax.toLocaleString()}</span>
+                </div>
                 <div className="border-t border-gray-200 pt-4">
                   <div className="flex justify-between text-lg font-medium">
                     <span className="text-gray-900">Total</span>
