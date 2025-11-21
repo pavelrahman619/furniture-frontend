@@ -543,13 +543,13 @@ export default function ProductPage({ params }: ProductPageProps) {
             )}
 
             {/* Product Note */}
-            {/* {displayProduct.note && (
+            {displayProduct.note && (
               <div className="border-t border-gray-200 pt-8">
                 <p className="text-sm text-gray-600 leading-relaxed">
                   <strong>Note:</strong> {displayProduct.note}
                 </p>
               </div>
-            )} */}
+            )}
           </div>
         </div>
       </div>
