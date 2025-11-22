@@ -98,9 +98,10 @@ const CheckoutPage = () => {
   // Don't charge shipping for invalid locations (error state)
   const shipping = 0; // Force free delivery
 
-  // Backend formula: total = subtotal + delivery_cost (no tax)
-  // Tax is not supported by the backend system
-  const total = subtotal + shipping;
+  // Calculate tax (8% flat rate)
+  const tax = Math.round(subtotal * 0.08);
+  // Backend formula: total = subtotal + delivery_cost + tax
+  const total = subtotal + shipping + tax;
 
   const handleShippingChange = (field: keyof ShippingInfo, value: string) => {
     setShippingInfo((prev) => ({ ...prev, [field]: value }));
@@ -763,7 +764,10 @@ const CheckoutPage = () => {
                       : "FREE DELIVERY!"}
                   </span>
                 </div>
-                {/* Tax is not supported by backend - removed from checkout */}
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Tax</span>
+                  <span className="text-gray-900">${tax.toLocaleString()}</span>
+                </div>
                 <div className="border-t border-gray-200 pt-4">
                   <div className="flex justify-between text-lg font-medium">
                     <span className="text-gray-900">Total</span>
