@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { loadStripe } from "@stripe/stripe-js";
 import {
   Elements,
@@ -19,9 +19,41 @@ const stripePromise = loadStripe(
   "pk_test_51S0SMNFDRNmrCGwd9WoPHTjJEpe2f16yWqO2ZVkjDyUVRRj1fAzY24yXGg8lyFXVRevGfSY9rmVrnlnKXbKWmTPJ00785bvmqG"
 );
 
+interface OrderData {
+  items: Array<{
+    product_id: string;
+    quantity: number;
+    price: number;
+    name: string;
+  }>;
+  shipping_address: {
+    street: string;
+    city: string;
+    state: string;
+    zip_code: string;
+    country: string;
+  };
+  billing_address: {
+    street: string;
+    city: string;
+    state: string;
+    zip_code: string;
+    country: string;
+  };
+  payment_method: string;
+  customer_email: string;
+  customer_phone: string;
+  delivery_cost: number;
+  distance_miles: number;
+  delivery_zone_validated: boolean;
+  subtotal: number;
+  total: number;
+  amount: number;
+}
+
 interface PaymentFormProps {
   clientSecret: string;
-  orderData: any;
+  orderData: OrderData;
   total: number;
 }
 
@@ -64,9 +96,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
           payment_method: {
             card: cardElement,
             billing_details: {
-              name: `${orderData.shipping_address?.firstName || ""} ${
-                orderData.shipping_address?.lastName || ""
-              }`,
+              name: orderData.customer_email,
               email: orderData.customer_email,
               phone: orderData.customer_phone,
               address: {
@@ -208,12 +238,11 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
 
 export default function PaymentPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
-  const [orderData, setOrderData] = useState<any>(null);
+  const [orderData, setOrderData] = useState<OrderData | null>(null);
   const [total, setTotal] = useState(0);
 
   useEffect(() => {
@@ -225,7 +254,7 @@ export default function PaymentPage() {
     }
 
     try {
-      const parsedOrderData = JSON.parse(storedOrderData);
+      const parsedOrderData = JSON.parse(storedOrderData) as OrderData;
       setOrderData(parsedOrderData);
       setTotal(parsedOrderData.amount || 0);
 
@@ -238,7 +267,7 @@ export default function PaymentPage() {
     }
   }, [router]);
 
-  const createPaymentIntent = async (orderData: any) => {
+  const createPaymentIntent = async (orderData: OrderData) => {
     try {
       const response = await fetch(
         `${
@@ -356,7 +385,7 @@ export default function PaymentPage() {
               </h3>
 
               <div className="space-y-3 mb-6">
-                {orderData.items?.map((item: any, index: number) => (
+                {orderData.items?.map((item, index) => (
                   <div key={index} className="flex justify-between text-sm">
                     <span className="text-gray-600">
                       {item.name} × {item.quantity}

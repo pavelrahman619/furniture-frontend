@@ -3,60 +3,14 @@
 import { useState, useRef } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import Image from "next/image";
-
-interface Category {
-  id: string;
-  title: string;
-  description: string;
-  image: string;
-}
+import { FEATURED_CATEGORIES } from "@/data/featured-categories";
 
 const CategorySlider = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const sliderRef = useRef<HTMLDivElement>(null);
 
-  const categories: Category[] = [
-    {
-      id: "artisan-house",
-      title: "ARTISAN HOUSE",
-      description:
-        "Where craftsmanship meets timeless beauty. Each curated, found piece is an heirloom of artisanal design, meticulously hand-carved from reclaimed wood to reveal layers of character and history.",
-      image:
-        "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-    },
-    {
-      id: "living",
-      title: "LIVING",
-      description:
-        "Discover our living room collections - a selection of beautifully handcrafted items, designed to last a lifetime.",
-      image:
-        "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-    },
-    {
-      id: "dining",
-      title: "DINING",
-      description:
-        "Inspired by the people and places that form the heart of our brand, each piece invites you to relax in style and comfort.",
-      image:
-        "https://images.unsplash.com/photo-1449247709967-d4461a6a6103?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-    },
-    {
-      id: "bedroom",
-      title: "BEDROOM",
-      description:
-        "Transform your bedroom into an oasis of your own with our thoughtfully curated collections.",
-      image:
-        "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-    },
-    {
-      id: "lighting",
-      title: "LIGHTING",
-      description:
-        "From charming chandeliers to accent pieces, these handcrafted fixtures bring warmth, personality, and artisanal beauty to every space.",
-      image:
-        "https://images.unsplash.com/photo-1524484485831-a92ffc0de03f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-    },
-  ];
+  // Use featured categories from shared data
+  const categories = FEATURED_CATEGORIES;
 
   const slideLeft = () => {
     if (sliderRef.current) {
