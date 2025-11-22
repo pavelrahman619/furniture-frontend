@@ -11,6 +11,7 @@ export interface CategoryResponse {
   slug: string;
   image_url?: string;
   parent_id?: string;
+  subcategories?: CategoryResponse[];
 }
 
 export interface CategoriesListResponse {
@@ -48,6 +49,47 @@ export const fetchCategories = async (): Promise<CategoryResponse[]> => {
     return data.categories;
   } catch (error) {
     console.error('Error fetching categories:', error);
+    throw error;
+  }
+};
+
+/**
+ * Fetch categories with hierarchy (parent-child relationships)
+ */
+export const fetchCategoriesWithHierarchy = async (): Promise<CategoryResponse[]> => {
+  try {
+    const categories = await fetchCategories();
+    
+    // Organize into parent-child structure
+    const categoryMap = new Map<string, CategoryResponse>();
+    const rootCategories: CategoryResponse[] = [];
+    
+    // First pass: create map of all categories
+    categories.forEach(cat => {
+      categoryMap.set(cat.id, { ...cat, subcategories: [] });
+    });
+    
+    // Second pass: organize into hierarchy
+    categories.forEach(cat => {
+      const category = categoryMap.get(cat.id);
+      if (!category) return;
+      
+      if (cat.parent_id) {
+        // This is a child category
+        const parent = categoryMap.get(cat.parent_id);
+        if (parent) {
+          parent.subcategories = parent.subcategories || [];
+          parent.subcategories.push(category);
+        }
+      } else {
+        // This is a root category
+        rootCategories.push(category);
+      }
+    });
+    
+    return rootCategories;
+  } catch (error) {
+    console.error('Error fetching categories with hierarchy:', error);
     throw error;
   }
 };

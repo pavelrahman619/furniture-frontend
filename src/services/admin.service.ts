@@ -400,6 +400,7 @@ export class AdminService {
           throw new Error('Token refresh failed');
         }
       } catch (error) {
+        console.error('Token refresh failed:', error);
         return {
           success: false,
           error: 'Authentication token expired and refresh failed',
@@ -502,6 +503,7 @@ export class AdminService {
       };
     } catch (error) {
       // If verification fails, consider token invalid
+      console.error('Token verification failed:', error);
       return {
         success: true,
         data: false,

@@ -4,6 +4,7 @@ import { useState, useRef } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { FEATURED_CATEGORIES } from "@/data/featured-categories";
 
 interface Category {
   id: string;
@@ -17,62 +18,8 @@ const CategorySlider = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const sliderRef = useRef<HTMLDivElement>(null);
 
-  const categories: Category[] = [
-    {
-      id: "living-room",
-      title: "LIVING ROOM",
-      slug: "living-room",
-      description:
-        "Discover the living room section, where sophisticated design meets modern luxury. From statement seating to elegant accents, elevate your home with enduring style",
-      image:
-        "/furniture/living room.webp",
-    },
-    {
-      id: "dining-room",
-      title: "DINING ROOM",
-      slug: "dining-room",
-      description:
-        "Our dining room section brings elegance to every occasion. Discover refined tables and seating designed for timeless gatherings",
-      image:
-        "/furniture/dining room.webp",
-    },
-    {
-      id: "bedroom",
-      title: "BEDROOM",
-      slug: "bedroom",
-      description:
-        "Transform your bedroom into a sanctuary of comfort & style",
-      image:
-        "/furniture/bedroom.jpg",
-    },
-    {
-      id: "office",
-      title: "OFFICE",
-      slug: "office",
-      description:
-        "Curated office pieces that inspire success and style",
-      image:
-        "/furniture/office.webp",
-    },
-    {
-      id: "entry-and-decor",
-      title: "ENTRY & DECOR",
-      slug: "entry-and-decor",
-      description:
-        "Make a lasting first impression with entryway pieces and decor",
-      image:
-        "/furniture/entry and decor.webp",
-    },
-    {
-      id: "outdoor",
-      title: "OUTDOOR",
-      slug: "outdoor",
-      description:
-        "Outdoor living made easy with modern, weather-ready furniture",
-      image:
-        "/furniture/outdoor.jpg",
-    },
-  ];
+  // Use featured categories from shared data
+  const categories = FEATURED_CATEGORIES;
 
   const slideLeft = () => {
     if (sliderRef.current) {
