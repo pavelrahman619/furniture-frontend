@@ -69,7 +69,7 @@ const CartPage = () => {
                     </h3>
 
                     <div className="space-y-2 text-sm">
-                      <div className="grid grid-cols-2 gap-x-4">
+                      {/* <div className="grid grid-cols-2 gap-x-4">
                         <span className="text-gray-500 uppercase">FABRIC</span>
                         <span className="text-gray-900">{item.fabric}</span>
                       </div>
@@ -80,16 +80,16 @@ const CartPage = () => {
                       <div className="grid grid-cols-2 gap-x-4">
                         <span className="text-gray-500 uppercase">WIDTH</span>
                         <span className="text-gray-900">{item.width}</span>
-                      </div>
+                      </div> */}
                       {/* Color display hidden - UI only (logic kept) */}
                       {/* <div className="grid grid-cols-2 gap-x-4">
                         <span className="text-gray-500 uppercase">COLOR</span>
                         <span className="text-gray-900">{item.color}</span>
                       </div> */}
-                      <div className="grid grid-cols-2 gap-x-4">
+                      {/* <div className="grid grid-cols-2 gap-x-4">
                         <span className="text-gray-500 uppercase">ITEM#</span>
                         <span className="text-gray-900">{item.sku}</span>
-                      </div>
+                      </div> */}
                     </div>
                   </div>
 
@@ -151,7 +151,7 @@ const CartPage = () => {
                       </p>
                       <button
                         onClick={() => removeFromCart(item.cartId)}
-                        className="text-gray-600 underline hover:text-gray-800 transition-colors"
+                        className="text-red-600 underline hover:text-red-800 transition-colors"
                       >
                         Remove
                       </button>

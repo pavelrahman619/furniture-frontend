@@ -471,7 +471,7 @@ const OrderSuccessContent = () => {
         {/* Action Buttons */}
         <div className="text-center space-y-4 lg:space-y-0 lg:space-x-6 lg:flex lg:justify-center">
           <Link
-            href="/orders"
+            href="/track"
             className="inline-block w-full lg:w-auto bg-gray-900 text-white px-8 py-4 font-medium tracking-wider hover:bg-gray-800 transition-colors"
           >
             TRACK YOUR ORDER

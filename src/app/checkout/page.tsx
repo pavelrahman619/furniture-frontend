@@ -96,10 +96,16 @@ const CheckoutPage = () => {
     currentShippingInfo.cost === 0 &&
     (shippingEstimate ? !shippingEstimate.isEstimate : false);
   // Don't charge shipping for invalid locations (error state)
-  const shipping = 0; // Force free delivery
+  const shipping =
+    currentShippingInfo && !isErrorState
+      ? currentShippingInfo.isFree
+        ? 0
+        : currentShippingInfo.cost
+      : 0;
 
-  // Calculate tax (8% flat rate)
-  const tax = Math.round(subtotal * 0.08);
+  // Calculate tax (9.75% on subtotal + shipping)
+  const taxableAmount = subtotal + shipping;
+  const tax = Math.round(taxableAmount * 0.0975);
   // Backend formula: total = subtotal + delivery_cost + tax
   const total = subtotal + shipping + tax;
 
@@ -331,7 +337,12 @@ const CheckoutPage = () => {
         try {
           // Prepare order data
           // Use the same shipping info that's displayed to the user
-          const shippingCost = 0; // Force free delivery in order data
+          const shippingCost =
+            currentShippingInfo && !isErrorState
+              ? currentShippingInfo.isFree
+                ? 0
+                : currentShippingInfo.cost
+              : 0;
           const distanceMiles =
             deliveryInfo?.distanceMiles ||
             currentShippingInfo?.distanceMiles ||
