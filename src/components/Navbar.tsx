@@ -230,13 +230,13 @@ const Navbar = () => {
             )}
 
             {/* Track Order */}
-            {/* <Link
+            <Link
               href="/track"
               className="flex items-center text-sm text-gray-700 hover:text-gray-900 transition-colors"
             >
               <Package className="h-4 w-4 mr-1" />
               Track Order
-            </Link> */}
+            </Link>
 
             {/* Become A Member */}
             {/* <button className="flex items-center text-sm text-gray-700 hover:text-gray-900 transition-colors">
