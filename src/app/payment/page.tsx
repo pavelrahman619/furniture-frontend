@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { loadStripe } from "@stripe/stripe-js";
 import {
   Elements,
@@ -19,27 +19,27 @@ const stripePromise = loadStripe(
   "pk_test_51S0SMNFDRNmrCGwd9WoPHTjJEpe2f16yWqO2ZVkjDyUVRRj1fAzY24yXGg8lyFXVRevGfSY9rmVrnlnKXbKWmTPJ00785bvmqG"
 );
 
+interface Address {
+  street: string;
+  city: string;
+  state: string;
+  zip_code: string;
+  country: string;
+  firstName?: string;
+  lastName?: string;
+}
+
+interface OrderItem {
+  product_id: string;
+  quantity: number;
+  price: number;
+  name: string;
+}
+
 interface OrderData {
-  items: Array<{
-    product_id: string;
-    quantity: number;
-    price: number;
-    name: string;
-  }>;
-  shipping_address: {
-    street: string;
-    city: string;
-    state: string;
-    zip_code: string;
-    country: string;
-  };
-  billing_address: {
-    street: string;
-    city: string;
-    state: string;
-    zip_code: string;
-    country: string;
-  };
+  items: OrderItem[];
+  shipping_address: Address;
+  billing_address: Address;
   payment_method: string;
   customer_email: string;
   customer_phone: string;
@@ -236,7 +236,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
   );
 };
 
-export default function PaymentPage() {
+function PaymentPageContent() {
   const router = useRouter();
 
   const [loading, setLoading] = useState(true);
@@ -385,7 +385,7 @@ export default function PaymentPage() {
               </h3>
 
               <div className="space-y-3 mb-6">
-                {orderData.items?.map((item, index) => (
+                {orderData.items?.map((item: OrderItem, index: number) => (
                   <div key={index} className="flex justify-between text-sm">
                     <span className="text-gray-600">
                       {item.name} × {item.quantity}
@@ -408,6 +408,17 @@ export default function PaymentPage() {
                   <span className="text-gray-600">Shipping</span>
                   <span className="text-green-600 font-medium">FREE</span>
                 </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Tax</span>
+                  <span className="text-gray-900">
+                    $
+                    {(
+                      total -
+                      (orderData.subtotal || 0) -
+                      (orderData.delivery_cost || 0)
+                    ).toLocaleString()}
+                  </span>
+                </div>
                 <div className="border-t border-gray-200 pt-2">
                   <div className="flex justify-between text-lg font-medium">
                     <span className="text-gray-900">Total</span>
@@ -429,5 +440,24 @@ export default function PaymentPage() {
         </div>
       </div>
     </main>
+  );
+}
+
+export default function PaymentPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="min-h-screen bg-gray-50">
+          <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="text-center py-16">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4"></div>
+              <p className="text-gray-600">Loading payment page...</p>
+            </div>
+          </div>
+        </main>
+      }
+    >
+      <PaymentPageContent />
+    </Suspense>
   );
 }
