@@ -67,7 +67,7 @@ const CategoryMegaMenu = ({ categories, onClose }: CategoryMegaMenuProps) => {
                       window.location.href = `/products?category=${category.id}`;
                       onClose();
                     }}
-                    className={`text-left w-full text-base transition-all flex items-center justify-between group ${
+                    className={`text-left w-full text-base transition-all flex items-center justify-between group cursor-pointer ${
                       hoveredCategory?.id === category.id
                         ? "text-gray-900 font-medium"
                         : "text-gray-700 hover:text-gray-900"
