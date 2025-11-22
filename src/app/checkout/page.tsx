@@ -375,8 +375,8 @@ const CheckoutPage = () => {
             distance_miles: distanceMiles,
             delivery_zone_validated: true,
             subtotal: subtotal,
-            total: subtotal + shippingCost, // Backend requires 'total' field
-            amount: subtotal + shippingCost, // Total amount for payment (used by Stripe)
+            total: subtotal + shippingCost + tax, // Backend requires 'total' field
+            amount: subtotal + shippingCost + tax, // Total amount for payment (used by Stripe)
           };
 
           // Store order data in session storage for payment page
