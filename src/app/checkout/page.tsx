@@ -96,12 +96,7 @@ const CheckoutPage = () => {
     currentShippingInfo.cost === 0 &&
     (shippingEstimate ? !shippingEstimate.isEstimate : false);
   // Don't charge shipping for invalid locations (error state)
-  const shipping =
-    currentShippingInfo && !isErrorState
-      ? currentShippingInfo.isFree
-        ? 0
-        : currentShippingInfo.cost
-      : 0;
+  const shipping = 0; // Force free delivery
 
   // Backend formula: total = subtotal + delivery_cost (no tax)
   // Tax is not supported by the backend system
@@ -182,7 +177,7 @@ const CheckoutPage = () => {
           } else {
             // Show fallback estimate only for network/API errors
             setShippingEstimate({
-              cost: 50, // Default estimate
+              cost: 0, // No default charge on fallback
               isFree: subtotal >= 1000, // Check if order qualifies for free delivery
               distanceMiles: 0,
               isEstimate: true,
@@ -316,7 +311,7 @@ const CheckoutPage = () => {
           console.error("❌ Delivery cost calculation failed:", costError);
           // Set default delivery cost if calculation fails
           setDeliveryInfo({
-            cost: 50, // Default delivery cost
+            cost: 0, // Default delivery cost
             isFree: false,
             distanceMiles: validationResult.distance_miles,
             calculated: true,
@@ -335,12 +330,7 @@ const CheckoutPage = () => {
         try {
           // Prepare order data
           // Use the same shipping info that's displayed to the user
-          const shippingCost =
-            currentShippingInfo && !isErrorState
-              ? currentShippingInfo.isFree
-                ? 0
-                : currentShippingInfo.cost
-              : 0;
+          const shippingCost = 0; // Force free delivery in order data
           const distanceMiles =
             deliveryInfo?.distanceMiles ||
             currentShippingInfo?.distanceMiles ||
@@ -383,6 +373,9 @@ const CheckoutPage = () => {
             delivery_cost: shippingCost,
             distance_miles: distanceMiles,
             delivery_zone_validated: true,
+            subtotal: subtotal,
+            total: subtotal + shippingCost, // Backend requires 'total' field
+            amount: subtotal + shippingCost, // Total amount for payment (used by Stripe)
           };
 
           // Store order data in session storage for payment page
@@ -762,28 +755,12 @@ const CheckoutPage = () => {
                     className={`text-gray-900 ${
                       isErrorState
                         ? "text-red-600 font-medium"
-                        : currentShippingInfo?.isFree
-                        ? "text-green-600 font-medium"
-                        : ""
+                        : "text-green-600 font-medium"
                     }`}
                   >
                     {isErrorState
                       ? "Delivery not available for this location"
-                      : deliveryInfo
-                      ? deliveryInfo.isFree
-                        ? "FREE DELIVERY!"
-                        : `$${deliveryInfo.cost.toLocaleString()}`
-                      : shippingEstimate
-                      ? shippingEstimate.loading
-                        ? "ESTIMATING..."
-                        : shippingEstimate.isFree
-                        ? `FREE DELIVERY!${
-                            shippingEstimate.isEstimate ? " (estimated)" : ""
-                          }`
-                        : `$${shippingEstimate.cost.toLocaleString()}${
-                            shippingEstimate.isEstimate ? " (estimated)" : ""
-                          }`
-                      : "Enter ZIP code for shipping estimate"}
+                      : "FREE DELIVERY!"}
                   </span>
                 </div>
                 {/* Tax is not supported by backend - removed from checkout */}

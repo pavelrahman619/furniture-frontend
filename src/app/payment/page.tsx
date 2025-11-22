@@ -14,8 +14,9 @@ import Link from "next/link";
 
 // Initialize Stripe with your publishable key
 const stripePromise = loadStripe(
-  process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY ||
-    "pk_live_51S0SM9Jv8YEVxzjkmVw2GvfgRhNNJnDEP7sQGe8GLTB4ZJjZk1CRIzo3UBYAgf5Bjb7EOzpAGbrgm6VYoV5aImOA00gqyEXMHR"
+  // process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY ||
+  // "pk_live_51S0SM9Jv8YEVxzjkmVw2GvfgRhNNJnDEP7sQGe8GLTB4ZJjZk1CRIzo3UBYAgf5Bjb7EOzpAGbrgm6VYoV5aImOA00gqyEXMHR"
+  "pk_test_51S0SMNFDRNmrCGwd9WoPHTjJEpe2f16yWqO2ZVkjDyUVRRj1fAzY24yXGg8lyFXVRevGfSY9rmVrnlnKXbKWmTPJ00785bvmqG"
 );
 
 interface PaymentFormProps {
@@ -226,7 +227,7 @@ export default function PaymentPage() {
     try {
       const parsedOrderData = JSON.parse(storedOrderData);
       setOrderData(parsedOrderData);
-      setTotal(parsedOrderData.total || 0);
+      setTotal(parsedOrderData.amount || 0);
 
       // Create payment intent
       createPaymentIntent(parsedOrderData);
@@ -249,7 +250,7 @@ export default function PaymentPage() {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            amount: orderData.total,
+            amount: orderData.amount,
             currency: "usd",
             order_data: orderData,
             customer_email: orderData.customer_email,
@@ -376,17 +377,7 @@ export default function PaymentPage() {
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">Shipping</span>
-                  <span className="text-gray-900">
-                    {orderData.delivery_cost === 0
-                      ? "FREE"
-                      : `$${orderData.delivery_cost?.toLocaleString()}`}
-                  </span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Tax</span>
-                  <span className="text-gray-900">
-                    ${Math.round(orderData.subtotal * 0.08)?.toLocaleString()}
-                  </span>
+                  <span className="text-green-600 font-medium">FREE</span>
                 </div>
                 <div className="border-t border-gray-200 pt-2">
                   <div className="flex justify-between text-lg font-medium">
