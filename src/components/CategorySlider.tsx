@@ -5,7 +5,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
-export interface Category {
+interface Category {
   id: string;
   title: string;
   slug: string;
@@ -13,7 +13,11 @@ export interface Category {
   image: string;
 }
 
-export const categories: Category[] = [
+const CategorySlider = () => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const sliderRef = useRef<HTMLDivElement>(null);
+
+  const categories: Category[] = [
     {
       id: "living-room",
       title: "LIVING ROOM",
@@ -68,11 +72,7 @@ export const categories: Category[] = [
       image:
         "/furniture/outdoor.jpg",
     },
-];
-
-const CategorySlider = () => {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const sliderRef = useRef<HTMLDivElement>(null);
+  ];
 
   const slideLeft = () => {
     if (sliderRef.current) {
