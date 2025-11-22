@@ -21,11 +21,13 @@ import { useDebounce } from "@/hooks/useDebounce";
 import SearchDropdown from "./SearchDropdown";
 import { ProductService } from "@/services/product.service";
 import { Product } from "@/types/product.types";
+import { categories } from "./CategorySlider";
 
 const Navbar = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [showAdminDropdown, setShowAdminDropdown] = useState(false);
   const [showSearchDropdown, setShowSearchDropdown] = useState(false);
+  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
   const [searchResults, setSearchResults] = useState<Product[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [totalSearchCount, setTotalSearchCount] = useState(0);
@@ -33,6 +35,7 @@ const Navbar = () => {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const searchDropdownRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const categoryDropdownRef = useRef<HTMLDivElement>(null);
   
   const { getTotalItems } = useCart();
   const { admin, isAuthenticated, logout } = useAdmin();
@@ -45,7 +48,7 @@ const Navbar = () => {
 
   const mainNavItems = [
     { name: "ALL PRODUCTS", href: "/products" },
-  //   { name: "SHOP BY CATEGORY", href: "#" },
+    { name: "SHOP BY CATEGORY", href: "#" },
   //   { name: "ROOMS", href: "#" },
   //   { name: "MADE TO ORDER", href: "#" },
   //   { name: "VILLA TEXTILES & RUGS", href: "#" },
@@ -150,6 +153,9 @@ const Navbar = () => {
         !searchInputRef.current.contains(event.target as Node)
       ) {
         setShowSearchDropdown(false);
+      }
+      if (categoryDropdownRef.current && !categoryDropdownRef.current.contains(event.target as Node)) {
+        setShowCategoryDropdown(false);
       }
     };
 
@@ -319,13 +325,43 @@ const Navbar = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-center space-x-8 h-12">
             {mainNavItems.map((item, index) => (
-              <Link
-                key={index}
-                href={item.href}
-                className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors tracking-wide"
-              >
-                {item.name}
-              </Link>
+              item.name === "SHOP BY CATEGORY" ? (
+                <div key={index} className="relative" ref={categoryDropdownRef}>
+                  <button
+                    onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
+                    className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors tracking-wide flex items-center"
+                  >
+                    {item.name}
+                    <ChevronDown className="h-3 w-3 ml-1" />
+                  </button>
+
+                  {/* Category Dropdown */}
+                  {showCategoryDropdown && (
+                    <div className="absolute top-full left-0 mt-2 w-64 bg-white rounded-md shadow-lg border border-gray-200 z-50">
+                      <div className="py-2">
+                        {categories.map((category) => (
+                          <Link
+                            key={category.id}
+                            href={`/products?category=${category.slug}`}
+                            onClick={() => setShowCategoryDropdown(false)}
+                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors"
+                          >
+                            {category.title}
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <Link
+                  key={index}
+                  href={item.href}
+                  className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors tracking-wide"
+                >
+                  {item.name}
+                </Link>
+              )
             ))}
           </div>
         </div>
