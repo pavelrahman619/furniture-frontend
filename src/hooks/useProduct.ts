@@ -81,7 +81,7 @@ export const useProduct = (id: string): UseProductResult => {
           moreArriving: location.more_arriving ? 'Yes' : 'No'
         })),
         description: productData.description,
-        note: "The color of the product might differ due to production and your monitor screen settings. It's essential to ensure proper color calibration to accurately represent our products.",
+        note: "Product colors may vary slightly due to manufacturing differences and individual monitor settings. For the most accurate representation, please ensure your display is properly calibrated.",
         // Store raw variant data for variant-specific image selection
         rawVariants: productData.variants,
         // Store product-level images as fallback

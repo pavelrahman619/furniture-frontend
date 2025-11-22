@@ -20,6 +20,8 @@ export interface CartItem {
   sku: string;
   category: string;
   availability: "in-stock" | "out-of-stock" | "on-order";
+  variant_id?: string; // MongoDB ObjectId of the variant
+  variant_sku?: string; // SKU of the variant
   // Variant information
   variants?: {
     size?: string;
