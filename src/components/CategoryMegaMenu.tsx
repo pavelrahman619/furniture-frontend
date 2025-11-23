@@ -55,6 +55,16 @@ const CategoryMegaMenu = ({ categories, onClose }: CategoryMegaMenuProps) => {
         <div className="grid grid-cols-12 gap-8">
           {/* Left Column - Main Categories */}
           <div className="col-span-4">
+            <div className="mb-6 pb-6 border-b border-gray-200">
+              <Link
+                href="/products"
+                onClick={onClose}
+                className="text-sm font-medium text-gray-900 hover:text-gray-700 transition-colors"
+              >
+                All Shop by Category →
+              </Link>
+            </div>
+
             <h4 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-4">
               Categories
             </h4>
@@ -67,44 +77,32 @@ const CategoryMegaMenu = ({ categories, onClose }: CategoryMegaMenuProps) => {
                       window.location.href = `/products?category=${category.id}`;
                       onClose();
                     }}
-                    className={`text-left w-full text-base transition-all flex items-center justify-between group cursor-pointer ${
-                      hoveredCategory?.id === category.id
+                    className={`text-left w-full text-base transition-all flex items-center justify-between group cursor-pointer ${hoveredCategory?.id === category.id
                         ? "text-gray-900 font-medium"
                         : "text-gray-700 hover:text-gray-900"
-                    }`}
+                      }`}
                   >
                     <span>{category.name}</span>
                     {category.subcategories &&
                       category.subcategories.length > 0 && (
                         <ChevronRight
-                          className={`h-4 w-4 transition-opacity ${
-                            hoveredCategory?.id === category.id
+                          className={`h-4 w-4 transition-opacity ${hoveredCategory?.id === category.id
                               ? "opacity-100"
                               : "opacity-0 group-hover:opacity-100"
-                          }`}
+                            }`}
                         />
                       )}
                   </button>
                 </li>
               ))}
             </ul>
-
-            <div className="mt-6 pt-6 border-t border-gray-200">
-              <Link
-                href="/products"
-                onClick={onClose}
-                className="text-sm font-medium text-gray-900 hover:text-gray-700 transition-colors"
-              >
-                All Shop by Category →
-              </Link>
-            </div>
           </div>
 
           {/* Middle Column - Subcategories */}
           <div className="col-span-3">
             {hoveredCategory &&
-            hoveredCategory.subcategories &&
-            hoveredCategory.subcategories.length > 0 ? (
+              hoveredCategory.subcategories &&
+              hoveredCategory.subcategories.length > 0 ? (
               <div>
                 <h4 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-4">
                   Shop by Type

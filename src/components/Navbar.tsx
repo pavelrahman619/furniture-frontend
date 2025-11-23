@@ -56,7 +56,9 @@ const Navbar = () => {
     { name: "ROOMS", href: "#", hasMegaMenu: false },
     { name: "MADE TO ORDER", href: "#", hasMegaMenu: false },
     { name: "VILLA TEXTILES & RUGS", href: "#", hasMegaMenu: false },
-    { name: "IN STOCK", href: "#", hasMegaMenu: false },
+    { name: "IN STOCK", href: "/products", hasMegaMenu: false },
+    { name: "CONTACT US", href: "#", hasMegaMenu: false },
+    { name: "ABOUT US", href: "#", hasMegaMenu: false },
   ];
 
   const adminMenuItems = [
