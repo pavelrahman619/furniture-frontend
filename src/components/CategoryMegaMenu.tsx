@@ -99,7 +99,7 @@ const CategoryMegaMenu = ({ categories, onClose }: CategoryMegaMenuProps) => {
           </div>
 
           {/* Middle Column - Subcategories */}
-          <div className="col-span-3">
+          {/* <div className="col-span-3">
             {hoveredCategory &&
               hoveredCategory.subcategories &&
               hoveredCategory.subcategories.length > 0 ? (
@@ -143,7 +143,7 @@ const CategoryMegaMenu = ({ categories, onClose }: CategoryMegaMenuProps) => {
                 </Link>
               </div>
             ) : null}
-          </div>
+          </div> */}
 
           {/* Right Column - Featured Image */}
           <div className="col-span-5">
