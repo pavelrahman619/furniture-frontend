@@ -337,7 +337,7 @@ const Navbar = () => {
       {/* Secondary Navigation */}
       <div className="bg-gray-50 border-t border-gray-200 relative">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-center space-x-8 h-12">
+          <div className="flex items-center justify-center md:space-x-14 space-x-6 h-12">
             {mainNavItems.map((item, index) => (
               <div
                 key={index}
