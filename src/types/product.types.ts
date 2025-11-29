@@ -3,8 +3,15 @@
  */
 
 // Variation type constants
-export const VARIATION_TYPES = ['Size', 'Dimensions', 'Weight', 'Color', 'Material', 'Style'] as const;
-export type VariationType = typeof VARIATION_TYPES[number];
+export const VARIATION_TYPES = [
+  "Size",
+  "Dimensions",
+  "Weight",
+  "Color",
+  "Material",
+  "Style",
+] as const;
+export type VariationType = (typeof VARIATION_TYPES)[number];
 
 export interface ProductVariant {
   _id?: string;
@@ -16,6 +23,7 @@ export interface ProductVariant {
   stock: number;
   sku: string;
   images?: ProductImage[];
+  otherDetails?: Record<string, unknown>; // Flexible key-value pairs for additional details
 }
 
 export interface ProductImage {
@@ -97,7 +105,7 @@ export interface ProductsQueryParams {
   // Additional filters that could be supported
   featured?: boolean;
   sort?: string;
-  order?: 'asc' | 'desc';
+  order?: "asc" | "desc";
 }
 
 // Filter types for frontend

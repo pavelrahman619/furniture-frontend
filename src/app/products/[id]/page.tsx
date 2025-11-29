@@ -3,7 +3,7 @@
 import { useState, use, useEffect, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ChevronRight, Plus, Minus } from "lucide-react";
+import { ChevronRight, Plus, Minus, X, ChevronLeft } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { useProduct } from "@/hooks/useProduct";
 import { ProductDetails } from "@/types/product.types";
@@ -34,7 +34,6 @@ const getFallbackProduct = (id: string): ProductDetails => {
   };
 };
 
-
 interface ProductPageProps {
   params: Promise<{
     id: string;
@@ -43,10 +42,17 @@ interface ProductPageProps {
 
 export default function ProductPage({ params }: ProductPageProps) {
   const resolvedParams = use(params);
-  const { productDetails, loading, error, refetch } = useProduct(resolvedParams.id);
+  const { productDetails, loading, error, refetch } = useProduct(
+    resolvedParams.id
+  );
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [showAddedMessage, setShowAddedMessage] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalImageIndex, setModalImageIndex] = useState(0);
+  const [activeTab, setActiveTab] = useState<"description" | "details">(
+    "description"
+  );
   const { addToCart } = useCart();
 
   // Memoize fallback product to prevent recreation on every render
@@ -57,11 +63,11 @@ export default function ProductPage({ params }: ProductPageProps) {
 
   // Use productDetails if available, otherwise fallback
   const displayProduct = productDetails || fallbackProduct;
-  
+
   const [selectedVariants, setSelectedVariants] = useState({
-    size: displayProduct.variants.size.options[0]?.value || '',
-    color: displayProduct.variants.color.options[0]?.value || '',
-    finish: displayProduct.variants.finish.options[0]?.value || '',
+    size: displayProduct.variants.size.options[0]?.value || "",
+    color: displayProduct.variants.color.options[0]?.value || "",
+    finish: displayProduct.variants.finish.options[0]?.value || "",
   });
 
   // Memoize default images to prevent recreation on every render
@@ -77,12 +83,26 @@ export default function ProductPage({ params }: ProductPageProps) {
   useEffect(() => {
     if (productDetails) {
       setSelectedVariants({
-        size: productDetails.variants.size.options[0]?.value || '',
-        color: productDetails.variants.color.options[0]?.value || '',
-        finish: productDetails.variants.finish.options[0]?.value || '',
+        size: productDetails.variants.size.options[0]?.value || "",
+        color: productDetails.variants.color.options[0]?.value || "",
+        finish: productDetails.variants.finish.options[0]?.value || "",
       });
     }
   }, [productDetails]);
+
+  // Find the matching variant based on selected attributes
+  const matchingVariant = useMemo(() => {
+    if (!productDetails?.rawVariants) return null;
+
+    return productDetails.rawVariants.find((variant) => {
+      // Match based on attribute field (new dynamic system)
+      if (variant.attribute) {
+        return variant.attribute === selectedVariants.size; // size field contains attribute value for backwards compatibility
+      }
+      // Fallback to old size field for backwards compatibility with existing products
+      return !selectedVariants.size || variant.size === selectedVariants.size;
+    });
+  }, [selectedVariants, productDetails]);
 
   // Update displayed images based on selected variant
   useEffect(() => {
@@ -91,23 +111,15 @@ export default function ProductPage({ params }: ProductPageProps) {
       return;
     }
 
-    // Find the matching variant based on selected attribute (instead of size/color/finish)
-    // The attribute field is now used instead of the deprecated size/color/material fields
-    const matchingVariant = productDetails.rawVariants.find(variant => {
-      // Match based on attribute field (new dynamic system)
-      if (variant.attribute) {
-        return variant.attribute === selectedVariants.size; // size field contains attribute value for backwards compatibility
-      }
-      // Fallback to old size field for backwards compatibility with existing products
-      return !selectedVariants.size || variant.size === selectedVariants.size;
-    });
-
     // If matching variant has images, use them; otherwise fall back
     if (matchingVariant?.images && matchingVariant.images.length > 0) {
-      const variantImages = matchingVariant.images.map(img => img.url);
+      const variantImages = matchingVariant.images.map((img) => img.url);
       setDisplayImages(variantImages);
       setSelectedImageIndex(0); // Reset to first image when variant changes
-    } else if (productDetails.productLevelImages && productDetails.productLevelImages.length > 0) {
+    } else if (
+      productDetails.productLevelImages &&
+      productDetails.productLevelImages.length > 0
+    ) {
       // Fallback to product-level images
       setDisplayImages(productDetails.productLevelImages);
       setSelectedImageIndex(0);
@@ -116,7 +128,29 @@ export default function ProductPage({ params }: ProductPageProps) {
       setDisplayImages(defaultImages);
       setSelectedImageIndex(0);
     }
-  }, [selectedVariants, productDetails, defaultImages]);
+  }, [matchingVariant, productDetails, defaultImages]);
+
+  // Handle keyboard navigation in modal
+  useEffect(() => {
+    if (!isModalOpen) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setIsModalOpen(false);
+      }
+      if (e.key === "ArrowRight") {
+        setModalImageIndex((prev) => (prev + 1) % displayImages.length);
+      }
+      if (e.key === "ArrowLeft") {
+        setModalImageIndex(
+          (prev) => (prev - 1 + displayImages.length) % displayImages.length
+        );
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isModalOpen, displayImages.length]);
 
   // Show loading state
   if (loading) {
@@ -131,8 +165,8 @@ export default function ProductPage({ params }: ProductPageProps) {
   if (error) {
     return (
       <main className="min-h-screen bg-white flex items-center justify-center">
-        <ErrorMessage 
-          message={error} 
+        <ErrorMessage
+          message={error}
           onRetry={refetch}
           retryLabel="Try Again"
         />
@@ -172,10 +206,34 @@ export default function ProductPage({ params }: ProductPageProps) {
     }));
   };
 
+  const openModal = (imageIndex: number) => {
+    setModalImageIndex(imageIndex);
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+  };
+
+  const goToNextImage = () => {
+    setModalImageIndex((prev) => (prev + 1) % displayImages.length);
+  };
+
+  const goToPrevImage = () => {
+    setModalImageIndex(
+      (prev) => (prev - 1 + displayImages.length) % displayImages.length
+    );
+  };
+
   const breadcrumbs = [
     { name: "PALACIOS HOME CO.", href: "/" },
     { name: "Products", href: "/products" },
-    { name: displayProduct.category, href: `/products?category=${displayProduct.category.toLowerCase().replace(/\s+/g, '-')}` },
+    {
+      name: displayProduct.category,
+      href: `/products?category=${displayProduct.category
+        .toLowerCase()
+        .replace(/\s+/g, "-")}`,
+    },
     { name: displayProduct.name, href: "#" },
   ];
 
@@ -207,14 +265,25 @@ export default function ProductPage({ params }: ProductPageProps) {
           {/* Product Images */}
           <div className="space-y-4">
             {/* Main Image */}
-            <div className="aspect-[4/3] relative bg-gray-50 border border-gray-200">
+            <div
+              className="aspect-[4/3] relative bg-gray-50 border border-gray-200 cursor-pointer group"
+              onClick={() => openModal(selectedImageIndex)}
+            >
               <Image
-                src={displayImages[selectedImageIndex] || "/placeholder-image.jpg"}
+                src={
+                  displayImages[selectedImageIndex] || "/placeholder-image.jpg"
+                }
                 alt={displayProduct.name}
                 fill
-                className="object-cover"
+                className="object-cover transition-transform group-hover:scale-105"
                 sizes="(max-width: 1024px) 100vw, 50vw"
               />
+              <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-10 transition-opacity" />
+              <div className="absolute top-4 right-4 bg-white/80 backdrop-blur-sm px-3 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+                <span className="text-xs font-medium text-gray-900">
+                  Click to expand
+                </span>
+              </div>
             </div>
 
             {/* Thumbnail Images */}
@@ -222,8 +291,11 @@ export default function ProductPage({ params }: ProductPageProps) {
               {displayImages.map((image, index) => (
                 <button
                   key={index}
-                  onClick={() => setSelectedImageIndex(index)}
-                  className={`aspect-square relative bg-gray-50 border-2 transition-all ${
+                  onClick={() => {
+                    setSelectedImageIndex(index);
+                    openModal(index);
+                  }}
+                  className={`aspect-square relative bg-gray-50 border-2 transition-all hover:scale-105 ${
                     selectedImageIndex === index
                       ? "border-gray-900"
                       : "border-gray-200 hover:border-gray-400"
@@ -281,7 +353,9 @@ export default function ProductPage({ params }: ProductPageProps) {
                     {displayProduct.variants.size.options.map((option) => (
                       <button
                         key={option.value}
-                        onClick={() => handleVariantChange("size", option.value)}
+                        onClick={() =>
+                          handleVariantChange("size", option.value)
+                        }
                         className={`text-left p-3 border border-gray-300 hover:border-gray-400 transition-all ${
                           selectedVariants.size === option.value
                             ? "border-gray-900 bg-gray-50"
@@ -445,12 +519,14 @@ export default function ProductPage({ params }: ProductPageProps) {
               <button
                 onClick={() => {
                   // Get selected variant details for display
-                  const selectedSizeOption = displayProduct.variants.size.options.find(
-                    (option) => option.value === selectedVariants.size
-                  );
-                  const selectedColorOption = displayProduct.variants.color.options.find(
-                    (option) => option.value === selectedVariants.color
-                  );
+                  const selectedSizeOption =
+                    displayProduct.variants.size.options.find(
+                      (option) => option.value === selectedVariants.size
+                    );
+                  const selectedColorOption =
+                    displayProduct.variants.color.options.find(
+                      (option) => option.value === selectedVariants.color
+                    );
                   const selectedFinishOption =
                     displayProduct.variants.finish.options.find(
                       (option) => option.value === selectedVariants.finish
@@ -460,19 +536,17 @@ export default function ProductPage({ params }: ProductPageProps) {
                     selectedSizeOption?.label,
                     selectedColorOption?.label,
                     selectedFinishOption?.label,
-                  ].filter(Boolean).join(", ");
-
-                  // Find the matching variant to get its _id and sku
-                  const matchingVariant = productDetails?.rawVariants?.find(v => {
-                    if (v.attribute) return v.attribute === selectedVariants.size;
-                    return v.size === selectedVariants.size;
-                  });
+                  ]
+                    .filter(Boolean)
+                    .join(", ");
 
                   addToCart(
                     {
                       id: displayProduct.id, // Original MongoDB ObjectId for backend lookup
                       cartId: `${displayProduct.id}-${selectedVariants.size}-${selectedVariants.color}-${selectedVariants.finish}`, // Unique cart identifier
-                      name: `${displayProduct.name}${variantDescription ? ` (${variantDescription})` : ''}`,
+                      name: `${displayProduct.name}${
+                        variantDescription ? ` (${variantDescription})` : ""
+                      }`,
                       image: displayImages[0] || "/placeholder-image.jpg",
                       price: calculateTotalPrice(),
                       sku: displayProduct.sku,
@@ -499,7 +573,7 @@ export default function ProductPage({ params }: ProductPageProps) {
                   : "Add to Cart"} */}
                 Add to Cart
               </button>
-              
+
               <button
                 onClick={() => {
                   // Order Now logic can be implemented here
@@ -532,13 +606,74 @@ export default function ProductPage({ params }: ProductPageProps) {
               </p>
             </div>
 
-            {/* Product Description */}
-            {displayProduct.description && (
+            {/* Product Description & Details Tabs */}
+            {(displayProduct.description ||
+              (matchingVariant?.otherDetails &&
+                Object.keys(matchingVariant.otherDetails).length > 0)) && (
               <div className="border-t border-gray-200 pt-8">
-                <h3 className="text-lg font-medium text-gray-900 mb-3">Description</h3>
-                <p className="text-sm text-gray-600 leading-relaxed">
-                  {displayProduct.description}
-                </p>
+                {/* Tab Navigation */}
+                <div className="flex border-b border-gray-200 mb-6">
+                  <button
+                    onClick={() => setActiveTab("description")}
+                    className={`px-4 py-2 text-sm font-medium transition-colors relative ${
+                      activeTab === "description"
+                        ? "text-gray-900"
+                        : "text-gray-500 hover:text-gray-700"
+                    }`}
+                  >
+                    Description
+                    {activeTab === "description" && (
+                      <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-900"></div>
+                    )}
+                  </button>
+                  {matchingVariant?.otherDetails &&
+                    Object.keys(matchingVariant.otherDetails).length > 0 && (
+                      <button
+                        onClick={() => setActiveTab("details")}
+                        className={`px-4 py-2 text-sm font-medium transition-colors relative ${
+                          activeTab === "details"
+                            ? "text-gray-900"
+                            : "text-gray-500 hover:text-gray-700"
+                        }`}
+                      >
+                        Additional Details
+                        {activeTab === "details" && (
+                          <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-900"></div>
+                        )}
+                      </button>
+                    )}
+                </div>
+
+                {/* Tab Content */}
+                {activeTab === "description" && displayProduct.description && (
+                  <div>
+                    <p className="text-sm text-gray-600 leading-relaxed">
+                      {displayProduct.description}
+                    </p>
+                  </div>
+                )}
+
+                {activeTab === "details" && matchingVariant?.otherDetails && (
+                  <div>
+                    <dl className="grid grid-cols-1 gap-4">
+                      {Object.entries(matchingVariant.otherDetails).map(
+                        ([key, value]) => (
+                          <div
+                            key={key}
+                            className="border-b border-gray-100 pb-3"
+                          >
+                            <dt className="text-sm font-medium text-gray-900 mb-1">
+                              {key}
+                            </dt>
+                            <dd className="text-sm text-gray-600">
+                              {String(value)}
+                            </dd>
+                          </div>
+                        )
+                      )}
+                    </dl>
+                  </div>
+                )}
               </div>
             )}
 
@@ -553,6 +688,105 @@ export default function ProductPage({ params }: ProductPageProps) {
           </div>
         </div>
       </div>
+
+      {/* Image Modal */}
+      {isModalOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm"
+          onClick={closeModal}
+        >
+          {/* Close Button */}
+          <button
+            onClick={closeModal}
+            className="absolute top-4 right-4 z-50 p-2 bg-white/10 hover:bg-white/20 rounded-full transition-colors"
+            aria-label="Close modal"
+          >
+            <X className="h-6 w-6 text-white" />
+          </button>
+
+          {/* Image Counter */}
+          <div className="absolute top-4 left-4 z-50 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full">
+            <span className="text-white text-sm font-medium">
+              {modalImageIndex + 1} / {displayImages.length}
+            </span>
+          </div>
+
+          {/* Previous Button */}
+          {displayImages.length > 1 && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                goToPrevImage();
+              }}
+              className="absolute left-4 z-50 p-3 bg-white/10 hover:bg-white/20 rounded-full transition-colors"
+              aria-label="Previous image"
+            >
+              <ChevronLeft className="h-8 w-8 text-white" />
+            </button>
+          )}
+
+          {/* Image Container */}
+          <div
+            className="relative w-full h-full max-w-7xl max-h-[90vh] mx-auto px-20"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="relative w-full h-full">
+              <Image
+                src={displayImages[modalImageIndex] || "/placeholder-image.jpg"}
+                alt={`${displayProduct.name} - Image ${modalImageIndex + 1}`}
+                fill
+                className="object-contain"
+                sizes="100vw"
+                priority
+              />
+            </div>
+          </div>
+
+          {/* Next Button */}
+          {displayImages.length > 1 && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                goToNextImage();
+              }}
+              className="absolute right-4 z-50 p-3 bg-white/10 hover:bg-white/20 rounded-full transition-colors"
+              aria-label="Next image"
+            >
+              <ChevronRight className="h-8 w-8 text-white" />
+            </button>
+          )}
+
+          {/* Thumbnail Navigation */}
+          {displayImages.length > 1 && (
+            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-50 max-w-4xl">
+              <div className="flex gap-2 overflow-x-auto px-4 py-2 bg-white/10 backdrop-blur-sm rounded-lg">
+                {displayImages.map((image, index) => (
+                  <button
+                    key={index}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setModalImageIndex(index);
+                    }}
+                    className={`flex-shrink-0 w-16 h-16 relative border-2 transition-all ${
+                      modalImageIndex === index
+                        ? "border-white scale-110"
+                        : "border-white/30 hover:border-white/60"
+                    }`}
+                  >
+                    <Image
+                      src={image}
+                      alt={`Thumbnail ${index + 1}`}
+                      fill
+                      className="object-cover"
+                      sizes="64px"
+                    />
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </main>
   );
 }
