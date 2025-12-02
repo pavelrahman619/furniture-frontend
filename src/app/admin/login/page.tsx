@@ -291,33 +291,6 @@ const AdminLoginPage = () => {
           </form>
         </div>
 
-        {/* Demo Credentials - Only show in development */}
-        {process.env.NODE_ENV === 'development' && (
-          <div className="bg-blue-50 border border-blue-200 p-4 rounded-md">
-            <h4 className="text-sm font-medium text-blue-800 mb-2">
-              Demo Admin Credentials
-            </h4>
-            <p className="text-xs text-blue-700">
-              Email: admin@classichome.com
-              <br />
-              Password: admin123
-            </p>
-            <button
-              type="button"
-              onClick={() => setFormData({
-                email: "admin@classichome.com",
-                password: "admin123"
-              })}
-              className="mt-2 text-xs text-blue-600 hover:text-blue-800 underline"
-            >
-              Click to fill demo credentials
-            </button>
-            <p className="text-xs text-blue-600 mt-1 italic">
-              * For development and testing purposes only
-            </p>
-          </div>
-        )}
-
         {/* Security Notice */}
         <div className="bg-amber-50 border border-amber-200 p-6 text-center">
           <div className="flex justify-center mb-3">

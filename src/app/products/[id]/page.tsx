@@ -566,22 +566,17 @@ export default function ProductPage({ params }: ProductPageProps) {
                   setTimeout(() => setShowAddedMessage(false), 3000);
                 }}
                 className="flex-1 bg-gray-900 text-white py-4 px-8 font-medium tracking-wider hover:bg-gray-800 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
-                // disabled={displayProduct.availability === "out-of-stock"} // availability not available in backend
               >
-                {/* {displayProduct.availability === "out-of-stock"
-                  ? "Out of Stock"
-                  : "Add to Cart"} */}
                 Add to Cart
               </button>
-
-              <button
-                onClick={() => {
-                  // Order Now logic can be implemented here
-                }}
-                className="flex-1 bg-white text-gray-900 py-4 px-8 font-medium tracking-wider border-2 border-gray-900 hover:bg-gray-50 transition-colors"
+             
+              
+              <a
+                href="mailto:info@palacioshomeco.com"
+                className="flex-1 bg-gray-900 text-white py-4 px-8 font-medium tracking-wider hover:bg-gray-800 transition-colors text-center"
               >
-                Order Now
-              </button>
+                Contact us to order
+              </a>
             </div>
 
             {/* Added to Cart Message */}

@@ -97,7 +97,7 @@ const LoginPage = () => {
             href="/"
             className="text-3xl font-light tracking-wider text-gray-900 hover:text-gray-700 transition-colors"
           >
-            CLASSIC HOME
+            PALACIOS HOME
           </Link>
           <h2 className="mt-8 text-2xl font-light text-gray-900 tracking-wider">
             SIGN IN TO YOUR ACCOUNT

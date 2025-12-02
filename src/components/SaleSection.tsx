@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 
 // Content interface
 interface SaleSectionContent {
@@ -80,9 +81,12 @@ const SaleSection = () => {
         </h2>
 
         {/* Shop All Button */}
-        <button className="bg-white text-gray-900 px-8 py-3 text-sm font-medium tracking-wider uppercase hover:bg-gray-100 transition-all duration-300 transform hover:scale-105 shadow-lg">
+        <Link
+          href="/products"
+          className="bg-white text-gray-900 px-8 py-3 text-sm font-medium tracking-wider uppercase hover:bg-gray-100 transition-all duration-300 transform hover:scale-105 shadow-lg inline-block"
+        >
           {content.buttonText}
-        </button>
+        </Link>
       </div>
     </section>
   );

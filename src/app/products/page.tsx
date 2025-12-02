@@ -8,7 +8,7 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 import ErrorMessage from "@/components/ErrorMessage";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { useInfiniteProductsForDisplay } from "@/hooks/useProducts";
-import { useFilters, useSortBy } from "@/stores/filterStore";
+import { useFilters, useSortBy, useFilterStore } from "@/stores/filterStore";
 import { ProductsQueryParams } from "@/types/product.types";
 
 // Using DisplayProduct from types instead of local interface
@@ -17,15 +17,28 @@ function ProductsPageContent() {
   const [isClient, setIsClient] = useState(false);
   const searchParams = useSearchParams();
   const searchQuery = searchParams.get("search") || "";
+  const categoryParam = searchParams.get("category") || "";
   
   // Get filters and sort from Zustand store
   const filters = useFilters();
   const sortBy = useSortBy();
+  const setFilter = useFilterStore((state) => state.setFilter);
 
   // Ensure we're on the client side
   useEffect(() => {
     setIsClient(true);
   }, []);
+
+  // Initialize category filter from URL params
+  useEffect(() => {
+    if (categoryParam) {
+      // Parse comma-separated categories if multiple are provided
+      const categories = categoryParam.split(',').map(cat => cat.trim()).filter(Boolean);
+      if (categories.length > 0) {
+        setFilter('category', categories);
+      }
+    }
+  }, [categoryParam, setFilter]);
 
   // Build query parameters for the API (excluding page since infinite query handles that)
   const queryParams = useMemo((): Omit<ProductsQueryParams, 'page'> => {

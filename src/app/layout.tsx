@@ -19,9 +19,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Classic Home - Furniture & Home Decor",
+  title: "PALACIOS HOME - Premium Furniture & Home Decor",
   description:
-    "Discover premium furniture and home decor at Classic Home. Shop by category, rooms, and custom made-to-order pieces.",
+    "Discover curated furniture collections for living rooms, dining rooms, bedrooms, and offices. Elevate your home with timeless design, refined comfort, and sophisticated style.",
 };
 
 export default function RootLayout({

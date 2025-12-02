@@ -60,6 +60,12 @@ const Navbar = () => {
     { name: "CONTACT US", href: "#", hasMegaMenu: false },
     { name: "ABOUT US", href: "#", hasMegaMenu: false },
   ];
+  // const mainNavItems = [
+    // { name: "", href: "#" },
+    // { name: "TEST1", href: "#" },
+    // { name: "TEST2", href: "#" },
+    // { name: "TEST3", href: "#" },
+  // ];
 
   const adminMenuItems = [
     { name: "Products", href: "/admin/products", icon: Package },
@@ -173,14 +179,18 @@ const Navbar = () => {
     <nav className="sticky top-0 z-50 w-full bg-white border-b border-gray-200 shadow-sm">
       {/* Top Navigation Bar */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+        <div className="flex items-center justify-between h-20">
           {/* Logo */}
-          <div className="flex-shrink-0">
+          <div className="flex-shrink-0 py-2">
             <Link
               href="/"
-              className="text-2xl font-light tracking-wider text-gray-900 hover:text-gray-700 transition-colors"
+              className="flex items-center hover:opacity-80 transition-opacity duration-200"
             >
-              CLASSIC HOME
+              <img
+                src="/furniture/logo.svg"
+                alt="PALACIOS HOME"
+                className="h-14 w-auto object-contain"
+              />
             </Link>
           </div>
 
@@ -245,10 +255,10 @@ const Navbar = () => {
             </Link>
 
             {/* Become A Member */}
-            <button className="flex items-center text-sm text-gray-700 hover:text-gray-900 transition-colors">
+            {/* <button className="flex items-center text-sm text-gray-700 hover:text-gray-900 transition-colors">
               <Plus className="h-4 w-4 mr-1" />
               Become A Member
-            </button>
+            </button> */}
 
             {/* Admin User Info & Logout OR Sign In */}
             {isAuthenticated && admin ? (
@@ -299,24 +309,27 @@ const Navbar = () => {
                 href="/login"
                 className="flex items-center text-sm text-gray-700 hover:text-gray-900 transition-colors"
               >
-                <User className="h-4 w-4 mr-1" />
-                Sign In
+                {/* <User className="h-4 w-4 mr-1" />
+                Sign In */}
+              </Link>
+            )
+            }
+
+            {/* Cart - Only show when admin is not logged in */}
+            {!isAuthenticated && (
+              <Link
+                href="/cart"
+                className="flex items-center text-sm text-gray-700 hover:text-gray-900 transition-colors relative"
+              >
+                <ShoppingBag className="h-4 w-4 mr-1" />
+                Cart
+                {cartItemCount > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-gray-900 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                    {cartItemCount > 99 ? "99+" : cartItemCount}
+                  </span>
+                )}
               </Link>
             )}
-
-            {/* Cart */}
-            <Link
-              href="/cart"
-              className="flex items-center text-sm text-gray-700 hover:text-gray-900 transition-colors relative"
-            >
-              <ShoppingBag className="h-4 w-4 mr-1" />
-              Cart
-              {cartItemCount > 0 && (
-                <span className="absolute -top-2 -right-2 bg-gray-900 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                  {cartItemCount > 99 ? "99+" : cartItemCount}
-                </span>
-              )}
-            </Link>
           </div>
         </div>
       </div>

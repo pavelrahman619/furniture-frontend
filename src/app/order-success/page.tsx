@@ -527,17 +527,17 @@ const OrderSuccessContent = () => {
               <p className="text-gray-600 text-sm">
                 Questions about your order? Contact our customer service team at{" "}
                 <Link
-                  href="tel:1-800-555-0123"
+                  href="tel:(323) 618-4663"
                   className="underline hover:text-gray-800"
                 >
-                  1-800-555-0123
+                  (323) 618-4663
                 </Link>{" "}
                 or{" "}
                 <Link
-                  href="mailto:orders@classichome.com"
+                  href="mailto:info@palacioshomeco.com"
                   className="underline hover:text-gray-800"
                 >
-                  orders@classichome.com
+                  info@palacioshomeco.com
                 </Link>
               </p>
             </div>

@@ -3,7 +3,16 @@
 import { useState, useRef } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import { FEATURED_CATEGORIES } from "@/data/featured-categories";
+
+interface Category {
+  id: string;
+  title: string;
+  slug: string;
+  description: string;
+  image: string;
+}
 
 const CategorySlider = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -64,18 +73,19 @@ const CategorySlider = () => {
           style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
         >
           {categories.map((category) => (
-            <div
+            <Link
               key={category.id}
+              href={`/products?category=${category.slug}`}
               className="flex-none w-80 bg-white group cursor-pointer"
             >
               {/* Image Container */}
-              <div className="relative overflow-hidden mb-6">
+              <div className="relative overflow-hidden mb-6 h-80">
                 <Image
                   src={category.image}
                   alt={category.title}
-                  width={800}
-                  height={320}
-                  className="w-full h-80 object-cover transition-transform duration-700 group-hover:scale-105"
+                  fill
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  className="object-cover transition-transform duration-700 group-hover:scale-105"
                 />
                 <div className="absolute inset-0 bg-black/20 group-hover:opacity-10 transition-all duration-300" />
               </div>
@@ -89,7 +99,7 @@ const CategorySlider = () => {
                   {category.description}
                 </p>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       </div>

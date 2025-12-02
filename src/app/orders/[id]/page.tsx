@@ -584,11 +584,11 @@ export default function CustomerOrderDetailsPage() {
             <div className="flex flex-col sm:flex-row justify-center items-center space-y-2 sm:space-y-0 sm:space-x-8 text-sm text-gray-600">
               <div className="flex items-center">
                 <Phone className="h-4 w-4 mr-2" />
-                <span>1-800-555-0123</span>
+                <span>(323) 618-4663</span>
               </div>
               <div className="flex items-center">
                 <Mail className="h-4 w-4 mr-2" />
-                <span>orders@classichome.com</span>
+                <span>info@palacioshomeco.com</span>
               </div>
             </div>
           </div>

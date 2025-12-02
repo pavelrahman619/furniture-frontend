@@ -10,6 +10,8 @@ import {
   ImageIcon,
   Type,
   MousePointer,
+  Package,
+  ClipboardList,
 } from "lucide-react";
 import { ContentService, ContentServiceError } from "@/services/content.service";
 import type { HeroContent, SaleSectionContent } from "@/services/content.service";
@@ -30,8 +32,8 @@ const defaultContent: ContentData = {
   hero: {
     backgroundImage:
       "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2158&q=80",
-    title: "NEW INTRODUCTIONS",
-    buttonText: "NEW INTROS",
+    title: "NEW ARRIVALS",
+    buttonText: "CHECK IT OUT",
   },
   saleSection: {
     backgroundImage:

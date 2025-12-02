@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState, useEffect } from "react";
 
 // Content interface
@@ -11,10 +12,9 @@ interface HeroContent {
 
 // Default content values
 const defaultContent: HeroContent = {
-  backgroundImage:
-    "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2158&q=80",
-  title: "NEW INTRODUCTIONS",
-  buttonText: "NEW INTROS",
+  backgroundImage: "/furniture/new intro.webp",
+  title: "NEW ARRIVALS",
+  buttonText: "CHECK IT OUT",
 };
 
 const Hero = () => {
@@ -77,9 +77,12 @@ const Hero = () => {
         </h1>
 
         {/* CTA Button */}
-        <button className="bg-black bg-opacity-80 hover:bg-opacity-100 text-white px-8 py-3 text-sm font-medium tracking-wider transition-all duration-300 hover:scale-105">
+        <Link
+          href="/products"
+          className="bg-black bg-opacity-80 hover:bg-opacity-100 text-white px-8 py-3 text-sm font-medium tracking-wider transition-all duration-300 hover:scale-105"
+        >
           {content.buttonText}
-        </button>
+        </Link>
       </div>
 
       {/* Decorative Elements */}

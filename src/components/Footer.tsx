@@ -1,45 +1,65 @@
 "use client";
 
 import { useState } from "react";
-import { Instagram, Facebook, Linkedin, ChevronRight } from "lucide-react";
+import { Instagram, Facebook, Linkedin } from "lucide-react";
 
 const Footer = () => {
   const [email, setEmail] = useState("");
 
-  const companyLinks = [
-    "About Classic Home",
-    "Careers",
-    "Meet Our Team",
-    "Press Inquiries",
-    "Contact Us",
-    "Join Today",
-    "Made In America",
-    "Terms & Conditions",
-    "Privacy Policy",
+  // First column links
+  const firstColumnLinks = [
+    "About us",
+    "Contact us", 
+    "Terms and conditions"
   ];
 
-  const accountLinks = [
-    "My Account",
-    "Claims Portal",
-    "Delivery & Shipping",
-    "Catalogs & Subscriptions",
+  // Second column links
+  const secondColumnLinks = [
+    "Privacy policy",
+    "Delivery policy"
   ];
 
-  const connectLinks = [
-    "FAQs",
-    "Classic Home Trade Program",
-    "Design Services",
-    "Find an Account Manager",
-    "Care Guide",
+  // Third column links - email links
+  const thirdColumnLinks = [
+    { text: "Collaborate with us", email: "info@palacioshomeco.com" },
+    { text: "Press inquiries", email: "info@palacioshomeco.com" }
   ];
 
-  const showroomLinks = [
-    "Las Vegas Tour",
-    "High Point Tour",
-    "Atlanta Tour",
-    "Dallas Tour",
-    "Los Angeles Tour",
-  ];
+  // Commented out - not needed
+  // const companyLinks = [
+  //   "About Palacios Home",
+  //   "Careers",
+  //   "Meet Our Team",
+  //   "Press Inquiries",
+  //   "Contact Us",
+  //   "Join Today",
+  //   "Made In America",
+  //   "Terms & Conditions",
+  //   "Privacy Policy",
+  // ];
+
+  // const accountLinks = [
+  //   "My Account",
+  //   "Claims Portal",
+  //   "Delivery & Shipping",
+  //   "Catalogs & Subscriptions",
+  // ];
+
+  // const connectLinks = [
+  //   "FAQs",
+  //   "Palacios Home Trade Program",
+  //   "Design Services",
+  //   "Find an Account Manager",
+  //   "Care Guide",
+  // ];
+
+  // const showroomLinks = [
+  //   "Las Vegas Tour",
+  //   "High Point Tour",
+  //   "Atlanta Tour",
+  //   "Dallas Tour",
+  //   "Los Angeles Tour",
+  // ];
 
   const handleEmailSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,11 +76,130 @@ const Footer = () => {
           {/* Logo Section */}
           <div className="lg:col-span-5 mb-8">
             <h2 className="text-3xl font-light tracking-widest text-white">
-              CLASSIC HOME
+              PALACIOS HOME CO.
             </h2>
           </div>
 
-          {/* Company Links */}
+          {/* First Column - About us, Contact us, Terms and conditions */}
+          <div className="space-y-4">
+            <ul className="space-y-3">
+              {firstColumnLinks.map((link, index) => (
+                <li key={index}>
+                  <a
+                    href="#"
+                    className="text-sm text-gray-400 hover:text-white transition-colors duration-200"
+                  >
+                    {link}
+                  </a>
+                </li>
+              ))}
+            </ul>
+            {/* Email contact */}
+            <div className="mt-4">
+              <span className="text-sm text-gray-400 mb-1">Email: </span>
+              <a
+                href="mailto:info@palacioshomeco.com"
+                className="text-sm text-white hover:text-gray-300 transition-colors duration-200"
+              >
+                info@palacioshomeco.com
+              </a>
+            </div>
+          </div>
+
+          {/* Second Column - Privacy policy, Delivery policy */}
+          <div className="space-y-4">
+            <ul className="space-y-3">
+              {secondColumnLinks.map((link, index) => (
+                <li key={index}>
+                  <a
+                    href="#"
+                    className="text-sm text-gray-400 hover:text-white transition-colors duration-200"
+                  >
+                    {link}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Third Column - Collaborate with us, Press inquiries */}
+          <div className="space-y-4">
+            <ul className="space-y-3">
+              {thirdColumnLinks.map((link, index) => (
+                <li key={index}>
+                  <a
+                    href={`mailto:${link.email}`}
+                    className="text-sm text-gray-400 hover:text-white transition-colors duration-200"
+                  >
+                    {link.text}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Fourth Column - Omitted as requested */}
+          {/* <div></div> */}
+
+          {/* Fifth Column - Contact Info & Social Media */}
+          <div className="space-y-4">
+            {/* Address */}
+            <div>
+              <h3 className="text-sm font-semibold tracking-wider text-gray-300 uppercase mb-2">
+                Address:
+              </h3>
+              <p className="text-sm text-gray-400">
+                500 W 7th St<br />
+                Los Angeles, CA 90014
+              </p>
+            </div>
+            
+            {/* Phone */}
+            <div>
+              <h3 className="text-sm font-semibold tracking-wider text-gray-300 uppercase mb-2">
+                Phone:
+              </h3>
+              <a
+                href="tel:(323)618-4663"
+                className="text-sm text-gray-400 hover:text-white transition-colors duration-200"
+              >
+                (323) 618-4663
+              </a>
+            </div>
+
+            {/* Social Media */}
+            <div>
+              <h3 className="text-sm font-semibold tracking-wider text-gray-300 uppercase mb-2">
+                Follow Us:
+              </h3>
+            <div className="flex space-x-4">
+              <a
+                href="https://www.instagram.com/palacioshomeco?igsh=NTc4MTIwNjQ2YQ%3D%3D&utm_source=qr"
+                className="text-gray-400 hover:text-white transition-colors duration-200"
+                aria-label="Instagram"
+              >
+                <Instagram className="h-6 w-6" />
+              </a>
+              <a
+                href="https://www.facebook.com/profile.php?id=61576768246518&mibextid=wwXIfr"
+                className="text-gray-400 hover:text-white transition-colors duration-200"
+                aria-label="Facebook"
+              >
+                <Facebook className="h-6 w-6" />
+              </a>
+              <a
+                href="#"
+                className="text-gray-400 hover:text-white transition-colors duration-200"
+                aria-label="LinkedIn"
+              >
+                <Linkedin className="h-6 w-6" />
+              </a>
+            </div>
+            </div>
+          </div>
+
+          {/* Commented out sections - not needed */}
+          {/* 
           <div className="space-y-4">
             <h3 className="text-sm font-semibold tracking-wider text-gray-300 uppercase">
               Company
@@ -79,7 +218,6 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Account Links */}
           <div className="space-y-4">
             <h3 className="text-sm font-semibold tracking-wider text-gray-300 uppercase">
               Account
@@ -98,7 +236,6 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Connect Links */}
           <div className="space-y-4">
             <h3 className="text-sm font-semibold tracking-wider text-gray-300 uppercase">
               Connect
@@ -117,7 +254,6 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Showrooms Links */}
           <div className="space-y-4">
             <h3 className="text-sm font-semibold tracking-wider text-gray-300 uppercase">
               Showrooms
@@ -136,9 +272,24 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Newsletter and Social Media */}
           <div className="space-y-6">
-            {/* Newsletter Section */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-semibold tracking-wider text-gray-300 uppercase">
+                Contact
+              </h3>
+              <div className="space-y-3">
+                <div>
+                  <p className="text-sm text-gray-400 mb-1">Email</p>
+                  <a
+                    href="mailto:info@palacioshomeco.com"
+                    className="text-sm text-white hover:text-gray-300 transition-colors duration-200"
+                  >
+                    info@palacioshomeco.com
+                  </a>
+                </div>
+              </div>
+            </div>
+
             <div className="space-y-4">
               <h3 className="text-sm font-semibold tracking-wider text-gray-300 uppercase">
                 Newsletter
@@ -163,37 +314,8 @@ const Footer = () => {
                 </button>
               </form>
             </div>
-
-            {/* Social Media Section */}
-            <div className="space-y-4">
-              <h3 className="text-sm font-semibold tracking-wider text-gray-300 uppercase">
-                Follow Us:
-              </h3>
-              <div className="flex space-x-4">
-                <a
-                  href="#"
-                  className="text-gray-400 hover:text-white transition-colors duration-200"
-                  aria-label="Instagram"
-                >
-                  <Instagram className="h-6 w-6" />
-                </a>
-                <a
-                  href="#"
-                  className="text-gray-400 hover:text-white transition-colors duration-200"
-                  aria-label="Facebook"
-                >
-                  <Facebook className="h-6 w-6" />
-                </a>
-                <a
-                  href="#"
-                  className="text-gray-400 hover:text-white transition-colors duration-200"
-                  aria-label="LinkedIn"
-                >
-                  <Linkedin className="h-6 w-6" />
-                </a>
-              </div>
-            </div>
           </div>
+          */}
         </div>
       </div>
     </footer>
