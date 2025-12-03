@@ -650,14 +650,14 @@ export default function ProductPage({ params }: ProductPageProps) {
 
                 {activeTab === "details" && matchingVariant?.otherDetails && (
                   <div>
-                    <dl className="grid grid-cols-1 gap-4">
+                    <dl className="grid grid-cols-1 gap-y-3">
                       {Object.entries(matchingVariant.otherDetails).map(
                         ([key, value]) => (
                           <div
                             key={key}
-                            className="border-b border-gray-100 pb-3"
+                            className="flex items-start gap-4"
                           >
-                            <dt className="text-sm font-medium text-gray-900 mb-1">
+                            <dt className="text-sm font-medium text-gray-900 whitespace-nowrap min-w-[15rem]">
                               {key}
                             </dt>
                             <dd className="text-sm text-gray-600">
