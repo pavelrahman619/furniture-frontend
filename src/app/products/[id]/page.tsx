@@ -3,7 +3,15 @@
 import { useState, use, useEffect, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ChevronRight, Plus, Minus, X, ChevronLeft } from "lucide-react";
+import {
+  ChevronRight,
+  Plus,
+  Minus,
+  X,
+  ChevronLeft,
+  ZoomIn,
+  ZoomOut,
+} from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { useProduct } from "@/hooks/useProduct";
 import { ProductDetails } from "@/types/product.types";
@@ -53,6 +61,8 @@ export default function ProductPage({ params }: ProductPageProps) {
   const [activeTab, setActiveTab] = useState<"description" | "details">(
     "description"
   );
+  const [isZoomEnabled, setIsZoomEnabled] = useState(false);
+  const [zoomPosition, setZoomPosition] = useState({ x: 0, y: 0 });
   const { addToCart } = useCart();
 
   // Memoize fallback product to prevent recreation on every render
@@ -223,6 +233,19 @@ export default function ProductPage({ params }: ProductPageProps) {
     setModalImageIndex(
       (prev) => (prev - 1 + displayImages.length) % displayImages.length
     );
+  };
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!isZoomEnabled) return;
+
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    setZoomPosition({ x, y });
+  };
+
+  const toggleZoom = () => {
+    setIsZoomEnabled(!isZoomEnabled);
   };
 
   const breadcrumbs = [
@@ -706,6 +729,23 @@ export default function ProductPage({ params }: ProductPageProps) {
             </span>
           </div>
 
+          {/* Zoom Toggle Button */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              toggleZoom();
+            }}
+            className="absolute top-4 left-1/2 transform -translate-x-1/2 z-50 p-2 bg-white/10 hover:bg-white/20 rounded-full transition-colors"
+            aria-label={isZoomEnabled ? "Disable zoom" : "Enable zoom"}
+            title={isZoomEnabled ? "Disable zoom" : "Enable zoom"}
+          >
+            {isZoomEnabled ? (
+              <ZoomOut className="h-6 w-6 text-white" />
+            ) : (
+              <ZoomIn className="h-6 w-6 text-white" />
+            )}
+          </button>
+
           {/* Previous Button */}
           {displayImages.length > 1 && (
             <button
@@ -724,15 +764,25 @@ export default function ProductPage({ params }: ProductPageProps) {
           <div
             className="relative w-full h-full max-w-7xl max-h-[90vh] mx-auto px-20"
             onClick={(e) => e.stopPropagation()}
+            onMouseMove={handleMouseMove}
+            style={{ cursor: isZoomEnabled ? "zoom-in" : "default" }}
           >
-            <div className="relative w-full h-full">
+            <div className="relative w-full h-full overflow-hidden">
               <Image
                 src={displayImages[modalImageIndex] || "/placeholder-image.jpg"}
                 alt={`${displayProduct.name} - Image ${modalImageIndex + 1}`}
                 fill
-                className="object-contain"
+                className="object-contain transition-transform duration-100"
                 sizes="100vw"
                 priority
+                style={
+                  isZoomEnabled
+                    ? {
+                        transform: "scale(2)",
+                        transformOrigin: `${zoomPosition.x}% ${zoomPosition.y}%`,
+                      }
+                    : undefined
+                }
               />
             </div>
           </div>
