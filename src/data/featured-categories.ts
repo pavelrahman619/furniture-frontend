@@ -29,8 +29,7 @@ export const FEATURED_CATEGORIES: FeaturedCategory[] = [
     title: "BEDROOM",
     description:
       "Transform your bedroom into an oasis of your own with our thoughtfully curated collections.",
-    image:
-      "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+    image: "/navbar-images/Bedroom.png",
     slug: "bedroom",
     subcategories: [
       { id: "beds", name: "Beds", slug: "beds" },
@@ -50,8 +49,7 @@ export const FEATURED_CATEGORIES: FeaturedCategory[] = [
     title: "DINING ROOM",
     description:
       "Inspired by the people and places that form the heart of our brand, each piece invites you to relax in style and comfort.",
-    image:
-      "https://images.unsplash.com/photo-1449247709967-d4461a6a6103?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+    image: "/navbar-images/Dining room.png",
     slug: "dining-room",
     subcategories: [
       { id: "dining-tables", name: "Dining Tables", slug: "dining-tables" },
@@ -67,8 +65,7 @@ export const FEATURED_CATEGORIES: FeaturedCategory[] = [
     title: "ENTRY & DECOR",
     description:
       "Where craftsmanship meets timeless beauty. Each curated piece is an heirloom of artisanal design, meticulously hand-carved from reclaimed wood to reveal layers of character and history.",
-    image:
-      "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+    image: "/navbar-images/Entry and Decor.png",
     slug: "entry-decor",
     subcategories: [
       { id: "console-tables", name: "Console Tables", slug: "console-tables" },
@@ -84,8 +81,7 @@ export const FEATURED_CATEGORIES: FeaturedCategory[] = [
     title: "LIVING ROOM",
     description:
       "Discover our living room collections - a selection of beautifully handcrafted items, designed to last a lifetime.",
-    image:
-      "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+    image: "/navbar-images/Living room.png",
     slug: "living-room",
     subcategories: [
       { id: "sofas", name: "Sofas & Sectionals", slug: "sofas" },
@@ -101,8 +97,7 @@ export const FEATURED_CATEGORIES: FeaturedCategory[] = [
     title: "OFFICE",
     description:
       "Functional and beautiful furniture for work and productivity, designed to inspire creativity and focus.",
-    image:
-      "https://images.unsplash.com/photo-1518455027359-f3f8164ba6bd?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+    image: "/navbar-images/Office.png",
     slug: "office",
     subcategories: [
       { id: "desks", name: "Desks", slug: "desks" },
@@ -118,8 +113,7 @@ export const FEATURED_CATEGORIES: FeaturedCategory[] = [
     title: "OUTDOOR",
     description:
       "Durable and stylish outdoor furniture designed to withstand the elements while creating a beautiful outdoor living space.",
-    image:
-      "https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+    image: "/navbar-images/Outdoor.png",
     slug: "outdoor",
     subcategories: [
       { id: "patio-sets", name: "Patio Sets", slug: "patio-sets" },
