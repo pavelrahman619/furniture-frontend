@@ -54,7 +54,7 @@ const CategoryMegaMenu = ({ categories, onClose }: CategoryMegaMenuProps) => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-12 gap-8">
           {/* Left Column - Main Categories */}
-          <div className="col-span-4">
+          <div className="col-span-12 md:col-span-4">
             <div className="mb-6 pb-6 border-b border-gray-200">
               <Link
                 href="/products"
@@ -77,19 +77,21 @@ const CategoryMegaMenu = ({ categories, onClose }: CategoryMegaMenuProps) => {
                       window.location.href = `/products?category=${category.id}`;
                       onClose();
                     }}
-                    className={`text-left w-full text-base transition-all flex items-center justify-between group cursor-pointer ${hoveredCategory?.id === category.id
+                    className={`text-left w-full text-base transition-all flex items-center justify-between group cursor-pointer ${
+                      hoveredCategory?.id === category.id
                         ? "text-gray-900 font-medium"
                         : "text-gray-700 hover:text-gray-900"
-                      }`}
+                    }`}
                   >
                     <span>{category.name}</span>
                     {category.subcategories &&
                       category.subcategories.length > 0 && (
                         <ChevronRight
-                          className={`h-4 w-4 transition-opacity ${hoveredCategory?.id === category.id
+                          className={`h-4 w-4 transition-opacity ${
+                            hoveredCategory?.id === category.id
                               ? "opacity-100"
                               : "opacity-0 group-hover:opacity-100"
-                            }`}
+                          }`}
                         />
                       )}
                   </button>
@@ -146,7 +148,7 @@ const CategoryMegaMenu = ({ categories, onClose }: CategoryMegaMenuProps) => {
           </div> */}
 
           {/* Right Column - Featured Image */}
-          <div className="col-span-5">
+          <div className="hidden md:block md:col-span-5">
             <div className="relative h-96 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg overflow-hidden">
               {displayImage ? (
                 <Image

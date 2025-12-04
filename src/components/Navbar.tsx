@@ -61,10 +61,10 @@ const Navbar = () => {
     { name: "ABOUT US", href: "#", hasMegaMenu: false },
   ];
   // const mainNavItems = [
-    // { name: "", href: "#" },
-    // { name: "TEST1", href: "#" },
-    // { name: "TEST2", href: "#" },
-    // { name: "TEST3", href: "#" },
+  // { name: "", href: "#" },
+  // { name: "TEST1", href: "#" },
+  // { name: "TEST2", href: "#" },
+  // { name: "TEST3", href: "#" },
   // ];
 
   const adminMenuItems = [
@@ -312,8 +312,7 @@ const Navbar = () => {
                 {/* <User className="h-4 w-4 mr-1" />
                 Sign In */}
               </Link>
-            )
-            }
+            )}
 
             {/* Cart - Only show when admin is not logged in */}
             {!isAuthenticated && (
@@ -337,7 +336,7 @@ const Navbar = () => {
       {/* Secondary Navigation */}
       <div className="bg-gray-50 border-t border-gray-200 relative">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-center md:space-x-14 space-x-6 h-12">
+          <div className="flex items-center justify-center md:space-x-14 sm:space-x-6 space-x-3 h-12">
             {mainNavItems.map((item, index) => (
               <div
                 key={index}
@@ -351,14 +350,14 @@ const Navbar = () => {
                       e.preventDefault();
                       setShowCategoryMegaMenu(!showCategoryMegaMenu);
                     }}
-                    className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors tracking-wide"
+                    className="md:text-sm text-xs font-medium text-gray-700 hover:text-gray-900 transition-colors tracking-wide whitespace-nowrap"
                   >
                     {item.name}
                   </button>
                 ) : (
                   <Link
                     href={item.href}
-                    className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors tracking-wide"
+                    className="md:text-sm text-xs font-medium text-gray-700 hover:text-gray-900 transition-colors tracking-wide whitespace-nowrap"
                   >
                     {item.name}
                   </Link>
