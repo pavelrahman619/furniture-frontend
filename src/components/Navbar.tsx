@@ -6,19 +6,19 @@ import { useRouter, usePathname } from "next/navigation";
 import {
   Search,
   User,
-  Plus,
   ShoppingBag,
   Package,
   Settings,
   LogOut,
   ChevronDown,
   Key,
+  Menu,
+  X,
 } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { useAdmin } from "@/contexts/AdminContext";
 import { useDebounce } from "@/hooks/useDebounce";
 import SearchDropdown from "./SearchDropdown";
-import CategoryMegaMenu from "./CategoryMegaMenu";
 import { ProductService } from "@/services/product.service";
 import { Product } from "@/types/product.types";
 import { CategoryResponse } from "@/services/category.service";
@@ -28,7 +28,8 @@ const Navbar = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [showAdminDropdown, setShowAdminDropdown] = useState(false);
   const [showSearchDropdown, setShowSearchDropdown] = useState(false);
-  const [showCategoryMegaMenu, setShowCategoryMegaMenu] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [showAllProductsDropdown, setShowAllProductsDropdown] = useState(false);
   const [searchResults, setSearchResults] = useState<Product[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [totalSearchCount, setTotalSearchCount] = useState(0);
@@ -39,7 +40,8 @@ const Navbar = () => {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const searchDropdownRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
-  const categoryMenuRef = useRef<HTMLDivElement>(null);
+  const mobileMenuRef = useRef<HTMLDivElement>(null);
+  const allProductsDropdownRef = useRef<HTMLDivElement>(null);
 
   const { getTotalItems } = useCart();
   const { admin, isAuthenticated, logout } = useAdmin();
@@ -51,14 +53,11 @@ const Navbar = () => {
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
   const mainNavItems = [
-    { name: "ALL PRODUCTS", href: "/products", hasMegaMenu: true },
-    // { name: "SHOP BY CATEGORY", href: "#", hasMegaMenu: true },
-    // { name: "ROOMS", href: "#", hasMegaMenu: false },
-    // { name: "MADE TO ORDER", href: "#", hasMegaMenu: false },
-    // { name: "VILLA TEXTILES & RUGS", href: "#", hasMegaMenu: false },
-    { name: "IN STOCK", href: "/products", hasMegaMenu: false },
-    { name: "CONTACT US", href: "#", hasMegaMenu: false },
-    { name: "ABOUT US", href: "#", hasMegaMenu: false },
+    { name: "ALL PRODUCTS", href: "/products", hasDropdown: true },
+    { name: "IN STOCK", href: "/products", hasDropdown: false },
+    { name: "TRACK ORDER", href: "/track", hasDropdown: false },
+    { name: "CONTACT US", href: "#", hasDropdown: false },
+    { name: "ABOUT US", href: "#", hasDropdown: false },
   ];
   // const mainNavItems = [
   // { name: "", href: "#" },
@@ -148,6 +147,8 @@ const Navbar = () => {
   useEffect(() => {
     setSearchQuery("");
     setShowSearchDropdown(false);
+    setShowMobileMenu(false);
+    setShowAllProductsDropdown(false);
   }, [pathname]);
 
   // Close dropdowns when clicking outside
@@ -167,6 +168,18 @@ const Navbar = () => {
       ) {
         setShowSearchDropdown(false);
       }
+      if (
+        mobileMenuRef.current &&
+        !mobileMenuRef.current.contains(event.target as Node)
+      ) {
+        setShowMobileMenu(false);
+      }
+      if (
+        allProductsDropdownRef.current &&
+        !allProductsDropdownRef.current.contains(event.target as Node)
+      ) {
+        setShowAllProductsDropdown(false);
+      }
     };
 
     document.addEventListener("mousedown", handleClickOutside);
@@ -175,13 +188,40 @@ const Navbar = () => {
     };
   }, []);
 
+  // Prevent body scroll when mobile menu is open
+  useEffect(() => {
+    if (showMobileMenu) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [showMobileMenu]);
+
   return (
     <nav className="sticky top-0 z-50 w-full bg-white border-b border-gray-200 shadow-sm">
       {/* Top Navigation Bar */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
-          {/* Logo */}
-          <div className="flex-shrink-0 py-2">
+          {/* Mobile: Burger Menu */}
+          <div className="lg:hidden flex items-center">
+            <button
+              onClick={() => setShowMobileMenu(!showMobileMenu)}
+              className="text-gray-700 hover:text-gray-900 transition-colors p-2"
+              aria-label="Toggle menu"
+            >
+              {showMobileMenu ? (
+                <X className="h-6 w-6" />
+              ) : (
+                <Menu className="h-6 w-6" />
+              )}
+            </button>
+          </div>
+
+          {/* Logo - Desktop: Left, Mobile: Center */}
+          <div className="flex-shrink-0 py-2 lg:mr-0 absolute left-1/2 transform -translate-x-1/2 lg:static lg:transform-none">
             <Link
               href="/"
               className="flex items-center hover:opacity-80 transition-opacity duration-200"
@@ -194,9 +234,13 @@ const Navbar = () => {
             </Link>
           </div>
 
-          {/* Search Bar */}
-          <div className="flex-1 max-w-lg mx-8" ref={searchDropdownRef}>
-            <div className="relative">
+          {/* Desktop: Expandable Search Bar */}
+          <div className="hidden lg:flex items-center" ref={searchDropdownRef}>
+            <div
+              className={`relative transition-all duration-300 ${
+                searchQuery ? "w-[500px]" : "w-96"
+              }`}
+            >
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <Search className="h-5 w-5 text-gray-400" />
               </div>
@@ -206,9 +250,20 @@ const Navbar = () => {
                 value={searchQuery}
                 onChange={handleSearchInputChange}
                 onKeyDown={handleSearchKeyDown}
-                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-gray-500 focus:border-gray-500 sm:text-sm"
-                placeholder="Search by item number or keyword"
+                className="block w-full pl-10 pr-10 py-2.5 border-2 border-gray-200 rounded-full leading-5 bg-gray-50 placeholder-gray-400 focus:outline-none focus:bg-white focus:border-gray-900 focus:placeholder-gray-500 sm:text-sm transition-all duration-200"
+                placeholder="Search products..."
               />
+              {searchQuery && (
+                <button
+                  onClick={() => {
+                    setSearchQuery("");
+                    setShowSearchDropdown(false);
+                  }}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
 
               {/* Search Dropdown */}
               {showSearchDropdown && (
@@ -225,8 +280,8 @@ const Navbar = () => {
           </div>
 
           {/* Right Side Actions */}
-          <div className="flex items-center space-x-6">
-            {/* Admin Menu Items - Only show when authenticated */}
+          <div className="flex items-center lg:space-x-6 space-x-2">
+            {/* Desktop: Admin Menu Items - Only show when authenticated */}
             {isAuthenticated && (
               <>
                 {adminMenuItems.map((item) => {
@@ -235,7 +290,7 @@ const Navbar = () => {
                     <Link
                       key={item.name}
                       href={item.href}
-                      className="flex items-center text-sm text-gray-700 hover:text-gray-900 transition-colors"
+                      className="hidden lg:flex items-center text-sm text-gray-700 hover:text-gray-900 transition-colors"
                     >
                       <IconComponent className="h-4 w-4 mr-1" />
                       {item.name}
@@ -245,24 +300,9 @@ const Navbar = () => {
               </>
             )}
 
-            {/* Track Order */}
-            <Link
-              href="/track"
-              className="flex items-center text-sm text-gray-700 hover:text-gray-900 transition-colors"
-            >
-              <Package className="h-4 w-4 mr-1" />
-              Track Order
-            </Link>
-
-            {/* Become A Member */}
-            {/* <button className="flex items-center text-sm text-gray-700 hover:text-gray-900 transition-colors">
-              <Plus className="h-4 w-4 mr-1" />
-              Become A Member
-            </button> */}
-
-            {/* Admin User Info & Logout OR Sign In */}
+            {/* Desktop: Admin User Info & Logout OR Sign In */}
             {isAuthenticated && admin ? (
-              <div className="relative" ref={dropdownRef}>
+              <div className="hidden lg:block relative" ref={dropdownRef}>
                 <button
                   onClick={() => setShowAdminDropdown(!showAdminDropdown)}
                   className="flex items-center text-sm text-gray-700 hover:text-gray-900 transition-colors"
@@ -307,7 +347,7 @@ const Navbar = () => {
             ) : (
               <Link
                 href="/login"
-                className="flex items-center text-sm text-gray-700 hover:text-gray-900 transition-colors"
+                className="hidden lg:flex items-center text-sm text-gray-700 hover:text-gray-900 transition-colors"
               >
                 {/* <User className="h-4 w-4 mr-1" />
                 Sign In */}
@@ -320,8 +360,8 @@ const Navbar = () => {
                 href="/cart"
                 className="flex items-center text-sm text-gray-700 hover:text-gray-900 transition-colors relative"
               >
-                <ShoppingBag className="h-4 w-4 mr-1" />
-                Cart
+                <ShoppingBag className="h-5 w-5 lg:h-4 lg:w-4 lg:mr-1" />
+                <span className="hidden lg:inline">Cart</span>
                 {cartItemCount > 0 && (
                   <span className="absolute -top-2 -right-2 bg-gray-900 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
                     {cartItemCount > 99 ? "99+" : cartItemCount}
@@ -333,27 +373,153 @@ const Navbar = () => {
         </div>
       </div>
 
-      {/* Secondary Navigation */}
-      <div className="bg-gray-50 border-t border-gray-200 relative">
+      {/* Mobile Menu */}
+      {showMobileMenu && (
+        <div
+          ref={mobileMenuRef}
+          className="lg:hidden fixed inset-0 top-20 bg-white z-40 overflow-y-auto"
+        >
+          <div className="px-4 py-6 space-y-6">
+            {/* Mobile: Admin Menu Items */}
+            {isAuthenticated && admin && (
+              <div className="border-b border-gray-200 pb-4">
+                <div className="mb-4">
+                  <div className="text-sm font-medium text-gray-900">
+                    {admin.name}
+                  </div>
+                  <div className="text-xs text-gray-500">{admin.email}</div>
+                  <div className="text-xs text-gray-500 capitalize">
+                    {admin.role.replace("_", " ")}
+                  </div>
+                </div>
+                {adminMenuItems.map((item) => {
+                  const IconComponent = item.icon;
+                  return (
+                    <Link
+                      key={item.name}
+                      href={item.href}
+                      onClick={() => setShowMobileMenu(false)}
+                      className="flex items-center py-3 text-base text-gray-700 hover:text-gray-900 transition-colors"
+                    >
+                      <IconComponent className="h-5 w-5 mr-3" />
+                      {item.name}
+                    </Link>
+                  );
+                })}
+                <Link
+                  href="/admin/change-password"
+                  onClick={() => setShowMobileMenu(false)}
+                  className="flex items-center py-3 text-base text-gray-700 hover:text-gray-900 transition-colors"
+                >
+                  <Key className="h-5 w-5 mr-3" />
+                  Change Password
+                </Link>
+                <button
+                  onClick={() => {
+                    handleLogout();
+                    setShowMobileMenu(false);
+                  }}
+                  className="flex items-center py-3 text-base text-gray-700 hover:text-gray-900 transition-colors"
+                >
+                  <LogOut className="h-5 w-5 mr-3" />
+                  Logout
+                </button>
+              </div>
+            )}
+
+            {/* Mobile: Main Nav Items */}
+            <div className="border-t border-gray-200 pt-4 space-y-2">
+              {mainNavItems.map((item, index) => {
+                if (item.hasDropdown) {
+                  return (
+                    <div key={index} className="space-y-2">
+                      <div className="py-3 text-base font-medium text-gray-900">
+                        {item.name}
+                      </div>
+                      <div className="pl-4 space-y-2">
+                        <Link
+                          href="/products"
+                          onClick={() => setShowMobileMenu(false)}
+                          className="block py-2 text-sm text-gray-700 hover:text-gray-900 transition-colors"
+                        >
+                          All Products →
+                        </Link>
+                        {hierarchicalCategories.map((category) => (
+                          <Link
+                            key={category.id}
+                            href={`/products?category=${category.id}`}
+                            onClick={() => setShowMobileMenu(false)}
+                            className="block py-2 text-sm text-gray-700 hover:text-gray-900 transition-colors"
+                          >
+                            {category.name}
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                }
+                return (
+                  <Link
+                    key={index}
+                    href={item.href}
+                    onClick={() => setShowMobileMenu(false)}
+                    className="block py-3 text-base font-medium text-gray-700 hover:text-gray-900 transition-colors"
+                  >
+                    {item.name}
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Desktop: Secondary Navigation */}
+      <div className="hidden lg:block bg-gray-50 border-t border-gray-200 relative">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-center md:space-x-14 sm:space-x-6 space-x-3 h-12">
             {mainNavItems.map((item, index) => (
               <div
                 key={index}
                 className="relative"
-                ref={item.hasMegaMenu ? categoryMenuRef : undefined}
+                ref={item.hasDropdown ? allProductsDropdownRef : undefined}
               >
-                {item.hasMegaMenu ? (
-                  <button
-                    onMouseEnter={() => setShowCategoryMegaMenu(true)}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      setShowCategoryMegaMenu(!showCategoryMegaMenu);
-                    }}
-                    className="md:text-sm text-xs font-medium text-gray-700 hover:text-gray-900 transition-colors tracking-wide whitespace-nowrap"
-                  >
-                    {item.name}
-                  </button>
+                {item.hasDropdown ? (
+                  <div className="relative">
+                    <button
+                      onClick={() =>
+                        setShowAllProductsDropdown(!showAllProductsDropdown)
+                      }
+                      className="flex items-center md:text-sm text-xs font-medium text-gray-700 hover:text-gray-900 transition-colors tracking-wide whitespace-nowrap"
+                    >
+                      {item.name}
+                      <ChevronDown className="ml-1 h-3 w-3" />
+                    </button>
+
+                    {/* All Products Dropdown */}
+                    {showAllProductsDropdown && (
+                      <div className="absolute top-full left-0 mt-2 w-56 bg-white rounded-md shadow-lg border border-gray-200 z-50 py-2">
+                        <Link
+                          href="/products"
+                          onClick={() => setShowAllProductsDropdown(false)}
+                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors font-medium"
+                        >
+                          All Products →
+                        </Link>
+                        <div className="border-t border-gray-100 my-2"></div>
+                        {hierarchicalCategories.map((category) => (
+                          <Link
+                            key={category.id}
+                            href={`/products?category=${category.id}`}
+                            onClick={() => setShowAllProductsDropdown(false)}
+                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                          >
+                            {category.name}
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 ) : (
                   <Link
                     href={item.href}
@@ -366,14 +532,49 @@ const Navbar = () => {
             ))}
           </div>
         </div>
+      </div>
 
-        {/* Category Mega Menu */}
-        {showCategoryMegaMenu && hierarchicalCategories.length > 0 && (
-          <CategoryMegaMenu
-            categories={hierarchicalCategories}
-            onClose={() => setShowCategoryMegaMenu(false)}
-          />
-        )}
+      {/* Mobile: Secondary Navigation with Search */}
+      <div className="lg:hidden bg-gray-50 border-t border-gray-200">
+        <div className="px-4 py-3">
+          <div className="relative" ref={searchDropdownRef}>
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Search className="h-5 w-5 text-gray-400" />
+            </div>
+            <input
+              ref={searchInputRef}
+              type="text"
+              value={searchQuery}
+              onChange={handleSearchInputChange}
+              onKeyDown={handleSearchKeyDown}
+              className="block w-full pl-10 pr-10 py-2.5 border-2 border-gray-200 rounded-full leading-5 bg-gray-50 placeholder-gray-400 focus:outline-none focus:bg-white focus:border-gray-900 focus:placeholder-gray-500 text-sm transition-all duration-200"
+              placeholder="Search products..."
+            />
+            {searchQuery && (
+              <button
+                onClick={() => {
+                  setSearchQuery("");
+                  setShowSearchDropdown(false);
+                }}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+
+            {/* Search Dropdown */}
+            {showSearchDropdown && (
+              <SearchDropdown
+                products={searchResults}
+                isLoading={isSearching}
+                searchQuery={searchQuery}
+                totalCount={totalSearchCount}
+                onClose={closeSearchDropdown}
+                onSeeAllResults={navigateToSearchResults}
+              />
+            )}
+          </div>
+        </div>
       </div>
     </nav>
   );

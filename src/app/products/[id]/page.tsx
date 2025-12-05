@@ -592,8 +592,7 @@ export default function ProductPage({ params }: ProductPageProps) {
               >
                 Add to Cart
               </button>
-             
-              
+
               <a
                 href="mailto:info@palacioshomeco.com"
                 className="flex-1 bg-gray-900 text-white py-4 px-8 font-medium tracking-wider hover:bg-gray-800 transition-colors text-center"
@@ -676,10 +675,7 @@ export default function ProductPage({ params }: ProductPageProps) {
                     <dl className="grid grid-cols-1 gap-y-3">
                       {Object.entries(matchingVariant.otherDetails).map(
                         ([key, value]) => (
-                          <div
-                            key={key}
-                            className="flex items-start gap-4"
-                          >
+                          <div key={key} className="flex items-start gap-4">
                             <dt className="text-sm font-medium text-gray-900 whitespace-nowrap min-w-[15rem]">
                               {key}
                             </dt>
@@ -729,13 +725,13 @@ export default function ProductPage({ params }: ProductPageProps) {
             </span>
           </div>
 
-          {/* Zoom Toggle Button */}
+          {/* Zoom Toggle Button - Hidden on mobile */}
           <button
             onClick={(e) => {
               e.stopPropagation();
               toggleZoom();
             }}
-            className="absolute top-4 left-1/2 transform -translate-x-1/2 z-50 p-2 bg-white/10 hover:bg-white/20 rounded-full transition-colors"
+            className="hidden md:block absolute top-4 left-1/2 transform -translate-x-1/2 z-50 p-2 bg-white/10 hover:bg-white/20 rounded-full transition-colors"
             aria-label={isZoomEnabled ? "Disable zoom" : "Enable zoom"}
             title={isZoomEnabled ? "Disable zoom" : "Enable zoom"}
           >
@@ -762,7 +758,7 @@ export default function ProductPage({ params }: ProductPageProps) {
 
           {/* Image Container */}
           <div
-            className="relative w-full h-full max-w-7xl max-h-[90vh] mx-auto px-20"
+            className="relative w-full h-full max-w-7xl max-h-[90vh] mx-auto px-4 md:px-20"
             onClick={(e) => e.stopPropagation()}
             onMouseMove={handleMouseMove}
             style={{ cursor: isZoomEnabled ? "zoom-in" : "default" }}
