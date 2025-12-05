@@ -19,6 +19,7 @@ import { useCart } from "@/contexts/CartContext";
 import { useAdmin } from "@/contexts/AdminContext";
 import { useDebounce } from "@/hooks/useDebounce";
 import SearchDropdown from "./SearchDropdown";
+import CategoryMegaMenu from "./CategoryMegaMenu";
 import { ProductService } from "@/services/product.service";
 import { Product } from "@/types/product.types";
 import { CategoryResponse } from "@/services/category.service";
@@ -29,7 +30,7 @@ const Navbar = () => {
   const [showAdminDropdown, setShowAdminDropdown] = useState(false);
   const [showSearchDropdown, setShowSearchDropdown] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
-  const [showAllProductsDropdown, setShowAllProductsDropdown] = useState(false);
+  const [showCategoryMegaMenu, setShowCategoryMegaMenu] = useState(false);
   const [searchResults, setSearchResults] = useState<Product[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [totalSearchCount, setTotalSearchCount] = useState(0);
@@ -41,7 +42,7 @@ const Navbar = () => {
   const searchDropdownRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
-  const allProductsDropdownRef = useRef<HTMLDivElement>(null);
+  const categoryMegaMenuRef = useRef<HTMLDivElement>(null);
 
   const { getTotalItems } = useCart();
   const { admin, isAuthenticated, logout } = useAdmin();
@@ -148,7 +149,7 @@ const Navbar = () => {
     setSearchQuery("");
     setShowSearchDropdown(false);
     setShowMobileMenu(false);
-    setShowAllProductsDropdown(false);
+    setShowCategoryMegaMenu(false);
   }, [pathname]);
 
   // Close dropdowns when clicking outside
@@ -175,10 +176,10 @@ const Navbar = () => {
         setShowMobileMenu(false);
       }
       if (
-        allProductsDropdownRef.current &&
-        !allProductsDropdownRef.current.contains(event.target as Node)
+        categoryMegaMenuRef.current &&
+        !categoryMegaMenuRef.current.contains(event.target as Node)
       ) {
-        setShowAllProductsDropdown(false);
+        setShowCategoryMegaMenu(false);
       }
     };
 
@@ -442,7 +443,7 @@ const Navbar = () => {
                           onClick={() => setShowMobileMenu(false)}
                           className="block py-2 text-sm text-gray-700 hover:text-gray-900 transition-colors"
                         >
-                          All Products →
+                          View all categories
                         </Link>
                         {hierarchicalCategories.map((category) => (
                           <Link
@@ -482,43 +483,17 @@ const Navbar = () => {
               <div
                 key={index}
                 className="relative"
-                ref={item.hasDropdown ? allProductsDropdownRef : undefined}
+                ref={item.hasDropdown ? categoryMegaMenuRef : undefined}
               >
                 {item.hasDropdown ? (
                   <div className="relative">
                     <button
-                      onClick={() =>
-                        setShowAllProductsDropdown(!showAllProductsDropdown)
-                      }
+                      onMouseEnter={() => setShowCategoryMegaMenu(true)}
                       className="flex items-center md:text-sm text-xs font-medium text-gray-700 hover:text-gray-900 transition-colors tracking-wide whitespace-nowrap"
                     >
                       {item.name}
                       <ChevronDown className="ml-1 h-3 w-3" />
                     </button>
-
-                    {/* All Products Dropdown */}
-                    {showAllProductsDropdown && (
-                      <div className="absolute top-full left-0 mt-2 w-56 bg-white rounded-md shadow-lg border border-gray-200 z-50 py-2">
-                        <Link
-                          href="/products"
-                          onClick={() => setShowAllProductsDropdown(false)}
-                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors font-medium"
-                        >
-                          View All Categories →
-                        </Link>
-                        <div className="border-t border-gray-100 my-2"></div>
-                        {hierarchicalCategories.map((category) => (
-                          <Link
-                            key={category.id}
-                            href={`/products?category=${category.id}`}
-                            onClick={() => setShowAllProductsDropdown(false)}
-                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
-                          >
-                            {category.name}
-                          </Link>
-                        ))}
-                      </div>
-                    )}
                   </div>
                 ) : (
                   <Link
@@ -532,6 +507,14 @@ const Navbar = () => {
             ))}
           </div>
         </div>
+
+        {/* Category Mega Menu - Desktop Only */}
+        {showCategoryMegaMenu && (
+          <CategoryMegaMenu
+            categories={hierarchicalCategories}
+            onClose={() => setShowCategoryMegaMenu(false)}
+          />
+        )}
       </div>
 
       {/* Mobile: Secondary Navigation with Search */}

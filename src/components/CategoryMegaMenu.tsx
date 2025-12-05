@@ -148,7 +148,7 @@ const CategoryMegaMenu = ({ categories, onClose }: CategoryMegaMenuProps) => {
           </div> */}
 
           {/* Right Column - Featured Image */}
-          <div className="hidden md:block md:col-span-5">
+          <div className="hidden md:block md:col-span-8">
             <div className="relative h-96 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg overflow-hidden">
               {displayImage ? (
                 <Image
