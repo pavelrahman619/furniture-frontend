@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { ChevronRight } from "lucide-react";
 
 interface Category {
@@ -20,6 +21,7 @@ interface CategoryMegaMenuProps {
 }
 
 const CategoryMegaMenu = ({ categories, onClose }: CategoryMegaMenuProps) => {
+  const router = useRouter();
   const [hoveredCategory, setHoveredCategory] = useState<Category | null>(null);
   const [displayImage, setDisplayImage] = useState<string | null>(null);
 
@@ -44,6 +46,10 @@ const CategoryMegaMenu = ({ categories, onClose }: CategoryMegaMenuProps) => {
 
   const handleCategoryHover = (category: Category) => {
     setHoveredCategory(category);
+  };
+
+  const handleCategoryClick = (categoryId: string) => {
+    router.push(`/products?category=${categoryId}`);
   };
 
   return (
@@ -71,12 +77,9 @@ const CategoryMegaMenu = ({ categories, onClose }: CategoryMegaMenuProps) => {
             <ul className="space-y-3">
               {categoriesWithSubs.map((category) => (
                 <li key={category.id}>
-                  <button
+                  <div
                     onMouseEnter={() => handleCategoryHover(category)}
-                    onClick={() => {
-                      window.location.href = `/products?category=${category.id}`;
-                      onClose();
-                    }}
+                    onMouseDown={() => handleCategoryClick(category.id)}
                     className={`text-left w-full text-base transition-all flex items-center justify-between group cursor-pointer ${
                       hoveredCategory?.id === category.id
                         ? "text-gray-900 font-medium"
@@ -94,7 +97,7 @@ const CategoryMegaMenu = ({ categories, onClose }: CategoryMegaMenuProps) => {
                           }`}
                         />
                       )}
-                  </button>
+                  </div>
                 </li>
               ))}
             </ul>
@@ -183,13 +186,12 @@ const CategoryMegaMenu = ({ categories, onClose }: CategoryMegaMenuProps) => {
                   <h3 className="text-white text-2xl font-light">
                     {hoveredCategory.name}
                   </h3>
-                  <Link
-                    href={`/products?category=${hoveredCategory.id}`}
-                    onClick={onClose}
-                    className="inline-block mt-2 text-white text-sm hover:underline"
+                  <div
+                    onMouseDown={() => handleCategoryClick(hoveredCategory.id)}
+                    className="inline-block mt-2 text-white text-sm hover:underline cursor-pointer"
                   >
                     Shop All {hoveredCategory.name} →
-                  </Link>
+                  </div>
                 </div>
               )}
             </div>
