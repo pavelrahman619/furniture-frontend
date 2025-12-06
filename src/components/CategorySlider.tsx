@@ -6,14 +6,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { FEATURED_CATEGORIES } from "@/data/featured-categories";
 
-interface Category {
-  id: string;
-  title: string;
-  slug: string;
-  description: string;
-  image: string;
-}
-
 const CategorySlider = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const sliderRef = useRef<HTMLDivElement>(null);

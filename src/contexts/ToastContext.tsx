@@ -36,40 +36,55 @@ export function useToast() {
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
-  const addToast = useCallback((toast: Omit<Toast, "id">) => {
-    const id = Math.random().toString(36).substr(2, 9);
-    const newToast = { ...toast, id };
-    
-    setToasts((prev) => [...prev, newToast]);
-
-    // Auto remove after duration (default 5 seconds)
-    const duration = toast.duration ?? 5000;
-    if (duration > 0) {
-      setTimeout(() => {
-        removeToast(id);
-      }, duration);
-    }
-  }, []);
-
   const removeToast = useCallback((id: string) => {
     setToasts((prev) => prev.filter((toast) => toast.id !== id));
   }, []);
 
-  const success = useCallback((title: string, message?: string) => {
-    addToast({ type: "success", title, message });
-  }, [addToast]);
+  const addToast = useCallback(
+    (toast: Omit<Toast, "id">) => {
+      const id = Math.random().toString(36).substr(2, 9);
+      const newToast = { ...toast, id };
 
-  const error = useCallback((title: string, message?: string) => {
-    addToast({ type: "error", title, message });
-  }, [addToast]);
+      setToasts((prev) => [...prev, newToast]);
 
-  const warning = useCallback((title: string, message?: string) => {
-    addToast({ type: "warning", title, message });
-  }, [addToast]);
+      // Auto remove after duration (default 5 seconds)
+      const duration = toast.duration ?? 5000;
+      if (duration > 0) {
+        setTimeout(() => {
+          removeToast(id);
+        }, duration);
+      }
+    },
+    [removeToast]
+  );
 
-  const info = useCallback((title: string, message?: string) => {
-    addToast({ type: "info", title, message });
-  }, [addToast]);
+  const success = useCallback(
+    (title: string, message?: string) => {
+      addToast({ type: "success", title, message });
+    },
+    [addToast]
+  );
+
+  const error = useCallback(
+    (title: string, message?: string) => {
+      addToast({ type: "error", title, message });
+    },
+    [addToast]
+  );
+
+  const warning = useCallback(
+    (title: string, message?: string) => {
+      addToast({ type: "warning", title, message });
+    },
+    [addToast]
+  );
+
+  const info = useCallback(
+    (title: string, message?: string) => {
+      addToast({ type: "info", title, message });
+    },
+    [addToast]
+  );
 
   return (
     <ToastContext.Provider
@@ -89,11 +104,11 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-function ToastContainer({ 
-  toasts, 
-  onRemove 
-}: { 
-  toasts: Toast[]; 
+function ToastContainer({
+  toasts,
+  onRemove,
+}: {
+  toasts: Toast[];
   onRemove: (id: string) => void;
 }) {
   if (toasts.length === 0) return null;
@@ -107,11 +122,11 @@ function ToastContainer({
   );
 }
 
-function ToastItem({ 
-  toast, 
-  onRemove 
-}: { 
-  toast: Toast; 
+function ToastItem({
+  toast,
+  onRemove,
+}: {
+  toast: Toast;
   onRemove: (id: string) => void;
 }) {
   const getIcon = () => {

@@ -1,5 +1,5 @@
-import { apiService, ApiResponse } from '../lib/api-service';
-import { API_ENDPOINTS } from '../lib/api-config';
+import { apiService, ApiResponse } from "../lib/api-service";
+import { API_ENDPOINTS } from "../lib/api-config";
 
 /**
  * Admin Authentication Request/Response Types
@@ -53,7 +53,7 @@ export interface AdminUser {
   id: string;
   email: string;
   name: string;
-  role: 'admin' | 'super_admin';
+  role: "admin" | "super_admin";
   permissions: string[];
   lastLogin: string;
 }
@@ -75,11 +75,16 @@ export interface AdminTokenResponse {
  * Token Storage Keys
  */
 const STORAGE_KEYS = {
-  ADMIN_TOKEN: 'admin_token',
-  ADMIN_REFRESH_TOKEN: 'admin_refresh_token',
-  ADMIN_USER: 'admin_user',
-  ADMIN_EXPIRES_AT: 'admin_expires_at',
+  ADMIN_TOKEN: "admin_token",
+  ADMIN_REFRESH_TOKEN: "admin_refresh_token",
+  ADMIN_USER: "admin_user",
+  ADMIN_EXPIRES_AT: "admin_expires_at",
 } as const;
+
+/**
+ * Check if we're running in a browser environment
+ */
+const isBrowser = (): boolean => typeof window !== "undefined";
 
 /**
  * Token Storage Utilities
@@ -89,13 +94,23 @@ export const tokenStorage = {
    * Store admin session data
    */
   setSession: (session: AdminSession): void => {
+    if (!isBrowser()) return;
     try {
       localStorage.setItem(STORAGE_KEYS.ADMIN_TOKEN, session.token);
-      localStorage.setItem(STORAGE_KEYS.ADMIN_REFRESH_TOKEN, session.refreshToken);
-      localStorage.setItem(STORAGE_KEYS.ADMIN_USER, JSON.stringify(session.admin));
-      localStorage.setItem(STORAGE_KEYS.ADMIN_EXPIRES_AT, session.expiresAt.toString());
+      localStorage.setItem(
+        STORAGE_KEYS.ADMIN_REFRESH_TOKEN,
+        session.refreshToken
+      );
+      localStorage.setItem(
+        STORAGE_KEYS.ADMIN_USER,
+        JSON.stringify(session.admin)
+      );
+      localStorage.setItem(
+        STORAGE_KEYS.ADMIN_EXPIRES_AT,
+        session.expiresAt.toString()
+      );
     } catch (error) {
-      console.error('Failed to store admin session:', error);
+      console.error("Failed to store admin session:", error);
     }
   },
 
@@ -103,15 +118,16 @@ export const tokenStorage = {
    * Get stored admin token
    */
   getToken: (): string | null => {
+    if (!isBrowser()) return null;
     try {
       const token = localStorage.getItem(STORAGE_KEYS.ADMIN_TOKEN);
       // Check for null, empty string, or the literal string "undefined"
-      if (!token || token === 'undefined' || token === 'null') {
+      if (!token || token === "undefined" || token === "null") {
         return null;
       }
       return token;
     } catch (error) {
-      console.error('Failed to get admin token:', error);
+      console.error("Failed to get admin token:", error);
       return null;
     }
   },
@@ -120,15 +136,22 @@ export const tokenStorage = {
    * Get stored refresh token
    */
   getRefreshToken: (): string | null => {
+    if (!isBrowser()) return null;
     try {
-      const refreshToken = localStorage.getItem(STORAGE_KEYS.ADMIN_REFRESH_TOKEN);
+      const refreshToken = localStorage.getItem(
+        STORAGE_KEYS.ADMIN_REFRESH_TOKEN
+      );
       // Check for null, empty string, or the literal string "undefined"
-      if (!refreshToken || refreshToken === 'undefined' || refreshToken === 'null') {
+      if (
+        !refreshToken ||
+        refreshToken === "undefined" ||
+        refreshToken === "null"
+      ) {
         return null;
       }
       return refreshToken;
     } catch (error) {
-      console.error('Failed to get admin refresh token:', error);
+      console.error("Failed to get admin refresh token:", error);
       return null;
     }
   },
@@ -137,15 +160,16 @@ export const tokenStorage = {
    * Get stored admin user
    */
   getUser: (): AdminUser | null => {
+    if (!isBrowser()) return null;
     try {
       const userStr = localStorage.getItem(STORAGE_KEYS.ADMIN_USER);
       // Check for null, empty string, or the literal string "undefined"
-      if (!userStr || userStr === 'undefined' || userStr === 'null') {
+      if (!userStr || userStr === "undefined" || userStr === "null") {
         return null;
       }
       return JSON.parse(userStr);
     } catch (error) {
-      console.error('Failed to get admin user:', error);
+      console.error("Failed to get admin user:", error);
       return null;
     }
   },
@@ -154,16 +178,17 @@ export const tokenStorage = {
    * Get token expiration time
    */
   getExpiresAt: (): number | null => {
+    if (!isBrowser()) return null;
     try {
       const expiresStr = localStorage.getItem(STORAGE_KEYS.ADMIN_EXPIRES_AT);
       // Check for null, empty string, or the literal string "undefined"
-      if (!expiresStr || expiresStr === 'undefined' || expiresStr === 'null') {
+      if (!expiresStr || expiresStr === "undefined" || expiresStr === "null") {
         return null;
       }
       const parsed = parseInt(expiresStr, 10);
       return isNaN(parsed) ? null : parsed;
     } catch (error) {
-      console.error('Failed to get admin token expiration:', error);
+      console.error("Failed to get admin token expiration:", error);
       return null;
     }
   },
@@ -174,23 +199,24 @@ export const tokenStorage = {
   isTokenExpired: (): boolean => {
     const expiresAt = tokenStorage.getExpiresAt();
     if (!expiresAt) return true;
-    
+
     // Add 5 minute buffer before actual expiration
     const bufferTime = 5 * 60 * 1000; // 5 minutes in milliseconds
-    return Date.now() >= (expiresAt - bufferTime);
+    return Date.now() >= expiresAt - bufferTime;
   },
 
   /**
    * Clear all admin session data
    */
   clearSession: (): void => {
+    if (!isBrowser()) return;
     try {
       localStorage.removeItem(STORAGE_KEYS.ADMIN_TOKEN);
       localStorage.removeItem(STORAGE_KEYS.ADMIN_REFRESH_TOKEN);
       localStorage.removeItem(STORAGE_KEYS.ADMIN_USER);
       localStorage.removeItem(STORAGE_KEYS.ADMIN_EXPIRES_AT);
     } catch (error) {
-      console.error('Failed to clear admin session:', error);
+      console.error("Failed to clear admin session:", error);
     }
   },
 
@@ -223,7 +249,9 @@ export class AdminService {
   /**
    * Admin login
    */
-  static async login(credentials: AdminLoginRequest): Promise<ApiResponse<AdminLoginResponse>> {
+  static async login(
+    credentials: AdminLoginRequest
+  ): Promise<ApiResponse<AdminLoginResponse>> {
     try {
       const response = await apiService.post<BackendLoginResponse>(
         API_ENDPOINTS.ADMIN.LOGIN,
@@ -236,30 +264,34 @@ export class AdminService {
         // We need to map it to our AdminLoginResponse format
         const backendData = response.data;
         const token = backendData.token;
-        const refreshToken: string = backendData.refreshToken || backendData.token; // Use token as refreshToken if not provided
-        const expiresIn = backendData.expires_in || backendData.expiresIn || 3600;
+        const refreshToken: string =
+          backendData.refreshToken || backendData.token; // Use token as refreshToken if not provided
+        const expiresIn =
+          backendData.expires_in || backendData.expiresIn || 3600;
 
         // Map user to admin format
         const user = backendData.user || backendData.admin;
         if (!user || !token) {
-          throw new Error('Invalid login response format');
+          throw new Error("Invalid login response format");
         }
 
         // Check if user has admin role
-        if (user.role !== 'admin' && user.role !== 'super_admin') {
-          throw new Error('Access denied. You do not have admin privileges.');
+        if (user.role !== "admin" && user.role !== "super_admin") {
+          throw new Error("Access denied. You do not have admin privileges.");
         }
 
         const admin: AdminUser = {
-          id: user.id || user._id || 'unknown',
+          id: user.id || user._id || "unknown",
           email: user.email || credentials.email,
-          name: `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Admin User',
-          role: user.role as 'admin' | 'super_admin',
-          permissions: user.permissions || ['*'], // Grant all permissions by default
+          name:
+            `${user.first_name || ""} ${user.last_name || ""}`.trim() ||
+            "Admin User",
+          role: user.role as "admin" | "super_admin",
+          permissions: user.permissions || ["*"], // Grant all permissions by default
           lastLogin: new Date().toISOString(),
         };
 
-        const expiresAt = Date.now() + (expiresIn * 1000);
+        const expiresAt = Date.now() + expiresIn * 1000;
 
         tokenStorage.setSession({
           token,
@@ -293,7 +325,7 @@ export class AdminService {
    */
   static async logout(): Promise<ApiResponse<void>> {
     const token = tokenStorage.getToken();
-    
+
     try {
       // Call logout endpoint if token exists
       if (token) {
@@ -301,7 +333,7 @@ export class AdminService {
       }
     } catch (error) {
       // Log error but don't throw - we still want to clear local session
-      console.error('Logout API call failed:', error);
+      console.error("Logout API call failed:", error);
     } finally {
       // Always clear local session
       tokenStorage.clearSession();
@@ -309,7 +341,7 @@ export class AdminService {
 
     return {
       success: true,
-      message: 'Logged out successfully',
+      message: "Logged out successfully",
     };
   }
 
@@ -325,12 +357,15 @@ export class AdminService {
     if (!token) {
       return {
         success: false,
-        error: 'No authentication token found. Please login again.',
+        error: "No authentication token found. Please login again.",
       };
     }
 
     try {
-      const response = await apiService.post<{ success: boolean; message: string }>(
+      const response = await apiService.post<{
+        success: boolean;
+        message: string;
+      }>(
         API_ENDPOINTS.ADMIN.CHANGE_PASSWORD,
         {
           currentPassword,
@@ -343,8 +378,11 @@ export class AdminService {
         // Backend returns { success: true, message: "..." } directly
         // apiService wraps it, so response.data might be { success: true, message: "..." }
         // or response.message might be set directly
-        const message = response.data?.message || response.message || 'Password changed successfully';
-        
+        const message =
+          response.data?.message ||
+          response.message ||
+          "Password changed successfully";
+
         return {
           success: true,
           data: { message },
@@ -354,7 +392,11 @@ export class AdminService {
 
       return {
         success: false,
-        error: response.error || response.data?.message || response.message || 'Failed to change password',
+        error:
+          response.error ||
+          response.data?.message ||
+          response.message ||
+          "Failed to change password",
       };
     } catch (error) {
       throw error;
@@ -366,14 +408,16 @@ export class AdminService {
    * NOTE: Backend doesn't support refresh tokens, so this always fails and clears the session
    */
   static async refreshToken(): Promise<ApiResponse<AdminTokenResponse>> {
-    console.log('[AdminService] Refresh token attempted, but backend does not support refresh tokens');
+    console.log(
+      "[AdminService] Refresh token attempted, but backend does not support refresh tokens"
+    );
 
     // Backend doesn't support refresh tokens, so always fail and clear session
     tokenStorage.clearSession();
 
     return {
       success: false,
-      error: 'Refresh tokens not supported by backend',
+      error: "Refresh tokens not supported by backend",
     };
   }
 
@@ -382,11 +426,11 @@ export class AdminService {
    */
   static async getCurrentAdmin(): Promise<ApiResponse<AdminUser>> {
     const token = tokenStorage.getToken();
-    
+
     if (!token) {
       return {
         success: false,
-        error: 'No authentication token found',
+        error: "No authentication token found",
       };
     }
 
@@ -397,13 +441,13 @@ export class AdminService {
         // Get updated token after refresh
         const newToken = tokenStorage.getToken();
         if (!newToken) {
-          throw new Error('Token refresh failed');
+          throw new Error("Token refresh failed");
         }
       } catch (error) {
-        console.error('Token refresh failed:', error);
+        console.error("Token refresh failed:", error);
         return {
           success: false,
-          error: 'Authentication token expired and refresh failed',
+          error: "Authentication token expired and refresh failed",
         };
       }
     }
@@ -411,7 +455,7 @@ export class AdminService {
     try {
       const currentToken = tokenStorage.getToken();
       if (!currentToken) {
-        throw new Error('No authentication token available');
+        throw new Error("No authentication token available");
       }
 
       const response = await apiService.get<AdminUser>(
@@ -433,7 +477,7 @@ export class AdminService {
       return response;
     } catch (error) {
       // If profile fetch fails with auth error, clear session
-      if (error instanceof Error && error.message.includes('401')) {
+      if (error instanceof Error && error.message.includes("401")) {
         tokenStorage.clearSession();
       }
       throw error;
@@ -466,15 +510,21 @@ export class AdminService {
         const user = response.data.user;
 
         // Check if user has admin role
-        if (isValid && user && (user.role === 'admin' || user.role === 'super_admin')) {
+        if (
+          isValid &&
+          user &&
+          (user.role === "admin" || user.role === "super_admin")
+        ) {
           // Update stored user data if verification returns user info
           const session = tokenStorage.getSession();
           if (session) {
             const updatedAdmin: AdminUser = {
-              id: user.id || user._id || 'unknown',
+              id: user.id || user._id || "unknown",
               email: user.email || session.admin.email,
-              name: `${user.first_name || ''} ${user.last_name || ''}`.trim() || session.admin.name,
-              role: user.role as 'admin' | 'super_admin',
+              name:
+                `${user.first_name || ""} ${user.last_name || ""}`.trim() ||
+                session.admin.name,
+              role: user.role as "admin" | "super_admin",
               permissions: session.admin.permissions,
               lastLogin: session.admin.lastLogin,
             };
@@ -503,7 +553,7 @@ export class AdminService {
       };
     } catch (error) {
       // If verification fails, consider token invalid
-      console.error('Token verification failed:', error);
+      console.error("Token verification failed:", error);
       return {
         success: true,
         data: false,
@@ -538,13 +588,13 @@ export class AdminService {
    */
   static initializeSession(): AdminSession | null {
     const session = tokenStorage.getSession();
-    
+
     // Clear session if expired
     if (session && tokenStorage.isTokenExpired()) {
       tokenStorage.clearSession();
       return null;
     }
-    
+
     return session;
   }
 }

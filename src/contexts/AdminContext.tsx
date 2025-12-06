@@ -12,7 +12,6 @@ import {
   AdminService,
   AdminUser,
   AdminLoginRequest,
-  AdminSession,
   tokenStorage,
 } from "@/services";
 
@@ -21,12 +20,12 @@ interface AdminContextType {
   admin: AdminUser | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  
+
   // Actions
   login: (credentials: AdminLoginRequest) => Promise<void>;
   logout: () => Promise<void>;
   refreshSession: () => Promise<void>;
-  
+
   // Utilities
   hasPermission: (permission: string) => boolean;
   getToken: () => string | null;
@@ -52,7 +51,8 @@ export const AdminProvider = ({ children }: AdminProviderProps) => {
   const [isLoading, setIsLoading] = useState(true);
 
   // Session timeout handling
-  const [sessionTimeoutId, setSessionTimeoutId] = useState<NodeJS.Timeout | null>(null);
+  const [sessionTimeoutId, setSessionTimeoutId] =
+    useState<NodeJS.Timeout | null>(null);
 
   // Initialize admin session on mount
   useEffect(() => {
@@ -98,66 +98,74 @@ export const AdminProvider = ({ children }: AdminProviderProps) => {
     };
 
     initializeSession();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Setup session timeout warning and auto-logout
-  const setupSessionTimeout = useCallback((expiresAt: number) => {
-    // Clear existing timeout
-    if (sessionTimeoutId) {
-      clearTimeout(sessionTimeoutId);
-    }
+  const setupSessionTimeout = useCallback(
+    (expiresAt: number) => {
+      // Clear existing timeout
+      if (sessionTimeoutId) {
+        clearTimeout(sessionTimeoutId);
+      }
 
-    const now = Date.now();
-    const timeUntilExpiry = expiresAt - now;
-    
-    // Set timeout for 5 minutes before expiry to show warning
-    const warningTime = Math.max(0, timeUntilExpiry - (5 * 60 * 1000));
-    
-    const timeoutId = setTimeout(() => {
-      // Show session timeout warning (could integrate with toast system)
-      console.warn("Admin session will expire in 5 minutes");
-      
-      // Set another timeout for actual logout
-      const logoutTimeoutId = setTimeout(() => {
-        logout();
-      }, 5 * 60 * 1000); // 5 minutes
-      
-      setSessionTimeoutId(logoutTimeoutId);
-    }, warningTime);
-    
-    setSessionTimeoutId(timeoutId);
-  }, [sessionTimeoutId]);
+      const now = Date.now();
+      const timeUntilExpiry = expiresAt - now;
+
+      // Set timeout for 5 minutes before expiry to show warning
+      const warningTime = Math.max(0, timeUntilExpiry - 5 * 60 * 1000);
+
+      const timeoutId = setTimeout(() => {
+        // Show session timeout warning (could integrate with toast system)
+        console.warn("Admin session will expire in 5 minutes");
+
+        // Set another timeout for actual logout
+        const logoutTimeoutId = setTimeout(() => {
+          logout();
+        }, 5 * 60 * 1000); // 5 minutes
+
+        setSessionTimeoutId(logoutTimeoutId);
+      }, warningTime);
+
+      setSessionTimeoutId(timeoutId);
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [sessionTimeoutId]
+  );
 
   // Login function
-  const login = useCallback(async (credentials: AdminLoginRequest) => {
-    setIsLoading(true);
-    
-    try {
-      const response = await AdminService.login(credentials);
-      
-      if (response.success && response.data) {
-        const { admin: adminUser, expiresIn } = response.data;
-        const expiresAt = Date.now() + (expiresIn * 1000);
-        
-        setAdmin(adminUser);
-        setIsAuthenticated(true);
-        setupSessionTimeout(expiresAt);
-      } else {
-        throw new Error(response.error || "Login failed");
+  const login = useCallback(
+    async (credentials: AdminLoginRequest) => {
+      setIsLoading(true);
+
+      try {
+        const response = await AdminService.login(credentials);
+
+        if (response.success && response.data) {
+          const { admin: adminUser, expiresIn } = response.data;
+          const expiresAt = Date.now() + expiresIn * 1000;
+
+          setAdmin(adminUser);
+          setIsAuthenticated(true);
+          setupSessionTimeout(expiresAt);
+        } else {
+          throw new Error(response.error || "Login failed");
+        }
+      } catch (error) {
+        setAdmin(null);
+        setIsAuthenticated(false);
+        throw error;
+      } finally {
+        setIsLoading(false);
       }
-    } catch (error) {
-      setAdmin(null);
-      setIsAuthenticated(false);
-      throw error;
-    } finally {
-      setIsLoading(false);
-    }
-  }, [setupSessionTimeout]);
+    },
+    [setupSessionTimeout]
+  );
 
   // Logout function
   const logout = useCallback(async () => {
     setIsLoading(true);
-    
+
     try {
       await AdminService.logout();
     } catch (error) {
@@ -169,7 +177,7 @@ export const AdminProvider = ({ children }: AdminProviderProps) => {
         clearTimeout(sessionTimeoutId);
         setSessionTimeoutId(null);
       }
-      
+
       setAdmin(null);
       setIsAuthenticated(false);
       setIsLoading(false);
@@ -178,21 +186,29 @@ export const AdminProvider = ({ children }: AdminProviderProps) => {
 
   // Refresh session function (disabled since backend doesn't support refresh tokens)
   const refreshSession = useCallback(async () => {
-    console.log('[AdminContext] Refresh session attempted, but backend does not support refresh tokens');
+    console.log(
+      "[AdminContext] Refresh session attempted, but backend does not support refresh tokens"
+    );
 
     // Backend doesn't support refresh tokens, so just logout
     await logout();
   }, [logout]);
 
   // Permission checking utility
-  const hasPermission = useCallback((permission: string): boolean => {
-    if (!admin || !admin.permissions) {
-      return false;
-    }
-    
-    // Check if admin has the specific permission
-    return admin.permissions.includes(permission) || admin.permissions.includes('*');
-  }, [admin]);
+  const hasPermission = useCallback(
+    (permission: string): boolean => {
+      if (!admin || !admin.permissions) {
+        return false;
+      }
+
+      // Check if admin has the specific permission
+      return (
+        admin.permissions.includes(permission) ||
+        admin.permissions.includes("*")
+      );
+    },
+    [admin]
+  );
 
   // Get current token
   const getToken = useCallback((): string | null => {

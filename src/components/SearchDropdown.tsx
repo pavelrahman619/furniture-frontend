@@ -25,7 +25,6 @@ const SearchDropdown = ({
 }: SearchDropdownProps) => {
   // Limit to 6 products for preview
   const previewProducts = products.slice(0, 6);
-  const hasMoreResults = products.length > 6 || (totalCount && totalCount > 6);
 
   if (isLoading) {
     return (
@@ -148,4 +147,3 @@ const SearchResultItem = ({ product, onClose }: SearchResultItemProps) => {
 };
 
 export default SearchDropdown;
-

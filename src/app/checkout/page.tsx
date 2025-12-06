@@ -6,7 +6,6 @@ import Link from "next/link";
 import { ChevronLeft, CreditCard, Lock } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { useRouter } from "next/navigation";
-import OrderService from "@/services/order.service";
 import DeliveryService, { AddressData } from "@/services/delivery.service";
 
 interface ShippingInfo {
@@ -500,8 +499,9 @@ const CheckoutPage = () => {
                     onChange={(e) =>
                       handleShippingChange("firstName", e.target.value)
                     }
-                    className={`w-full border ${errors.firstName ? "border-red-500" : "border-gray-300"
-                      } px-4 py-3 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent`}
+                    className={`w-full border ${
+                      errors.firstName ? "border-red-500" : "border-gray-300"
+                    } px-4 py-3 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent`}
                   />
                   {errors.firstName && (
                     <p className="text-red-500 text-sm mt-1">
@@ -519,8 +519,9 @@ const CheckoutPage = () => {
                     onChange={(e) =>
                       handleShippingChange("lastName", e.target.value)
                     }
-                    className={`w-full border ${errors.lastName ? "border-red-500" : "border-gray-300"
-                      } px-4 py-3 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent`}
+                    className={`w-full border ${
+                      errors.lastName ? "border-red-500" : "border-gray-300"
+                    } px-4 py-3 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent`}
                   />
                   {errors.lastName && (
                     <p className="text-red-500 text-sm mt-1">
@@ -538,8 +539,9 @@ const CheckoutPage = () => {
                     onChange={(e) =>
                       handleShippingChange("email", e.target.value)
                     }
-                    className={`w-full border ${errors.email ? "border-red-500" : "border-gray-300"
-                      } px-4 py-3 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent`}
+                    className={`w-full border ${
+                      errors.email ? "border-red-500" : "border-gray-300"
+                    } px-4 py-3 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent`}
                   />
                   {errors.email && (
                     <p className="text-red-500 text-sm mt-1">{errors.email}</p>
@@ -555,8 +557,9 @@ const CheckoutPage = () => {
                     onChange={(e) =>
                       handleShippingChange("phone", e.target.value)
                     }
-                    className={`w-full border ${errors.phone ? "border-red-500" : "border-gray-300"
-                      } px-4 py-3 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent`}
+                    className={`w-full border ${
+                      errors.phone ? "border-red-500" : "border-gray-300"
+                    } px-4 py-3 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent`}
                   />
                   {errors.phone && (
                     <p className="text-red-500 text-sm mt-1">{errors.phone}</p>
@@ -581,8 +584,9 @@ const CheckoutPage = () => {
                     onChange={(e) =>
                       handleShippingChange("address", e.target.value)
                     }
-                    className={`w-full border ${errors.address ? "border-red-500" : "border-gray-300"
-                      } px-4 py-3 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent`}
+                    className={`w-full border ${
+                      errors.address ? "border-red-500" : "border-gray-300"
+                    } px-4 py-3 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent`}
                   />
                   {errors.address && (
                     <p className="text-red-500 text-sm mt-1">
@@ -636,8 +640,9 @@ const CheckoutPage = () => {
                       onChange={(e) =>
                         handleShippingChange("zipCode", e.target.value)
                       }
-                      className={`w-full border ${errors.zipCode ? "border-red-500" : "border-gray-300"
-                        } px-4 py-3 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent`}
+                      className={`w-full border ${
+                        errors.zipCode ? "border-red-500" : "border-gray-300"
+                      } px-4 py-3 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent`}
                     />
                     {errors.zipCode && (
                       <p className="text-red-500 text-sm mt-1">
@@ -669,16 +674,17 @@ const CheckoutPage = () => {
                 <button
                   onClick={handleContinueToPayment}
                   disabled={isProcessing || isValidatingAddress}
-                  className={`w-full ${isProcessing || isValidatingAddress
-                    ? "bg-gray-400 cursor-not-allowed"
-                    : "bg-gray-900 hover:bg-gray-800"
-                    } text-white py-4 px-8 font-medium tracking-wider transition-colors`}
+                  className={`w-full ${
+                    isProcessing || isValidatingAddress
+                      ? "bg-gray-400 cursor-not-allowed"
+                      : "bg-gray-900 hover:bg-gray-800"
+                  } text-white py-4 px-8 font-medium tracking-wider transition-colors`}
                 >
                   {isValidatingAddress
                     ? "VALIDATING ADDRESS..."
                     : isProcessing
-                      ? "PROCESSING..."
-                      : "CONTINUE TO PAYMENT"}
+                    ? "PROCESSING..."
+                    : "CONTINUE TO PAYMENT"}
                 </button>
 
                 {validationSuccess && (
@@ -771,28 +777,31 @@ const CheckoutPage = () => {
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">Shipping</span>
                   <span
-                    className={`text-gray-900 ${isErrorState
-                      ? "text-red-600 font-medium"
-                      : currentShippingInfo?.isFree
+                    className={`text-gray-900 ${
+                      isErrorState
+                        ? "text-red-600 font-medium"
+                        : currentShippingInfo?.isFree
                         ? "text-green-600 font-medium"
                         : ""
-                      }`}
+                    }`}
                   >
                     {isErrorState
                       ? "Delivery not available for this location"
                       : deliveryInfo
-                        ? deliveryInfo.isFree
-                          ? "FREE DELIVERY!"
-                          : `$${deliveryInfo.cost.toLocaleString()}`
-                        : shippingEstimate
-                          ? shippingEstimate.loading
-                            ? "ESTIMATING..."
-                            : shippingEstimate.isFree
-                              ? `FREE DELIVERY!${shippingEstimate.isEstimate ? " (estimated)" : ""
-                              }`
-                              : `$${shippingEstimate.cost.toLocaleString()}${shippingEstimate.isEstimate ? " (estimated)" : ""
-                              }`
-                          : "Enter ZIP code for shipping estimate"}
+                      ? deliveryInfo.isFree
+                        ? "FREE DELIVERY!"
+                        : `$${deliveryInfo.cost.toLocaleString()}`
+                      : shippingEstimate
+                      ? shippingEstimate.loading
+                        ? "ESTIMATING..."
+                        : shippingEstimate.isFree
+                        ? `FREE DELIVERY!${
+                            shippingEstimate.isEstimate ? " (estimated)" : ""
+                          }`
+                        : `$${shippingEstimate.cost.toLocaleString()}${
+                            shippingEstimate.isEstimate ? " (estimated)" : ""
+                          }`
+                      : "Enter ZIP code for shipping estimate"}
                   </span>
                 </div>
                 <div className="flex justify-between text-sm">

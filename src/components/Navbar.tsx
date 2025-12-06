@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter, usePathname } from "next/navigation";
 import {
   Search,
@@ -227,10 +228,13 @@ const Navbar = () => {
               href="/"
               className="flex items-center hover:opacity-80 transition-opacity duration-200"
             >
-              <img
+              <Image
                 src="/furniture/logo.svg"
                 alt="PALACIOS HOME"
+                width={160}
+                height={56}
                 className="h-14 w-auto object-contain"
+                priority
               />
             </Link>
           </div>

@@ -10,11 +10,15 @@ import {
   ImageIcon,
   Type,
   MousePointer,
-  Package,
-  ClipboardList,
 } from "lucide-react";
-import { ContentService, ContentServiceError } from "@/services/content.service";
-import type { HeroContent, SaleSectionContent } from "@/services/content.service";
+import {
+  ContentService,
+  ContentServiceError,
+} from "@/services/content.service";
+import type {
+  HeroContent,
+  SaleSectionContent,
+} from "@/services/content.service";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import ErrorMessage from "@/components/ErrorMessage";
 import { ToastProvider, useToast } from "@/components/ToastProvider";
@@ -68,22 +72,27 @@ function ContentManagementPageContent() {
   const loadContent = async () => {
     try {
       setIsLoading(true);
-      setLoadingStates(prev => ({ ...prev, initial: true }));
+      setLoadingStates((prev) => ({ ...prev, initial: true }));
       setError(null);
 
       // Get auth token from localStorage if available
       const token = localStorage.getItem("auth-token");
 
-      const contentData = await ContentService.getAllContent(token || undefined);
+      const contentData = await ContentService.getAllContent(
+        token || undefined
+      );
       setContent(contentData);
 
       showSuccess("Content loaded successfully");
     } catch (error) {
       console.error("Error loading content:", error);
 
-      const serviceError = error instanceof ContentServiceError
-        ? error
-        : new ContentServiceError("Failed to load content. Using default values.");
+      const serviceError =
+        error instanceof ContentServiceError
+          ? error
+          : new ContentServiceError(
+              "Failed to load content. Using default values."
+            );
 
       setError(serviceError);
       setContent(defaultContent);
@@ -98,7 +107,7 @@ function ContentManagementPageContent() {
       }
     } finally {
       setIsLoading(false);
-      setLoadingStates(prev => ({ ...prev, initial: false }));
+      setLoadingStates((prev) => ({ ...prev, initial: false }));
     }
   };
 
@@ -119,7 +128,7 @@ function ContentManagementPageContent() {
 
   // Save content via API with granular loading states
   const handleSave = async () => {
-    setLoadingStates(prev => ({
+    setLoadingStates((prev) => ({
       ...prev,
       hero: { saving: true },
       saleSection: { saving: true },
@@ -148,26 +157,28 @@ function ContentManagementPageContent() {
       let hasErrors = false;
       const errorMessages: string[] = [];
 
-      if (heroResult.status === 'rejected') {
+      if (heroResult.status === "rejected") {
         hasErrors = true;
-        const error = heroResult.reason instanceof ContentServiceError
-          ? heroResult.reason
-          : new ContentServiceError("Failed to update hero content");
+        const error =
+          heroResult.reason instanceof ContentServiceError
+            ? heroResult.reason
+            : new ContentServiceError("Failed to update hero content");
         errorMessages.push(`Hero section: ${error.message}`);
       }
 
-      if (saleResult.status === 'rejected') {
+      if (saleResult.status === "rejected") {
         hasErrors = true;
-        const error = saleResult.reason instanceof ContentServiceError
-          ? saleResult.reason
-          : new ContentServiceError("Failed to update sale section content");
+        const error =
+          saleResult.reason instanceof ContentServiceError
+            ? saleResult.reason
+            : new ContentServiceError("Failed to update sale section content");
         errorMessages.push(`Sale section: ${error.message}`);
       }
 
       if (hasErrors) {
         const combinedError = new ContentServiceError(
-          errorMessages.join('; '),
-          'PARTIAL_SAVE_ERROR',
+          errorMessages.join("; "),
+          "PARTIAL_SAVE_ERROR",
           undefined,
           true
         );
@@ -190,14 +201,15 @@ function ContentManagementPageContent() {
     } catch (error) {
       console.error("Error saving content:", error);
 
-      const serviceError = error instanceof ContentServiceError
-        ? error
-        : new ContentServiceError("Error saving content. Please try again.");
+      const serviceError =
+        error instanceof ContentServiceError
+          ? error
+          : new ContentServiceError("Error saving content. Please try again.");
 
       setError(serviceError);
       showError("Save failed", serviceError.message);
     } finally {
-      setLoadingStates(prev => ({
+      setLoadingStates((prev) => ({
         ...prev,
         hero: { saving: false },
         saleSection: { saving: false },
@@ -207,38 +219,48 @@ function ContentManagementPageContent() {
 
   // Save individual sections
   const handleSaveHero = async () => {
-    setLoadingStates(prev => ({
+    setLoadingStates((prev) => ({
       ...prev,
       hero: { saving: true },
     }));
 
     try {
       const token = localStorage.getItem("auth-token");
-      const updatedHeroContent = await ContentService.updateHeroContent(content.hero, "#", token || undefined);
+      const updatedHeroContent = await ContentService.updateHeroContent(
+        content.hero,
+        "#",
+        token || undefined
+      );
 
       showSuccess("Hero section saved successfully!");
 
       // Update local state with the response
-      setContent(prev => ({ ...prev, hero: updatedHeroContent }));
+      setContent((prev) => ({ ...prev, hero: updatedHeroContent }));
 
       // Save updated content to localStorage
       const updatedContent = { ...content, hero: updatedHeroContent };
-      localStorage.setItem("landing-page-content", JSON.stringify(updatedContent));
+      localStorage.setItem(
+        "landing-page-content",
+        JSON.stringify(updatedContent)
+      );
 
       // Dispatch event for this section
       window.dispatchEvent(
-        new CustomEvent("contentUpdated", { detail: { hero: updatedHeroContent } })
+        new CustomEvent("contentUpdated", {
+          detail: { hero: updatedHeroContent },
+        })
       );
     } catch (error) {
       console.error("Error saving hero content:", error);
 
-      const serviceError = error instanceof ContentServiceError
-        ? error
-        : new ContentServiceError("Failed to save hero content");
+      const serviceError =
+        error instanceof ContentServiceError
+          ? error
+          : new ContentServiceError("Failed to save hero content");
 
       showError("Hero save failed", serviceError.message);
     } finally {
-      setLoadingStates(prev => ({
+      setLoadingStates((prev) => ({
         ...prev,
         hero: { saving: false },
       }));
@@ -246,43 +268,56 @@ function ContentManagementPageContent() {
   };
 
   const handleSaveSaleSection = async () => {
-    setLoadingStates(prev => ({
+    setLoadingStates((prev) => ({
       ...prev,
       saleSection: { saving: true },
     }));
 
     try {
       const token = localStorage.getItem("auth-token");
-      const updatedSaleSectionContent = await ContentService.updateSaleSectionContentLocal(
-        content.saleSection,
-        "",
-        [],
-        token || undefined
-      );
+      const updatedSaleSectionContent =
+        await ContentService.updateSaleSectionContentLocal(
+          content.saleSection,
+          "",
+          [],
+          token || undefined
+        );
 
       showSuccess("Sale section saved successfully!");
 
       // Update local state with the response
-      setContent(prev => ({ ...prev, saleSection: updatedSaleSectionContent }));
+      setContent((prev) => ({
+        ...prev,
+        saleSection: updatedSaleSectionContent,
+      }));
 
       // Save updated content to localStorage
-      const updatedContent = { ...content, saleSection: updatedSaleSectionContent };
-      localStorage.setItem("landing-page-content", JSON.stringify(updatedContent));
+      const updatedContent = {
+        ...content,
+        saleSection: updatedSaleSectionContent,
+      };
+      localStorage.setItem(
+        "landing-page-content",
+        JSON.stringify(updatedContent)
+      );
 
       // Dispatch event for this section
       window.dispatchEvent(
-        new CustomEvent("contentUpdated", { detail: { saleSection: updatedSaleSectionContent } })
+        new CustomEvent("contentUpdated", {
+          detail: { saleSection: updatedSaleSectionContent },
+        })
       );
     } catch (error) {
       console.error("Error saving sale section content:", error);
 
-      const serviceError = error instanceof ContentServiceError
-        ? error
-        : new ContentServiceError("Failed to save sale section content");
+      const serviceError =
+        error instanceof ContentServiceError
+          ? error
+          : new ContentServiceError("Failed to save sale section content");
 
       showError("Sale section save failed", serviceError.message);
     } finally {
-      setLoadingStates(prev => ({
+      setLoadingStates((prev) => ({
         ...prev,
         saleSection: { saving: false },
       }));
@@ -296,7 +331,10 @@ function ContentManagementPageContent() {
     ) {
       setContent(defaultContent);
       setError(null);
-      showWarning("Content reset to default values", "Remember to save your changes.");
+      showWarning(
+        "Content reset to default values",
+        "Remember to save your changes."
+      );
     }
   };
 
@@ -311,7 +349,9 @@ function ContentManagementPageContent() {
         <div className="text-center">
           <LoadingSpinner size="lg" color="blue" className="mx-auto mb-4" />
           <p className="text-gray-600">Loading content...</p>
-          <p className="text-sm text-gray-500 mt-2">This may take a few moments</p>
+          <p className="text-sm text-gray-500 mt-2">
+            This may take a few moments
+          </p>
         </div>
       </div>
     );
@@ -354,10 +394,14 @@ function ContentManagementPageContent() {
                 </button>
                 <button
                   onClick={handleSave}
-                  disabled={loadingStates.hero.saving || loadingStates.saleSection.saving}
+                  disabled={
+                    loadingStates.hero.saving ||
+                    loadingStates.saleSection.saving
+                  }
                   className="flex items-center px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {(loadingStates.hero.saving || loadingStates.saleSection.saving) ? (
+                  {loadingStates.hero.saving ||
+                  loadingStates.saleSection.saving ? (
                     <>
                       <LoadingSpinner size="sm" color="gray" className="mr-2" />
                       Saving...
@@ -399,7 +443,8 @@ function ContentManagementPageContent() {
                         Hero Section
                       </h2>
                       <p className="text-sm text-gray-600">
-                        Main banner content displayed at the top of the landing page
+                        Main banner content displayed at the top of the landing
+                        page
                       </p>
                     </div>
                   </div>
@@ -410,7 +455,11 @@ function ContentManagementPageContent() {
                   >
                     {loadingStates.hero.saving ? (
                       <>
-                        <LoadingSpinner size="sm" color="gray" className="mr-2" />
+                        <LoadingSpinner
+                          size="sm"
+                          color="gray"
+                          className="mr-2"
+                        />
                         Saving...
                       </>
                     ) : (
@@ -432,12 +481,16 @@ function ContentManagementPageContent() {
                       </label>
                       <ImageUpload
                         currentImage={content.hero.backgroundImage}
-                        onImageChange={(url) => handleContentChange("hero", "backgroundImage", url)}
-                        onImageRemove={() => handleContentChange("hero", "backgroundImage", "")}
+                        onImageChange={(url) =>
+                          handleContentChange("hero", "backgroundImage", url)
+                        }
+                        onImageRemove={() =>
+                          handleContentChange("hero", "backgroundImage", "")
+                        }
                         uploadOptions={{
-                          folder: 'HERO_IMAGES',
-                          transformation: 'HERO_BANNER',
-                          tags: ['hero', 'content'],
+                          folder: "HERO_IMAGES",
+                          transformation: "HERO_BANNER",
+                          tags: ["hero", "content"],
                         }}
                         placeholder="Upload hero background image"
                         disabled={loadingStates.hero.saving}
@@ -496,7 +549,7 @@ function ContentManagementPageContent() {
                           fill
                           sizes="(max-width: 768px) 100vw, 33vw"
                           className="object-cover"
-                          onError={() => { }}
+                          onError={() => {}}
                         />
                       )}
                       <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
@@ -526,7 +579,8 @@ function ContentManagementPageContent() {
                         Sale Section
                       </h2>
                       <p className="text-sm text-gray-600">
-                        Promotional section content displayed on the landing page
+                        Promotional section content displayed on the landing
+                        page
                       </p>
                     </div>
                   </div>
@@ -537,7 +591,11 @@ function ContentManagementPageContent() {
                   >
                     {loadingStates.saleSection.saving ? (
                       <>
-                        <LoadingSpinner size="sm" color="gray" className="mr-2" />
+                        <LoadingSpinner
+                          size="sm"
+                          color="gray"
+                          className="mr-2"
+                        />
                         Saving...
                       </>
                     ) : (
@@ -559,12 +617,24 @@ function ContentManagementPageContent() {
                       </label>
                       <ImageUpload
                         currentImage={content.saleSection.backgroundImage}
-                        onImageChange={(url) => handleContentChange("saleSection", "backgroundImage", url)}
-                        onImageRemove={() => handleContentChange("saleSection", "backgroundImage", "")}
+                        onImageChange={(url) =>
+                          handleContentChange(
+                            "saleSection",
+                            "backgroundImage",
+                            url
+                          )
+                        }
+                        onImageRemove={() =>
+                          handleContentChange(
+                            "saleSection",
+                            "backgroundImage",
+                            ""
+                          )
+                        }
                         uploadOptions={{
-                          folder: 'SALE_IMAGES',
-                          transformation: 'SALE_BANNER',
-                          tags: ['sale', 'content'],
+                          folder: "SALE_IMAGES",
+                          transformation: "SALE_BANNER",
+                          tags: ["sale", "content"],
                         }}
                         placeholder="Upload sale section background image"
                         disabled={loadingStates.saleSection.saving}
@@ -627,7 +697,7 @@ function ContentManagementPageContent() {
                           fill
                           sizes="(max-width: 768px) 100vw, 33vw"
                           className="object-cover"
-                          onError={() => { }}
+                          onError={() => {}}
                         />
                       )}
                       <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
@@ -663,7 +733,7 @@ function ContentManagementPageContent() {
                       fill
                       sizes="(max-width: 768px) 100vw, 33vw"
                       className="object-cover"
-                      onError={() => { }}
+                      onError={() => {}}
                     />
                   )}
                   <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
@@ -693,7 +763,7 @@ function ContentManagementPageContent() {
                       alt="Sale section background preview"
                       fill
                       className="object-cover"
-                      onError={() => { }}
+                      onError={() => {}}
                     />
                   )}
                   <div className="absolute inset-0 bg-black/20 flex items-center justify-center">

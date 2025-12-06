@@ -1,28 +1,18 @@
 "use client";
 
-import { useState } from "react";
 import { Instagram, Facebook, Linkedin } from "lucide-react";
 
 const Footer = () => {
-  const [email, setEmail] = useState("");
-
   // First column links
-  const firstColumnLinks = [
-    "About us",
-    "Contact us", 
-    "Terms and conditions"
-  ];
+  const firstColumnLinks = ["About us", "Contact us", "Terms and conditions"];
 
   // Second column links
-  const secondColumnLinks = [
-    "Privacy policy",
-    "Delivery policy"
-  ];
+  const secondColumnLinks = ["Privacy policy", "Delivery policy"];
 
   // Third column links - email links
   const thirdColumnLinks = [
     { text: "Collaborate with us", email: "info@palacioshomeco.com" },
-    { text: "Press inquiries", email: "info@palacioshomeco.com" }
+    { text: "Press inquiries", email: "info@palacioshomeco.com" },
   ];
 
   // Commented out - not needed
@@ -60,13 +50,6 @@ const Footer = () => {
   //   "Dallas Tour",
   //   "Los Angeles Tour",
   // ];
-
-  const handleEmailSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Handle newsletter signup
-    console.log("Newsletter signup:", email);
-    setEmail("");
-  };
 
   return (
     <footer className="bg-gray-800 text-white">
@@ -149,11 +132,12 @@ const Footer = () => {
                 Address:
               </h3>
               <p className="text-sm text-gray-400">
-                500 W 7th St<br />
+                500 W 7th St
+                <br />
                 Los Angeles, CA 90014
               </p>
             </div>
-            
+
             {/* Phone */}
             <div>
               <h3 className="text-sm font-semibold tracking-wider text-gray-300 uppercase mb-2">
@@ -172,29 +156,29 @@ const Footer = () => {
               <h3 className="text-sm font-semibold tracking-wider text-gray-300 uppercase mb-2">
                 Follow Us:
               </h3>
-            <div className="flex space-x-4">
-              <a
-                href="https://www.instagram.com/palacioshomeco?igsh=NTc4MTIwNjQ2YQ%3D%3D&utm_source=qr"
-                className="text-gray-400 hover:text-white transition-colors duration-200"
-                aria-label="Instagram"
-              >
-                <Instagram className="h-6 w-6" />
-              </a>
-              <a
-                href="https://www.facebook.com/profile.php?id=61576768246518&mibextid=wwXIfr"
-                className="text-gray-400 hover:text-white transition-colors duration-200"
-                aria-label="Facebook"
-              >
-                <Facebook className="h-6 w-6" />
-              </a>
-              <a
-                href="#"
-                className="text-gray-400 hover:text-white transition-colors duration-200"
-                aria-label="LinkedIn"
-              >
-                <Linkedin className="h-6 w-6" />
-              </a>
-            </div>
+              <div className="flex space-x-4">
+                <a
+                  href="https://www.instagram.com/palacioshomeco?igsh=NTc4MTIwNjQ2YQ%3D%3D&utm_source=qr"
+                  className="text-gray-400 hover:text-white transition-colors duration-200"
+                  aria-label="Instagram"
+                >
+                  <Instagram className="h-6 w-6" />
+                </a>
+                <a
+                  href="https://www.facebook.com/profile.php?id=61576768246518&mibextid=wwXIfr"
+                  className="text-gray-400 hover:text-white transition-colors duration-200"
+                  aria-label="Facebook"
+                >
+                  <Facebook className="h-6 w-6" />
+                </a>
+                <a
+                  href="#"
+                  className="text-gray-400 hover:text-white transition-colors duration-200"
+                  aria-label="LinkedIn"
+                >
+                  <Linkedin className="h-6 w-6" />
+                </a>
+              </div>
             </div>
           </div>
 

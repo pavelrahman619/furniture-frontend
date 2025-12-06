@@ -1,16 +1,18 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
-import { X, Save, ArrowLeft, Upload, Loader2 } from "lucide-react";
+import { Save, ArrowLeft, Loader2 } from "lucide-react";
 import { useAdmin } from "@/contexts/AdminContext";
 import { useUpdateProduct } from "@/hooks/useAdminProducts";
 import AdminGuard from "@/components/AdminGuard";
 import { ProductService } from "@/services/product.service";
-import { uploadImageToCloudinary, validateImageFile } from "@/lib/cloudinary-utils";
-import { UpdateProductRequest, ProductImage, ProductVariant } from "@/types/product.types";
+import {
+  UpdateProductRequest,
+  ProductImage,
+  ProductVariant,
+} from "@/types/product.types";
 import { useToast } from "@/contexts/ToastContext";
 import VariantManager from "@/components/VariantManager";
 import { fetchCategories } from "@/services/category.service";
@@ -53,12 +55,12 @@ export default function EditProductPage() {
 
   const [formData, setFormData] = useState<ProductFormData | null>(null);
   const [errors, setErrors] = useState<FormErrors>({});
-  const [isUploading, setIsUploading] = useState(false);
+  const [isUploading] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
 
   const { data: categories = [], isLoading: isCategoriesLoading } = useQuery({
-    queryKey: ['categories'],
+    queryKey: ["categories"],
     queryFn: fetchCategories,
   });
 
@@ -74,9 +76,10 @@ export default function EditProductPage() {
         const product = await ProductService.getProduct(productId);
 
         // Transform product data to form format
-        const categoryId = typeof product.category_id === 'string'
-          ? product.category_id
-          : product.category_id._id;
+        const categoryId =
+          typeof product.category_id === "string"
+            ? product.category_id
+            : product.category_id._id;
 
         setFormData({
           name: product.name,
@@ -91,8 +94,8 @@ export default function EditProductPage() {
           variants: product.variants || [],
         });
       } catch (error) {
-        console.error('Failed to load product:', error);
-        setLoadError('Failed to load product data. Please try again.');
+        console.error("Failed to load product:", error);
+        setLoadError("Failed to load product data. Please try again.");
       } finally {
         setIsLoading(false);
       }
@@ -108,10 +111,14 @@ export default function EditProductPage() {
   ) => {
     if (!formData) return;
 
-    setFormData((prev) => prev ? ({
-      ...prev,
-      [field]: value,
-    }) : null);
+    setFormData((prev) =>
+      prev
+        ? {
+            ...prev,
+            [field]: value,
+          }
+        : null
+    );
 
     // Clear error for this field if it exists in FormErrors
     if (field in errors) {
@@ -127,92 +134,6 @@ export default function EditProductPage() {
     handleFieldChange("variants", variants);
   };
 
-  // Handle image upload
-  const handleImageUpload = async (file: File, index?: number) => {
-    if (!formData) return;
-
-    const validation = validateImageFile(file);
-    if (!validation.valid) {
-      setErrors((prev) => ({
-        ...prev,
-        images: validation.error,
-      }));
-      return;
-    }
-
-    setIsUploading(true);
-
-    try {
-      const result = await uploadImageToCloudinary(file, {
-        folder: 'PRODUCT_IMAGES',
-        tags: ['product', 'admin'],
-      });
-
-      if (result.success && result.url) {
-        const newImage: ProductImage = {
-          url: result.url,
-          alt: formData.name || 'Product image',
-          is_primary: formData.images.length === 0, // First image is primary
-        };
-
-        if (index !== undefined) {
-          // Replace existing image
-          setFormData((prev) => prev ? ({
-            ...prev,
-            images: prev.images.map((img, i) => (i === index ? newImage : img)),
-          }) : null);
-        } else {
-          // Add new image
-          setFormData((prev) => prev ? ({
-            ...prev,
-            images: [...prev.images, newImage],
-          }) : null);
-        }
-
-        // Clear any image errors
-        setErrors((prev) => ({
-          ...prev,
-          images: undefined,
-        }));
-      } else {
-        setErrors((prev) => ({
-          ...prev,
-          images: result.error || 'Failed to upload image',
-        }));
-      }
-    } catch {
-      setErrors((prev) => ({
-        ...prev,
-        images: 'Failed to upload image',
-      }));
-    } finally {
-      setIsUploading(false);
-    }
-  };
-
-  // Remove image
-  const removeImage = (index: number) => {
-    if (!formData) return;
-
-    setFormData((prev) => prev ? ({
-      ...prev,
-      images: prev.images.filter((_, i) => i !== index),
-    }) : null);
-  };
-
-  // Set primary image
-  const setPrimaryImage = (index: number) => {
-    if (!formData) return;
-
-    setFormData((prev) => prev ? ({
-      ...prev,
-      images: prev.images.map((img, i) => ({
-        ...img,
-        is_primary: i === index,
-      })),
-    }) : null);
-  };
-
   // Form validation
   const validateForm = (): boolean => {
     if (!formData) return false;
@@ -220,15 +141,15 @@ export default function EditProductPage() {
     const newErrors: FormErrors = {};
 
     if (!formData.name.trim()) {
-      newErrors.name = 'Product name is required';
+      newErrors.name = "Product name is required";
     }
 
     if (!formData.category_id) {
-      newErrors.category_id = 'Category is required';
+      newErrors.category_id = "Category is required";
     }
 
     if (!formData.description.trim()) {
-      newErrors.description = 'Description is required';
+      newErrors.description = "Description is required";
     }
 
     // DEPRECATED: Product-level images validation removed
@@ -239,30 +160,32 @@ export default function EditProductPage() {
 
     // Require at least one variant
     if (formData.variants.length === 0) {
-      newErrors.variants = 'At least one product variant is required';
+      newErrors.variants = "At least one product variant is required";
     } else {
       // Validate that variation type is selected if variants exist
       if (!formData.variation || !formData.variation.trim()) {
-        newErrors.variation = 'Variation type is required when variants exist';
+        newErrors.variation = "Variation type is required when variants exist";
       }
 
       // Validate variants if any exist
-      const variantSkus = formData.variants.map(v => v.sku);
-      const duplicateSkus = variantSkus.filter((sku, index) => variantSkus.indexOf(sku) !== index);
+      const variantSkus = formData.variants.map((v) => v.sku);
+      const duplicateSkus = variantSkus.filter(
+        (sku, index) => variantSkus.indexOf(sku) !== index
+      );
 
       if (duplicateSkus.length > 0) {
-        newErrors.variants = 'Variant SKUs must be unique';
+        newErrors.variants = "Variant SKUs must be unique";
       }
 
       // Check for variants with invalid data
-      const invalidVariants = formData.variants.some(variant =>
-        !variant.sku.trim() ||
-        variant.price <= 0 ||
-        variant.stock < 0
+      const invalidVariants = formData.variants.some(
+        (variant) =>
+          !variant.sku.trim() || variant.price <= 0 || variant.stock < 0
       );
 
       if (invalidVariants) {
-        newErrors.variants = 'All variants must have valid SKU, price, and non-negative stock';
+        newErrors.variants =
+          "All variants must have valid SKU, price, and non-negative stock";
       }
     }
 
@@ -275,7 +198,7 @@ export default function EditProductPage() {
     e.preventDefault();
 
     if (!isAuthenticated || !token || !formData) {
-      setErrors({ name: 'You must be logged in to update products' });
+      setErrors({ name: "You must be logged in to update products" });
       return;
     }
 
@@ -305,16 +228,16 @@ export default function EditProductPage() {
 
       // Success - show notification and redirect to products list
       success(
-        'Product Updated Successfully',
+        "Product Updated Successfully",
         `${formData.name} has been updated in your product catalog.`
       );
 
-      router.push('/admin/products');
+      router.push("/admin/products");
     } catch (err) {
-      console.error('Failed to update product:', err);
+      console.error("Failed to update product:", err);
       error(
-        'Failed to Update Product',
-        'There was an error updating the product. Please try again.'
+        "Failed to Update Product",
+        "There was an error updating the product. Please try again."
       );
     }
   };
@@ -351,7 +274,7 @@ export default function EditProductPage() {
                 Error Loading Product
               </h3>
               <p className="text-gray-600 mb-6">
-                {loadError || 'Product not found or failed to load.'}
+                {loadError || "Product not found or failed to load."}
               </p>
               <div className="space-x-4">
                 <button
@@ -406,7 +329,9 @@ export default function EditProductPage() {
                   ) : (
                     <Save className="h-4 w-4 mr-2" />
                   )}
-                  {updateProductMutation.isPending ? 'Updating...' : 'Update Product'}
+                  {updateProductMutation.isPending
+                    ? "Updating..."
+                    : "Update Product"}
                 </button>
               </div>
             </div>
@@ -420,7 +345,8 @@ export default function EditProductPage() {
                   Basic Information
                 </h2>
                 <p className="text-sm text-gray-600 mt-1">
-                  Edit the core product details. SKU, price, and stock are managed at the variant level.
+                  Edit the core product details. SKU, price, and stock are
+                  managed at the variant level.
                 </p>
               </div>
 
@@ -432,8 +358,9 @@ export default function EditProductPage() {
                   type="text"
                   value={formData.name}
                   onChange={(e) => handleFieldChange("name", e.target.value)}
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors.name ? 'border-red-300' : 'border-gray-300'
-                    }`}
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                    errors.name ? "border-red-300" : "border-gray-300"
+                  }`}
                   placeholder="Enter product name"
                 />
                 {errors.name && (
@@ -447,13 +374,18 @@ export default function EditProductPage() {
                 </label>
                 <select
                   value={formData.category_id}
-                  onChange={(e) => handleFieldChange("category_id", e.target.value)}
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors.category_id ? 'border-red-300' : 'border-gray-300'
-                    }`}
+                  onChange={(e) =>
+                    handleFieldChange("category_id", e.target.value)
+                  }
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                    errors.category_id ? "border-red-300" : "border-gray-300"
+                  }`}
                   disabled={isCategoriesLoading}
                 >
                   <option value="">
-                    {isCategoriesLoading ? "Loading categories..." : "Select category"}
+                    {isCategoriesLoading
+                      ? "Loading categories..."
+                      : "Select category"}
                   </option>
                   {categories.map((category) => (
                     <option key={category.id} value={category.id}>
@@ -462,7 +394,9 @@ export default function EditProductPage() {
                   ))}
                 </select>
                 {errors.category_id && (
-                  <p className="mt-1 text-sm text-red-600">{errors.category_id}</p>
+                  <p className="mt-1 text-sm text-red-600">
+                    {errors.category_id}
+                  </p>
                 )}
               </div>
 
@@ -487,14 +421,19 @@ export default function EditProductPage() {
                 </label>
                 <textarea
                   value={formData.description}
-                  onChange={(e) => handleFieldChange("description", e.target.value)}
+                  onChange={(e) =>
+                    handleFieldChange("description", e.target.value)
+                  }
                   rows={4}
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors.description ? 'border-red-300' : 'border-gray-300'
-                    }`}
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                    errors.description ? "border-red-300" : "border-gray-300"
+                  }`}
                   placeholder="Enter product description"
                 />
                 {errors.description && (
-                  <p className="mt-1 text-sm text-red-600">{errors.description}</p>
+                  <p className="mt-1 text-sm text-red-600">
+                    {errors.description}
+                  </p>
                 )}
               </div>
             </div>
@@ -611,14 +550,28 @@ export default function EditProductPage() {
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
               <div className="flex items-start">
                 <div className="flex-shrink-0">
-                  <svg className="h-5 w-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                  <svg
+                    className="h-5 w-5 text-blue-600"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                      clipRule="evenodd"
+                    />
                   </svg>
                 </div>
                 <div className="ml-3">
-                  <h3 className="text-sm font-medium text-blue-800">Product Images</h3>
+                  <h3 className="text-sm font-medium text-blue-800">
+                    Product Images
+                  </h3>
                   <p className="mt-1 text-sm text-blue-700">
-                    Product images are now managed at the variant level. Please add images to each variant in the <strong>Product Variants</strong> section below. This allows each variant (size, color, material) to have its own specific images.
+                    Product images are now managed at the variant level. Please
+                    add images to each variant in the{" "}
+                    <strong>Product Variants</strong> section below. This allows
+                    each variant (size, color, material) to have its own
+                    specific images.
                   </p>
                 </div>
               </div>
@@ -630,7 +583,9 @@ export default function EditProductPage() {
                 variants={formData.variants}
                 onVariantsChange={handleVariantsChange}
                 selectedVariation={formData.variation}
-                onVariationChange={(variation) => handleFieldChange("variation", variation)}
+                onVariationChange={(variation) =>
+                  handleFieldChange("variation", variation)
+                }
                 isEditing={true}
                 errors={{
                   ...(errors.variants ? { variants: errors.variants } : {}),

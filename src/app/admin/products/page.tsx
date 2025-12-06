@@ -21,11 +21,13 @@ import {
 import { useAdmin } from "@/contexts/AdminContext";
 import { useAdminProducts, useDeleteProduct } from "@/hooks/useAdminProducts";
 import AdminGuard from "@/components/AdminGuard";
-import { ProductTableSkeleton } from "@/components/ProductTableSkeleton";
 import { ProductsError } from "@/components/ProductsError";
 import { DeleteProductDialog } from "@/components/DeleteProductDialog";
 import { useToast } from "@/contexts/ToastContext";
-import { Product as ApiProduct, ProductsQueryParams } from "@/types/product.types";
+import {
+  Product as ApiProduct,
+  ProductsQueryParams,
+} from "@/types/product.types";
 import { ProductService } from "@/services/product.service";
 
 // Product interface for table display (transformed from API data)
@@ -44,18 +46,24 @@ interface Product {
 
 // Transform API product to display product
 const transformApiProduct = (apiProduct: ApiProduct): Product => {
-  const totalStock = (apiProduct.variants || []).reduce((sum, variant) => sum + (variant.stock || 0), 0);
+  const totalStock = (apiProduct.variants || []).reduce(
+    (sum, variant) => sum + (variant.stock || 0),
+    0
+  );
 
   // Priority: First variant's primary image > First variant's first image > Product-level images (fallback for backwards compatibility)
-  let imageUrl = "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80";
-  
+  let imageUrl =
+    "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80";
+
   // Try to get image from first variant
   if (apiProduct.variants && apiProduct.variants.length > 0) {
     const firstVariant = apiProduct.variants[0];
     if (firstVariant.images && firstVariant.images.length > 0) {
-      const variantPrimaryImage = firstVariant.images.find(img => img.is_primary);
+      const variantPrimaryImage = firstVariant.images.find(
+        (img) => img.is_primary
+      );
       const variantFirstImage = firstVariant.images[0];
-      
+
       if (variantPrimaryImage?.url) {
         imageUrl = variantPrimaryImage.url;
       } else if (variantFirstImage?.url) {
@@ -63,27 +71,36 @@ const transformApiProduct = (apiProduct: ApiProduct): Product => {
       }
     }
   }
-  
+
   // Fallback to product-level images (for backwards compatibility with existing products)
-  if (imageUrl === "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80") {
-    const primaryImage = apiProduct.images?.find(img => img.is_primary) || apiProduct.images?.[0];
+  if (
+    imageUrl ===
+    "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80"
+  ) {
+    const primaryImage =
+      apiProduct.images?.find((img) => img.is_primary) ||
+      apiProduct.images?.[0];
     if (primaryImage?.url) {
       imageUrl = primaryImage.url;
     }
   }
 
   // Extract category ID only
-  let categoryId = '';
-  if (typeof apiProduct.category_id === 'object' && apiProduct.category_id?._id) {
+  let categoryId = "";
+  if (
+    typeof apiProduct.category_id === "object" &&
+    apiProduct.category_id?._id
+  ) {
     categoryId = apiProduct.category_id._id;
-  } else if (typeof apiProduct.category_id === 'string') {
+  } else if (typeof apiProduct.category_id === "string") {
     categoryId = apiProduct.category_id;
   }
 
   // Get SKU from first variant, fallback to product SKU
-  const sku = apiProduct.variants && apiProduct.variants.length > 0
-    ? apiProduct.variants[0].sku
-    : apiProduct.sku;
+  const sku =
+    apiProduct.variants && apiProduct.variants.length > 0
+      ? apiProduct.variants[0].sku
+      : apiProduct.sku;
 
   return {
     id: apiProduct._id,
@@ -115,7 +132,7 @@ export default function ProductsPage() {
     setMounted(true);
   }, []);
   // Admin authentication
-  const { getToken, isAuthenticated } = useAdmin();
+  const { getToken } = useAdmin();
   const token = getToken();
 
   // Toast notifications
@@ -166,7 +183,6 @@ export default function ProductsPage() {
   // Fetch products from API
   const {
     data: apiResponse,
-    isLoading,
     error: productsError,
     refetch,
     isRefetching,
@@ -187,51 +203,68 @@ export default function ProductsPage() {
       return apiResponse.filters_available.categories;
     }
     // Fallback: extract unique category IDs from products (without names)
-    const uniqueCategoryIds = Array.from(new Set(products.map(p => p.categoryId).filter(Boolean)));
-    return uniqueCategoryIds.map(id => ({ id, name: id })); // Use ID as name fallback
+    const uniqueCategoryIds = Array.from(
+      new Set(products.map((p) => p.categoryId).filter(Boolean))
+    );
+    return uniqueCategoryIds.map((id) => ({ id, name: id })); // Use ID as name fallback
   }, [apiResponse, products]);
 
   // Helper function to get category name by ID
-  const getCategoryName = useCallback((categoryId: string) => {
-    const category = categories.find(cat => cat.id === categoryId);
-    return category?.name || 'Uncategorized';
-  }, [categories]);
+  const getCategoryName = useCallback(
+    (categoryId: string) => {
+      const category = categories.find((cat) => cat.id === categoryId);
+      return category?.name || "Uncategorized";
+    },
+    [categories]
+  );
 
   // Handle product deletion
-  const handleDeleteProduct = useCallback((productId: string) => {
-    const product = products.find(p => p.id === productId);
-    if (!product) return;
+  const handleDeleteProduct = useCallback(
+    (productId: string) => {
+      const product = products.find((p) => p.id === productId);
+      if (!product) return;
 
-    // Create product object with category name for the dialog
-    const productWithCategoryName = {
-      ...product,
-      category: getCategoryName(product.categoryId)
-    };
+      // Create product object with category name for the dialog
+      const productWithCategoryName = {
+        ...product,
+        category: getCategoryName(product.categoryId),
+      };
 
-    setProductToDelete(productWithCategoryName);
-    setShowDeleteDialog(true);
-  }, [products, getCategoryName]);
+      setProductToDelete(productWithCategoryName);
+      setShowDeleteDialog(true);
+    },
+    [products, getCategoryName]
+  );
 
   // Confirm product deletion
-  const confirmDeleteProduct = useCallback(async (productId: string) => {
-    if (!token) return;
+  const confirmDeleteProduct = useCallback(
+    async (productId: string) => {
+      if (!token) return;
 
-    const product = products.find(p => p.id === productId);
-    const productName = product?.name || "Product";
+      const product = products.find((p) => p.id === productId);
+      const productName = product?.name || "Product";
 
-    try {
-      await deleteProductMutation.mutateAsync({
-        id: productId,
-        token,
-      });
-      setShowDeleteDialog(false);
-      setProductToDelete(null);
-      success("Product deleted successfully", `${productName} has been removed from your inventory.`);
-    } catch (err) {
-      console.error('Failed to delete product:', err);
-      error("Failed to delete product", "An error occurred while deleting the product. Please try again.");
-    }
-  }, [token, deleteProductMutation, products, success, error]);
+      try {
+        await deleteProductMutation.mutateAsync({
+          id: productId,
+          token,
+        });
+        setShowDeleteDialog(false);
+        setProductToDelete(null);
+        success(
+          "Product deleted successfully",
+          `${productName} has been removed from your inventory.`
+        );
+      } catch (err) {
+        console.error("Failed to delete product:", err);
+        error(
+          "Failed to delete product",
+          "An error occurred while deleting the product. Please try again."
+        );
+      }
+    },
+    [token, deleteProductMutation, products, success, error]
+  );
 
   // Close delete dialog
   const closeDeleteDialog = useCallback(() => {
@@ -257,7 +290,9 @@ export default function ProductsPage() {
 
     // Apply client-side availability filter (since backend doesn't support this)
     if (availabilityFilter) {
-      filtered = filtered.filter((product) => product.availability === availabilityFilter);
+      filtered = filtered.filter(
+        (product) => product.availability === availabilityFilter
+      );
     }
 
     // Sort products client-side
@@ -280,12 +315,7 @@ export default function ProductsPage() {
     });
 
     return filtered;
-  }, [
-    products,
-    availabilityFilter,
-    sortField,
-    sortDirection,
-  ]);
+  }, [products, availabilityFilter, sortField, sortDirection, getCategoryName]);
 
   // Get displayed products (for infinite scroll)
   const displayedProducts = useMemo(() => {
@@ -357,9 +387,9 @@ export default function ProductsPage() {
     try {
       const blob = await ProductService.exportProductsToExcel(token);
       const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
+      const a = document.createElement("a");
       a.href = url;
-      a.download = 'products.xlsx';
+      a.download = "products.xlsx";
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
@@ -367,7 +397,7 @@ export default function ProductsPage() {
 
       success("Export successful", "Products exported to Excel successfully.");
     } catch (err) {
-      console.error('Export failed:', err);
+      console.error("Export failed:", err);
       error(
         "Export failed",
         err instanceof Error
@@ -393,9 +423,13 @@ export default function ProductsPage() {
             </div>
             <div className="flex items-center justify-center mb-4">
               <Loader2 className="h-6 w-6 animate-spin text-gray-600 mr-3" />
-              <span className="text-lg font-medium text-gray-900">Loading products...</span>
+              <span className="text-lg font-medium text-gray-900">
+                Loading products...
+              </span>
             </div>
-            <p className="text-sm text-gray-600">Preparing admin products view...</p>
+            <p className="text-sm text-gray-600">
+              Preparing admin products view...
+            </p>
           </div>
         </div>
       </main>
@@ -462,7 +496,9 @@ export default function ProductsPage() {
                   className="flex items-center px-3 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   title="Refresh products"
                 >
-                  <RefreshCw className={`h-4 w-4 ${isRefetching ? 'animate-spin' : ''}`} />
+                  <RefreshCw
+                    className={`h-4 w-4 ${isRefetching ? "animate-spin" : ""}`}
+                  />
                 </button>
                 <button
                   onClick={handleExportProducts}
@@ -475,7 +511,7 @@ export default function ProductsPage() {
                   ) : (
                     <Download className="h-4 w-4 mr-2" />
                   )}
-                  {isExporting ? 'Exporting...' : 'Export to Excel'}
+                  {isExporting ? "Exporting..." : "Export to Excel"}
                 </button>
                 <Link
                   href="/admin/products/create"
@@ -711,12 +747,13 @@ export default function ProductsPage() {
                         </td>
                         <td className="px-4 py-3">
                           <span
-                            className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${product.availability === "in-stock"
-                              ? "bg-green-100 text-green-800"
-                              : product.availability === "out-of-stock"
+                            className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                              product.availability === "in-stock"
+                                ? "bg-green-100 text-green-800"
+                                : product.availability === "out-of-stock"
                                 ? "bg-red-100 text-red-800"
                                 : "bg-yellow-100 text-yellow-800"
-                              }`}
+                            }`}
                           >
                             {product.availability === "in-stock" && "In Stock"}
                             {product.availability === "out-of-stock" &&
@@ -749,7 +786,9 @@ export default function ProductsPage() {
                               className="p-1 rounded-md text-red-600 hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                               title="Delete Product"
                             >
-                              {deleteProductMutation.isPending && deleteProductMutation.variables?.id === product.id ? (
+                              {deleteProductMutation.isPending &&
+                              deleteProductMutation.variables?.id ===
+                                product.id ? (
                                 <Loader2 className="h-4 w-4 animate-spin" />
                               ) : (
                                 <Trash2 className="h-4 w-4" />
@@ -778,8 +817,8 @@ export default function ProductsPage() {
                   !isLoadingMore && (
                     <div className="text-center py-4 bg-gray-50">
                       <span className="text-sm text-gray-500">
-                        All products loaded ({allFilteredAndSortedProducts.length}{" "}
-                        total)
+                        All products loaded (
+                        {allFilteredAndSortedProducts.length} total)
                       </span>
                     </div>
                   )}
