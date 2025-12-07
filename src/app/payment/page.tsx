@@ -12,11 +12,9 @@ import {
 import { Lock, CreditCard, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 
-// Initialize Stripe with your publishable key
+// Initialize Stripe with your publishable key from environment variable
 const stripePromise = loadStripe(
-  // process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY ||
-  // "pk_live_51S0SM9Jv8YEVxzjkmVw2GvfgRhNNJnDEP7sQGe8GLTB4ZJjZk1CRIzo3UBYAgf5Bjb7EOzpAGbrgm6VYoV5aImOA00gqyEXMHR"
-  "pk_test_51S0SMNFDRNmrCGwdH1uLusw0eFDEQNPsFiqsaNmp4xUvRAEkvSFl7kqbZr2iUu6xsFpck50aVjFRvLFi43DKAnqF00Q65FiDfJ"
+  process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || ""
 );
 
 interface Address {
@@ -129,7 +127,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
         try {
           const response = await fetch(
             `${
-              process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080"
+              process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080"
             }/api/payments/confirm`,
             {
               method: "POST",
@@ -271,7 +269,7 @@ function PaymentPageContent() {
     try {
       const response = await fetch(
         `${
-          process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080"
+          process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080"
         }/api/payments/create-intent`,
         {
           method: "POST",
