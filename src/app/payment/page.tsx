@@ -16,7 +16,7 @@ import Link from "next/link";
 const stripePromise = loadStripe(
   // process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY ||
   // "pk_live_51S0SM9Jv8YEVxzjkmVw2GvfgRhNNJnDEP7sQGe8GLTB4ZJjZk1CRIzo3UBYAgf5Bjb7EOzpAGbrgm6VYoV5aImOA00gqyEXMHR"
-  "pk_test_51S0SMNFDRNmrCGwd9WoPHTjJEpe2f16yWqO2ZVkjDyUVRRj1fAzY24yXGg8lyFXVRevGfSY9rmVrnlnKXbKWmTPJ00785bvmqG"
+  "pk_test_51S0SMNFDRNmrCGwdH1uLusw0eFDEQNPsFiqsaNmp4xUvRAEkvSFl7kqbZr2iUu6xsFpck50aVjFRvLFi43DKAnqF00Q65FiDfJ"
 );
 
 interface Address {
