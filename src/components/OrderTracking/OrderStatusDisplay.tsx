@@ -74,7 +74,7 @@ export function OrderStatusDisplay({ order }: OrderStatusDisplayProps) {
       </div>
 
       {/* Tracking Information */}
-      {order.trackingNumber && order.status === 'shipped' && (
+      {/* {order.trackingNumber && order.status === 'shipped' && (
         <div className="mt-8 p-4 bg-purple-50 rounded-lg border border-purple-200">
           <div className="flex items-center justify-between">
             <div>
@@ -96,7 +96,7 @@ export function OrderStatusDisplay({ order }: OrderStatusDisplayProps) {
             </button>
           </div>
         </div>
-      )}
+      )} */}
 
       {/* Expected Delivery */}
       {order.estimatedDelivery && order.status !== 'delivered' && (
