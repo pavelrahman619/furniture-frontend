@@ -57,7 +57,7 @@ export function useOrderTracking(): UseOrderTrackingReturn {
     try {
       // First try to get full order details
       const orderResponse = await OrderService.getOrder(orderNumber.trim());
-      const transformedOrder = transformOrder(orderResponse);
+      const transformedOrder = await transformOrder(orderResponse);
       setOrder(transformedOrder);
     } catch (orderError) {
       console.error('Failed to fetch order details:', orderError);

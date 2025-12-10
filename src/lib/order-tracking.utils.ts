@@ -87,23 +87,61 @@ export function formatAddress(address: {
  * Transform backend order item to frontend format
  */
 export function transformOrderItem(backendItem: {
-  product_id: string;
+  product_id: string | { _id: string; [key: string]: unknown };
   variant_id?: string;
   quantity: number;
   price: number;
   name: string;
-}): OrderItem {
+}, imageUrl?: string): OrderItem {
+  // Extract the actual product ID (handle both string and populated object)
+  const productId = typeof backendItem.product_id === 'string' 
+    ? backendItem.product_id 
+    : backendItem.product_id._id;
+    
   return {
-    id: backendItem.product_id,
+    id: productId,
     name: backendItem.name,
     price: backendItem.price,
     quantity: backendItem.quantity,
-    // Note: Backend doesn't provide image, sku, category in current response
-    // These would need to be fetched separately or added to backend response
-    image: undefined,
+    image: imageUrl,
     sku: backendItem.variant_id,
     category: undefined,
   };
+}
+
+/**
+ * Get product image URL from product data
+ * Priority: Variant image (if variant_id matches) > First variant image > Product-level images
+ */
+export function getProductImageUrl(
+  product: { variants?: Array<{ _id?: string; images?: Array<{ url: string; is_primary?: boolean }> }>; images?: Array<{ url: string; is_primary?: boolean }> },
+  variantId?: string
+): string | undefined {
+  // Try to get image from specific variant if variant_id is provided
+  if (variantId && product.variants) {
+    const matchingVariant = product.variants.find(v => v._id === variantId);
+    if (matchingVariant?.images && matchingVariant.images.length > 0) {
+      const primaryImage = matchingVariant.images.find(img => img.is_primary);
+      return primaryImage?.url || matchingVariant.images[0].url;
+    }
+  }
+
+  // Try to get image from first variant
+  if (product.variants && product.variants.length > 0) {
+    const firstVariant = product.variants[0];
+    if (firstVariant.images && firstVariant.images.length > 0) {
+      const primaryImage = firstVariant.images.find(img => img.is_primary);
+      return primaryImage?.url || firstVariant.images[0].url;
+    }
+  }
+
+  // Fallback to product-level images
+  if (product.images && product.images.length > 0) {
+    const primaryImage = product.images.find(img => img.is_primary);
+    return primaryImage?.url || product.images[0].url;
+  }
+
+  return undefined;
 }
 
 /**
@@ -185,9 +223,36 @@ export function transformTimelineEvent(
 
 /**
  * Transform backend order response to frontend format
+ * Now async to fetch product images
  */
-export function transformOrder(backendResponse: BackendOrderResponse): Order {
+export async function transformOrder(backendResponse: BackendOrderResponse): Promise<Order> {
   const { order } = backendResponse;
+  
+  // Fetch product images for each item
+  const itemsWithImages = await Promise.all(
+    order.items.map(async (item) => {
+      try {
+        let imageUrl: string | undefined;
+        
+        // Check if product_id is already populated (object) or just an ID (string)
+        if (typeof item.product_id === 'object' && item.product_id !== null) {
+          // Product is already populated, extract image directly
+          imageUrl = getProductImageUrl(item.product_id, item.variant_id);
+        } else if (typeof item.product_id === 'string') {
+          // Product is just an ID, fetch it
+          const { ProductService } = await import('@/services/product.service');
+          const product = await ProductService.getProduct(item.product_id);
+          imageUrl = getProductImageUrl(product, item.variant_id);
+        }
+        
+        return transformOrderItem(item, imageUrl);
+      } catch (error) {
+        console.warn(`Failed to fetch product image for item:`, error);
+        // Return item without image if fetch fails
+        return transformOrderItem(item);
+      }
+    })
+  );
   
   return {
     id: order._id,
@@ -196,7 +261,7 @@ export function transformOrder(backendResponse: BackendOrderResponse): Order {
     customerPhone: order.customer_phone,
     total: order.total,
     status: order.status.toLowerCase() as OrderStatus,
-    items: order.items.map(transformOrderItem),
+    items: itemsWithImages,
     orderDate: order.created_at,
     estimatedDelivery: order.estimated_delivery,
     shippingAddress: formatAddress(order.shipping_address),

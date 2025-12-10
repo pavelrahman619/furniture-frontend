@@ -7,7 +7,15 @@ import { LucideIcon } from 'lucide-react';
 
 // Backend API Response Types
 export interface BackendOrderItem {
-  product_id: string;
+  product_id: string | {
+    _id: string;
+    name: string;
+    images?: Array<{ url: string; is_primary?: boolean }>;
+    variants?: Array<{
+      _id?: string;
+      images?: Array<{ url: string; is_primary?: boolean }>;
+    }>;
+  };
   variant_id?: string;
   quantity: number;
   price: number;
