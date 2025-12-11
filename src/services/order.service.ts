@@ -28,6 +28,8 @@ export interface CreateOrderData {
   customer_id?: string;
   customer_email?: string;
   customer_phone?: string;
+  customer_first_name?: string;
+  customer_last_name?: string;
   delivery_cost?: number;
   distance_miles?: number;
   delivery_zone_validated?: boolean;
@@ -39,6 +41,8 @@ export interface OrderResponse {
     customer_id?: string;
     customer_email?: string;
     customer_phone?: string;
+    customer_first_name?: string;
+    customer_last_name?: string;
     items: Array<{
       product_id: string;
       variant_id?: string;
@@ -87,6 +91,8 @@ export interface OrderListResponse {
     customer_id?: string;
     customer_email?: string;
     customer_phone?: string;
+    customer_first_name?: string;
+    customer_last_name?: string;
     items: Array<{
       product_id: string;
       variant_id?: string;
@@ -202,6 +208,8 @@ function transformOrderForAdmin(backendOrder: {
   customer_id?: string;
   customer_email?: string;
   customer_phone?: string;
+  customer_first_name?: string;
+  customer_last_name?: string;
   items: Array<{
     product_id: string;
     variant_id?: string;
@@ -242,8 +250,13 @@ function transformOrderForAdmin(backendOrder: {
   // Generate order number from ID (backend might not have orderNumber field)
   const orderNumber = `ORD-${backendOrder._id.slice(-6).toUpperCase()}`;
   
-  // Extract customer name from email if no separate name field
-  const customerName = backendOrder.customer_email?.split('@')[0] || 'Guest Customer';
+  // Build full name from first and last name, fallback to email
+  const customerName = 
+    (backendOrder.customer_first_name && backendOrder.customer_last_name)
+      ? `${backendOrder.customer_first_name} ${backendOrder.customer_last_name}`
+      : backendOrder.customer_first_name || 
+        backendOrder.customer_email?.split('@')[0] || 
+        'Guest Customer';
   
   return {
     id: backendOrder._id,

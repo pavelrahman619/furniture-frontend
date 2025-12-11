@@ -11,6 +11,7 @@ import {
 } from "@stripe/react-stripe-js";
 import { Lock, CreditCard, ArrowLeft } from "lucide-react";
 import Link from "next/link";
+import { useCart } from "@/contexts/CartContext";
 
 // Initialize Stripe with your publishable key from environment variable
 const stripePromise = loadStripe(
@@ -41,6 +42,8 @@ interface OrderData {
   payment_method: string;
   customer_email: string;
   customer_phone: string;
+  customer_first_name?: string;
+  customer_last_name?: string;
   delivery_cost: number;
   distance_miles: number;
   delivery_zone_validated: boolean;
@@ -63,6 +66,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
   const stripe = useStripe();
   const elements = useElements();
   const router = useRouter();
+  const { clearCart } = useCart();
 
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -94,7 +98,9 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
           payment_method: {
             card: cardElement,
             billing_details: {
-              name: orderData.customer_email,
+              name: orderData.customer_first_name && orderData.customer_last_name
+                ? `${orderData.customer_first_name} ${orderData.customer_last_name}`
+                : orderData.customer_email,
               email: orderData.customer_email,
               phone: orderData.customer_phone,
               address: {
@@ -144,6 +150,8 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
           const result = await response.json();
 
           if (response.ok && result.success) {
+            // Clear the cart after successful payment
+            clearCart();
             // Redirect to order success page
             router.push(`/order-success?orderId=${result.order_id}`);
           } else {

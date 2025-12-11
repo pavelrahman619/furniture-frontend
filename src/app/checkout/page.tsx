@@ -245,6 +245,8 @@ const CheckoutPage = () => {
       newErrors.email = "Email is invalid";
     if (!shippingInfo.phone.trim())
       newErrors.phone = "Phone number is required";
+    else if (!/^\d+$/.test(shippingInfo.phone.trim()))
+      newErrors.phone = "Phone number must contain only numbers";
     if (!shippingInfo.address.trim()) newErrors.address = "Address is required";
     if (!shippingInfo.zipCode.trim())
       newErrors.zipCode = "ZIP code is required";
@@ -381,6 +383,8 @@ const CheckoutPage = () => {
             payment_method: "Credit Card", // You can add payment method selection later
             customer_email: shippingInfo.email,
             customer_phone: shippingInfo.phone,
+            customer_first_name: shippingInfo.firstName,
+            customer_last_name: shippingInfo.lastName,
             delivery_cost: shippingCost,
             distance_miles: distanceMiles,
             delivery_zone_validated: true,
