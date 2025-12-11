@@ -72,6 +72,17 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [paymentSucceeded, setPaymentSucceeded] = useState(false);
 
+  // Name and Billing Address states
+  const [cardholderName, setCardholderName] = useState("");
+  const [billingAddress, setBillingAddress] = useState({
+    line1: "",
+    line2: "",
+    city: "",
+    state: "",
+    postal_code: "",
+    country: "US",
+  });
+
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
@@ -90,6 +101,24 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
       return;
     }
 
+    // Validate name and billing address fields
+    if (!cardholderName.trim()) {
+      setError("Please enter the name on card.");
+      setProcessing(false);
+      return;
+    }
+    if (
+      !billingAddress.line1 ||
+      !billingAddress.city ||
+      !billingAddress.state ||
+      !billingAddress.postal_code ||
+      !billingAddress.country
+    ) {
+      setError("Please fill in all required billing address fields.");
+      setProcessing(false);
+      return;
+    }
+
     try {
       // Confirm payment with Stripe
       const { error, paymentIntent } = await stripe.confirmCardPayment(
@@ -98,25 +127,16 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
           payment_method: {
             card: cardElement,
             billing_details: {
-              name: orderData.customer_first_name && orderData.customer_last_name
-                ? `${orderData.customer_first_name} ${orderData.customer_last_name}`
-                : orderData.customer_email,
+              name: cardholderName,
               email: orderData.customer_email,
               phone: orderData.customer_phone,
               address: {
-                line1:
-                  orderData.billing_address?.street ||
-                  orderData.shipping_address?.street,
-                city:
-                  orderData.billing_address?.city ||
-                  orderData.shipping_address?.city,
-                state:
-                  orderData.billing_address?.state ||
-                  orderData.shipping_address?.state,
-                postal_code:
-                  orderData.billing_address?.zip_code ||
-                  orderData.shipping_address?.zip_code,
-                country: "US",
+                line1: billingAddress.line1,
+                line2: billingAddress.line2,
+                city: billingAddress.city,
+                state: billingAddress.state,
+                postal_code: billingAddress.postal_code,
+                country: billingAddress.country,
               },
             },
           },
@@ -206,6 +226,101 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div>
+        {/* Name on Card */}
+        <div className="mb-5">
+          <label
+            className="block text-sm font-medium text-gray-700 mb-1"
+            htmlFor="cardholder-name"
+          >
+            Name on Card
+          </label>
+          <input
+            id="cardholder-name"
+            type="text"
+            className="mt-1 block w-full rounded-md border border-gray-300 p-2 focus:border-gray-500 focus:outline-none"
+            placeholder="Full Name"
+            value={cardholderName}
+            onChange={(e) => setCardholderName(e.target.value)}
+            required
+          />
+        </div>
+
+        {/* Billing Address */}
+        <div className="mb-5">
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Billing Address
+          </label>
+          <input
+            type="text"
+            className="mb-2 block w-full rounded-md border border-gray-300 p-2 focus:border-gray-500 focus:outline-none"
+            placeholder="Address Line 1"
+            value={billingAddress.line1}
+            onChange={(e) =>
+              setBillingAddress({ ...billingAddress, line1: e.target.value })
+            }
+            required
+          />
+          <input
+            type="text"
+            className="mb-2 block w-full rounded-md border border-gray-300 p-2 focus:border-gray-500 focus:outline-none"
+            placeholder="Address Line 2 (optional)"
+            value={billingAddress.line2}
+            onChange={(e) =>
+              setBillingAddress({ ...billingAddress, line2: e.target.value })
+            }
+          />
+          <div className="flex gap-2 mb-2">
+            <input
+              type="text"
+              className="block w-full rounded-md border border-gray-300 p-2 focus:border-gray-500 focus:outline-none"
+              placeholder="City"
+              value={billingAddress.city}
+              onChange={(e) =>
+                setBillingAddress({ ...billingAddress, city: e.target.value })
+              }
+              required
+            />
+            <input
+              type="text"
+              className="block w-32 rounded-md border border-gray-300 p-2 focus:border-gray-500 focus:outline-none"
+              placeholder="State"
+              value={billingAddress.state}
+              onChange={(e) =>
+                setBillingAddress({ ...billingAddress, state: e.target.value })
+              }
+              required
+            />
+          </div>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              className="block w-1/2 rounded-md border border-gray-300 p-2 focus:border-gray-500 focus:outline-none"
+              placeholder="Postal Code"
+              value={billingAddress.postal_code}
+              onChange={(e) =>
+                setBillingAddress({
+                  ...billingAddress,
+                  postal_code: e.target.value,
+                })
+              }
+              required
+            />
+            <input
+              type="text"
+              className="block w-1/2 rounded-md border border-gray-300 p-2 focus:border-gray-500 focus:outline-none"
+              placeholder="Country (e.g. US)"
+              value={billingAddress.country}
+              onChange={(e) =>
+                setBillingAddress({
+                  ...billingAddress,
+                  country: e.target.value,
+                })
+              }
+              required
+            />
+          </div>
+        </div>
+
         <label className="block text-sm font-medium text-gray-700 mb-3">
           Card Information
         </label>

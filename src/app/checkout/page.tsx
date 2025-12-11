@@ -255,6 +255,134 @@ const CheckoutPage = () => {
     return Object.keys(newErrors).length === 0;
   };
 
+  const handleFinancingOption = async (financingUrl: string) => {
+    if (!validateForm()) {
+      return;
+    }
+
+    setIsValidatingAddress(true);
+    setOrderError(null);
+    setValidationSuccess(null);
+
+    try {
+      // Get the order data that would be prepared for payment
+      const storedOrderData = sessionStorage.getItem("pendingOrder");
+      let orderData;
+
+      if (storedOrderData) {
+        // Use existing order data from session storage
+        orderData = JSON.parse(storedOrderData);
+        // Update payment method for financing
+        orderData.payment_method = "Financing";
+      } else {
+        // If no stored order data, we need to validate address first
+        const addressData: AddressData = {
+          street: shippingInfo.address,
+          city: shippingInfo.city,
+          state: shippingInfo.state,
+          zip_code: shippingInfo.zipCode,
+          country: shippingInfo.country,
+        };
+
+        const validationResult = await DeliveryService.validateAddress(
+          addressData
+        );
+
+        if (!validationResult.within_delivery_zone) {
+          setOrderError(
+            "Sorry, we don't deliver to this address yet. Please check that your address is in Los Angeles, CA."
+          );
+          setIsValidatingAddress(false);
+          return;
+        }
+
+        // Use current shipping info to create order data
+        const shippingCost =
+          currentShippingInfo && !isErrorState
+            ? currentShippingInfo.isFree
+              ? 0
+              : currentShippingInfo.cost
+            : 0;
+
+        orderData = {
+          items: cartItems.map((item) => ({
+            product_id: item.id,
+            quantity: item.quantity,
+            price: item.price,
+            name: item.name,
+          })),
+          shipping_address: {
+            street: shippingInfo.address,
+            city: shippingInfo.city,
+            state: shippingInfo.state,
+            zip_code: shippingInfo.zipCode,
+            country: shippingInfo.country,
+          },
+          billing_address: {
+            street: shippingInfo.address,
+            city: shippingInfo.city,
+            state: shippingInfo.state,
+            zip_code: shippingInfo.zipCode,
+            country: shippingInfo.country,
+          },
+          payment_method: "Financing",
+          customer_email: shippingInfo.email,
+          customer_phone: shippingInfo.phone,
+          customer_first_name: shippingInfo.firstName,
+          customer_last_name: shippingInfo.lastName,
+          delivery_cost: shippingCost,
+          distance_miles: validationResult.distance_miles,
+          delivery_zone_validated: true,
+          subtotal: subtotal,
+          total: total,
+          amount: total,
+        };
+      }
+
+      // Send order data to backend (same endpoint as payment confirmation)
+      const response = await fetch(
+        `${
+          process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080"
+        }/api/payments/confirm`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            payment_intent_id: "financing_" + Date.now(), // Unique identifier for financing orders
+            order_data: orderData,
+          }),
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.message || "Failed to submit order");
+      }
+
+      console.log("Order submitted successfully:", result);
+
+      // Open financing URL in new tab
+      window.open(financingUrl, "_blank");
+
+      setIsValidatingAddress(false);
+      setValidationSuccess(
+        "Order submitted! Please complete the financing application in the new tab, then call our store."
+      );
+      router.push("/order-success?orderId=" + result.order_id);
+      setIsProcessing(false);
+      setIsValidatingAddress(false);
+      setOrderError(null);
+      setValidationSuccess(null);
+    } catch (error) {
+      console.error("Failed to submit order for financing:", error);
+      setIsValidatingAddress(false);
+      setOrderError("Failed to submit order. Please try again.");
+    }
+  };
+
   const handleContinueToPayment = async () => {
     if (validateForm()) {
       setIsValidatingAddress(true);
@@ -834,6 +962,54 @@ const CheckoutPage = () => {
                   Your personal information is protected by 256-bit SSL
                   encryption.
                 </p>
+              </div>
+
+              {/* Financing Options */}
+              <div className="mt-4 p-4 bg-blue-50 border border-blue-200">
+                <div className="flex items-center space-x-2 mb-3">
+                  <CreditCard className="h-4 w-4 text-blue-600" />
+                  <span className="text-sm font-medium text-blue-700">
+                    Go for Financing Options
+                  </span>
+                </div>
+                <p className="text-xs text-blue-600 mb-4">
+                  Apply for financing and get approved instantly. After filling
+                  out the form, please call our store to complete your order.
+                </p>
+                <div className="space-y-2">
+                  <button
+                    onClick={() =>
+                      handleFinancingOption(
+                        "https://apply.snapfinance.com/snap-com/landing?paramId=qiUhkzP5F08l77TPejPjo0HePDUgEHE1nYuaQpwminqGeYcBeSJcjLxn9O+pW/tjNTjqqvnNmnmDfkyNRG90PtXmgsWitYRaSh8oUg2MEuI%3D&source=SHORT_CODE&merchantId=490294307&utm_source=ig&utm_medium=social&utm_content=link_in_bio&fbclid=PAdGRleAOl3YFleHRuA2FlbQIxMQBzcnRjBmFwcF9pZA8xMjQwMjQ1NzQyODc0MTQAAadaSbkzJoWa0ZfcQ4lor_krMUFrTRKzTqdij6-0rPWBUONC38mMEDYn6iZLPA_aem_w1p1bqiuY0f3CGRy_Q7RfA"
+                      )
+                    }
+                    disabled={isProcessing || isValidatingAddress}
+                    className={`w-full ${
+                      isProcessing || isValidatingAddress
+                        ? "bg-gray-400 cursor-not-allowed"
+                        : "bg-blue-600 hover:bg-blue-700"
+                    } text-white py-3 px-4 text-sm font-medium tracking-wider transition-colors`}
+                  >
+                    {isValidatingAddress
+                      ? "PROCESSING..."
+                      : "APPLY WITH SNAP FINANCE"}
+                  </button>
+                  <button
+                    onClick={() =>
+                      handleFinancingOption(
+                        "https://apply.acima.com/lease?app_id=lo&location_guid=loca-a92e49c0-280c-489a-9253-cc59ebafa41e&utm_campaign=merchant&utm_source=applyonmobile&lang=en&utm_medium=social&utm_content=link_in_bio&fbclid=PAdGRleAOl6QNleHRuA2FlbQIxMQBzcnRjBmFwcF9pZA8xMjQwMjQ1NzQyODc0MTQAAaem1Wgohp6NjrtK5krtO_Ut31cbV5Nqq62uzgQTX8wPi905ehy4eTKrmvHZvw_aem_AjrF1z_SpuyPcAPGvQpsnw"
+                      )
+                    }
+                    disabled={isProcessing || isValidatingAddress}
+                    className={`w-full ${
+                      isProcessing || isValidatingAddress
+                        ? "bg-gray-400 cursor-not-allowed"
+                        : "bg-green-600 hover:bg-green-700"
+                    } text-white py-3 px-4 text-sm font-medium tracking-wider transition-colors`}
+                  >
+                    {isValidatingAddress ? "PROCESSING..." : "APPLY WITH ACIMA"}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
