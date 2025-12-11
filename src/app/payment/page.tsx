@@ -44,6 +44,8 @@ interface OrderData {
   payment_method: string;
   customer_email: string;
   customer_phone: string;
+  customer_first_name?: string;
+  customer_last_name?: string;
   delivery_cost: number;
   distance_miles: number;
   delivery_zone_validated: boolean;
@@ -98,7 +100,9 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
           payment_method: {
             card: cardElement,
             billing_details: {
-              name: orderData.customer_email,
+              name: orderData.customer_first_name && orderData.customer_last_name
+                ? `${orderData.customer_first_name} ${orderData.customer_last_name}`
+                : orderData.customer_email,
               email: orderData.customer_email,
               phone: orderData.customer_phone,
               address: {

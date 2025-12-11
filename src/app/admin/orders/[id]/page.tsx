@@ -385,7 +385,12 @@ export default function OrderDetailsPage() {
 
   // Generate display data from backend order
   const orderNumber = generateOrderNumber(order._id);
-  const customerName = order.customer_email?.split('@')[0] || 'Guest Customer';
+  const customerName = 
+    (order.customer_first_name && order.customer_last_name)
+      ? `${order.customer_first_name} ${order.customer_last_name}`
+      : order.customer_first_name ||
+        order.customer_email?.split('@')[0] || 
+        'Guest Customer';
   const shippingAddress = formatAddress(order.shipping_address);
   const orderStatus = order.status.toLowerCase() as OrderStatus;
   

@@ -384,6 +384,8 @@ const CheckoutPage = () => {
             payment_method: "Credit Card", // You can add payment method selection later
             customer_email: shippingInfo.email,
             customer_phone: shippingInfo.phone,
+            customer_first_name: shippingInfo.firstName,
+            customer_last_name: shippingInfo.lastName,
             delivery_cost: shippingCost,
             distance_miles: distanceMiles,
             delivery_zone_validated: true,
