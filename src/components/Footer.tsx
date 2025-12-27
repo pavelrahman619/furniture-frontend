@@ -1,13 +1,21 @@
 "use client";
 
 import { Instagram, Facebook, Linkedin } from "lucide-react";
+import Link from "next/link";
 
 const Footer = () => {
   // First column links
-  const firstColumnLinks = ["About us", "Contact us", "Terms and conditions"];
+  const firstColumnLinks = [
+    { text: "About us", href: "/about-us" },
+    { text: "Contact us", href: "/contact-us" },
+    { text: "Terms and conditions", href: "/terms-and-conditions" },
+  ];
 
   // Second column links
-  const secondColumnLinks = ["Privacy policy", "Delivery policy"];
+  const secondColumnLinks = [
+    { text: "Privacy policy", href: "/privacy" },
+    { text: "Delivery policy", href: "/delivery-policy" },
+  ];
 
   // Third column links - email links
   const thirdColumnLinks = [
@@ -68,12 +76,12 @@ const Footer = () => {
             <ul className="space-y-3">
               {firstColumnLinks.map((link, index) => (
                 <li key={index}>
-                  <a
-                    href="#"
+                  <Link
+                    href={link.href}
                     className="text-sm text-gray-400 hover:text-white transition-colors duration-200"
                   >
-                    {link}
-                  </a>
+                    {link.text}
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -94,12 +102,12 @@ const Footer = () => {
             <ul className="space-y-3">
               {secondColumnLinks.map((link, index) => (
                 <li key={index}>
-                  <a
-                    href="#"
+                  <Link
+                    href={link.href}
                     className="text-sm text-gray-400 hover:text-white transition-colors duration-200"
                   >
-                    {link}
-                  </a>
+                    {link.text}
+                  </Link>
                 </li>
               ))}
             </ul>
