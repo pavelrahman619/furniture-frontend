@@ -1,5 +1,5 @@
-import { apiService } from '@/lib/api-service';
-import { API_ENDPOINTS } from '@/lib/api-config';
+import { apiService } from "@/lib/api-service";
+import { API_ENDPOINTS } from "@/lib/api-config";
 
 // Types for order operations
 export interface CreateOrderData {
@@ -24,7 +24,7 @@ export interface CreateOrderData {
     zip_code: string;
     country: string;
   };
-  payment_method: string;
+  payment_intent: string;
   customer_id?: string;
   customer_email?: string;
   customer_phone?: string;
@@ -64,7 +64,7 @@ export interface OrderResponse {
       zip_code: string;
       country: string;
     };
-    payment_method: string;
+    stripe_payment_intent_id?: string;
     payment_status: string;
     status: string;
     timeline: Array<{
@@ -114,7 +114,7 @@ export interface OrderListResponse {
       zip_code: string;
       country: string;
     };
-    payment_method: string;
+    stripe_payment_intent_id?: string;
     payment_status: string;
     status: string;
     timeline: Array<{
@@ -156,6 +156,8 @@ export interface AdminOrder {
   orderNumber: string;
   customerName: string;
   customerEmail: string;
+  customerPhone?: string;
+  stripePaymentIntentId?: string;
   total: number;
   status: "pending" | "processing" | "shipped" | "delivered" | "cancelled";
   items: AdminOrderItem[];
@@ -199,7 +201,8 @@ function transformOrderItemForAdmin(backendItem: {
     price: backendItem.price,
     quantity: backendItem.quantity,
     // Default image - in a real app, you'd fetch this from product data
-    image: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
+    image:
+      "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
   };
 }
 
@@ -231,7 +234,7 @@ function transformOrderForAdmin(backendOrder: {
     zip_code: string;
     country: string;
   };
-  payment_method: string;
+  stripe_payment_intent_id?: string;
   payment_status: string;
   status: string;
   timeline: Array<{
@@ -249,22 +252,24 @@ function transformOrderForAdmin(backendOrder: {
 }): AdminOrder {
   // Generate order number from ID (backend might not have orderNumber field)
   const orderNumber = `ORD-${backendOrder._id.slice(-6).toUpperCase()}`;
-  
+
   // Build full name from first and last name, fallback to email
-  const customerName = 
-    (backendOrder.customer_first_name && backendOrder.customer_last_name)
+  const customerName =
+    backendOrder.customer_first_name && backendOrder.customer_last_name
       ? `${backendOrder.customer_first_name} ${backendOrder.customer_last_name}`
-      : backendOrder.customer_first_name || 
-        backendOrder.customer_email?.split('@')[0] || 
-        'Guest Customer';
-  
+      : backendOrder.customer_first_name ||
+        backendOrder.customer_email?.split("@")[0] ||
+        "Guest Customer";
+
   return {
     id: backendOrder._id,
     orderNumber,
     customerName,
-    customerEmail: backendOrder.customer_email || '',
+    customerEmail: backendOrder.customer_email || "",
+    customerPhone: backendOrder.customer_phone,
+    stripePaymentIntentId: backendOrder.stripe_payment_intent_id,
     total: backendOrder.total,
-    status: backendOrder.status.toLowerCase() as AdminOrder['status'],
+    status: backendOrder.status.toLowerCase() as AdminOrder["status"],
     items: backendOrder.items.map(transformOrderItemForAdmin),
     orderDate: backendOrder.created_at,
     estimatedDelivery: backendOrder.estimated_delivery,
@@ -282,9 +287,9 @@ export class OrderService {
       orderData
     );
     if (!response.data) {
-      throw new Error('Failed to create order - no response data');
+      throw new Error("Failed to create order - no response data");
     }
-    return response.data.orderId || response.data._id || '';
+    return response.data.orderId || response.data._id || "";
   }
 
   /**
@@ -295,7 +300,7 @@ export class OrderService {
       API_ENDPOINTS.ORDERS.DETAIL(orderId)
     );
     if (!response.data) {
-      throw new Error('Failed to fetch order - no response data');
+      throw new Error("Failed to fetch order - no response data");
     }
     return response.data;
   }
@@ -313,18 +318,18 @@ export class OrderService {
   }): Promise<OrderListResponse> {
     const queryParams = new URLSearchParams();
 
-    if (params?.page) queryParams.append('page', params.page.toString());
-    if (params?.limit) queryParams.append('limit', params.limit.toString());
-    if (params?.status) queryParams.append('status', params.status);
-    if (params?.customer) queryParams.append('customer', params.customer);
-    if (params?.date_from) queryParams.append('date_from', params.date_from);
-    if (params?.date_to) queryParams.append('date_to', params.date_to);
+    if (params?.page) queryParams.append("page", params.page.toString());
+    if (params?.limit) queryParams.append("limit", params.limit.toString());
+    if (params?.status) queryParams.append("status", params.status);
+    if (params?.customer) queryParams.append("customer", params.customer);
+    if (params?.date_from) queryParams.append("date_from", params.date_from);
+    if (params?.date_to) queryParams.append("date_to", params.date_to);
 
     const endpoint = `${API_ENDPOINTS.ORDERS.LIST}?${queryParams.toString()}`;
 
     const response = await apiService.get<OrderListResponse>(endpoint);
     if (!response.data) {
-      throw new Error('Failed to fetch orders - no response data');
+      throw new Error("Failed to fetch orders - no response data");
     }
     return response.data;
   }
@@ -353,7 +358,7 @@ export class OrderService {
       estimated_delivery?: string;
     }>(API_ENDPOINTS.ORDERS.TRACK(orderId));
     if (!response.data) {
-      throw new Error('Failed to track order - no response data');
+      throw new Error("Failed to track order - no response data");
     }
     return response.data;
   }
@@ -373,23 +378,23 @@ export class OrderService {
     // sort_direction?: 'asc' | 'desc'; // Backend doesn't support sorting parameters
   }): Promise<AdminOrdersResponse> {
     // Get admin token for authentication
-    const { AdminService } = await import('./admin.service');
+    const { AdminService } = await import("./admin.service");
     const token = AdminService.getCurrentToken();
-    
+
     if (!token) {
-      throw new Error('Admin authentication required');
+      throw new Error("Admin authentication required");
     }
 
     const queryParams = new URLSearchParams();
 
     // Only include parameters that the backend supports
-    if (params?.page) queryParams.append('page', params.page.toString());
-    if (params?.limit) queryParams.append('limit', params.limit.toString());
-    if (params?.status) queryParams.append('status', params.status);
-    if (params?.customer) queryParams.append('customer', params.customer);
-    if (params?.date_from) queryParams.append('date_from', params.date_from);
-    if (params?.date_to) queryParams.append('date_to', params.date_to);
-    
+    if (params?.page) queryParams.append("page", params.page.toString());
+    if (params?.limit) queryParams.append("limit", params.limit.toString());
+    if (params?.status) queryParams.append("status", params.status);
+    if (params?.customer) queryParams.append("customer", params.customer);
+    if (params?.date_from) queryParams.append("date_from", params.date_from);
+    if (params?.date_to) queryParams.append("date_to", params.date_to);
+
     // Remove unsupported parameters
     // if (params?.search) queryParams.append('search', params.search);
     // if (params?.sort_field) queryParams.append('sort_field', params.sort_field);
@@ -399,7 +404,7 @@ export class OrderService {
 
     const response = await apiService.get<OrderListResponse>(endpoint, token);
     if (!response.data) {
-      throw new Error('Failed to fetch orders - no response data');
+      throw new Error("Failed to fetch orders - no response data");
     }
 
     // Transform backend response to admin format
@@ -418,11 +423,11 @@ export class OrderService {
     notes?: string
   ): Promise<{ status: string; notes: string }> {
     // Get admin token for authentication
-    const { AdminService } = await import('./admin.service');
+    const { AdminService } = await import("./admin.service");
     const token = AdminService.getCurrentToken();
-    
+
     if (!token) {
-      throw new Error('Admin authentication required');
+      throw new Error("Admin authentication required");
     }
 
     const response = await apiService.put<{ status: string; notes: string }>(
@@ -431,7 +436,7 @@ export class OrderService {
       token
     );
     if (!response.data) {
-      throw new Error('Failed to update order status - no response data');
+      throw new Error("Failed to update order status - no response data");
     }
     return response.data;
   }
@@ -443,43 +448,46 @@ export class OrderService {
     status?: string;
     date_from?: string;
     date_to?: string;
-    format?: 'xlsx' | 'csv';
+    format?: "xlsx" | "csv";
   }): Promise<Blob> {
     // Get admin token for authentication
-    const { AdminService } = await import('./admin.service');
+    const { AdminService } = await import("./admin.service");
     const token = AdminService.getCurrentToken();
-    
+
     if (!token) {
-      throw new Error('Admin authentication required');
+      throw new Error("Admin authentication required");
     }
 
     const queryParams = new URLSearchParams();
-    
+
     // Add filter parameters
-    if (params?.status) queryParams.append('status', params.status);
-    if (params?.date_from) queryParams.append('date_from', params.date_from);
-    if (params?.date_to) queryParams.append('date_to', params.date_to);
-    if (params?.format) queryParams.append('format', params.format);
+    if (params?.status) queryParams.append("status", params.status);
+    if (params?.date_from) queryParams.append("date_from", params.date_from);
+    if (params?.date_to) queryParams.append("date_to", params.date_to);
+    if (params?.format) queryParams.append("format", params.format);
 
     // Build full URL with base URL and query params
-    const { buildApiUrl, getApiHeaders } = await import('@/lib/api-config');
-    const url = buildApiUrl(`${API_ENDPOINTS.ORDERS.EXPORT}?${queryParams.toString()}`);
+    const { buildApiUrl, getApiHeaders } = await import("@/lib/api-config");
+    const url = buildApiUrl(
+      `${API_ENDPOINTS.ORDERS.EXPORT}?${queryParams.toString()}`
+    );
     const headers = getApiHeaders(token);
 
     // Override Accept header to expect binary response (Excel file)
-    headers['Accept'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+    headers["Accept"] =
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
     // Remove Content-Type for GET requests with binary response
-    delete headers['Content-Type'];
+    delete headers["Content-Type"];
 
     try {
       const response = await fetch(url, {
-        method: 'GET',
+        method: "GET",
         headers,
       });
 
       if (!response.ok) {
         const errorText = await response.text();
-        let errorMessage = 'Failed to export orders';
+        let errorMessage = "Failed to export orders";
         try {
           const errorData = JSON.parse(errorText);
           errorMessage = errorData.message || errorMessage;
@@ -488,31 +496,33 @@ export class OrderService {
         }
 
         if (response.status === 401) {
-          throw new Error('Authentication required. Please log in again.');
+          throw new Error("Authentication required. Please log in again.");
         }
         if (response.status === 403) {
-          throw new Error('Access denied. Admin privileges required.');
+          throw new Error("Access denied. Admin privileges required.");
         }
         if (response.status === 404) {
-          throw new Error('Export endpoint not found. Feature may not be available yet.');
+          throw new Error(
+            "Export endpoint not found. Feature may not be available yet."
+          );
         }
         throw new Error(errorMessage);
       }
 
       const blob = await response.blob();
-      
+
       // Validate that we received a valid file
       if (blob.size === 0) {
-        throw new Error('Export file is empty');
+        throw new Error("Export file is empty");
       }
 
       return blob;
     } catch (error) {
-      console.error('Error exporting orders to Excel:', error);
+      console.error("Error exporting orders to Excel:", error);
       if (error instanceof Error) {
         throw error;
       }
-      throw new Error('Network error occurred during export');
+      throw new Error("Network error occurred during export");
     }
   }
 }

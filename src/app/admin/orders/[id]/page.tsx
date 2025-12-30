@@ -406,12 +406,12 @@ export default function OrderDetailsPage() {
 
   // Generate display data from backend order
   const orderNumber = generateOrderNumber(order._id);
-  const customerName = 
-    (order.customer_first_name && order.customer_last_name)
+  const customerName =
+    order.customer_first_name && order.customer_last_name
       ? `${order.customer_first_name} ${order.customer_last_name}`
       : order.customer_first_name ||
-        order.customer_email?.split('@')[0] || 
-        'Guest Customer';
+        order.customer_email?.split("@")[0] ||
+        "Guest Customer";
   const shippingAddress = formatAddress(order.shipping_address);
   const orderStatus = order.status.toLowerCase() as OrderStatus;
 
@@ -816,9 +816,11 @@ export default function OrderDetailsPage() {
                     <CreditCard className="h-5 w-5 text-gray-400" />
                     <div>
                       <p className="text-sm font-medium text-gray-900">
-                        {order.payment_method}
+                        {order.stripe_payment_intent_id || "N/A"}
                       </p>
-                      <p className="text-sm text-gray-500">Payment Method</p>
+                      <p className="text-sm text-gray-500">
+                        Stripe Payment Intent ID
+                      </p>
                     </div>
                   </div>
 
