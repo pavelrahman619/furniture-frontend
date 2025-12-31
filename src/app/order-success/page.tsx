@@ -240,7 +240,7 @@ const OrderSuccessContent = () => {
             state: order.shipping_address.state,
             zip: order.shipping_address.zip_code,
           },
-          paymentMethod: order.payment_method,
+          paymentMethod: order.payment_method || "****",
         };
 
         setOrderDetails(transformedOrder);

@@ -65,6 +65,7 @@ export interface OrderResponse {
       country: string;
     };
     stripe_payment_intent_id?: string;
+    payment_method?: string;
     payment_status: string;
     status: string;
     timeline: Array<{

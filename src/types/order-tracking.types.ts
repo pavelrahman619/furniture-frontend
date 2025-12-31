@@ -45,7 +45,7 @@ export interface BackendOrderResponse {
     items: BackendOrderItem[];
     shipping_address: BackendAddress;
     billing_address: BackendAddress;
-    payment_method: string;
+    payment_method?: string;
     payment_status: string;
     status: string;
     timeline: BackendTimelineEvent[];
