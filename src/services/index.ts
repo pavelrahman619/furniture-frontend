@@ -82,3 +82,12 @@ export {
   transformSaleSectionToLocal,
   transformLocalToSaleSection
 } from './content.service';
+
+// Contact service
+export { default as ContactService, ContactServiceError } from './contact.service';
+export type { 
+  ContactFormRequest,
+  ContactFormResponse,
+  ContactFormEntry,
+  ContactFormsListResponse
+} from './contact.service';

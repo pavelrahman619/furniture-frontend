@@ -15,6 +15,7 @@ import {
   Key,
   Menu,
   X,
+  Mail,
 } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { useAdmin } from "@/contexts/AdminContext";
@@ -72,6 +73,7 @@ const Navbar = () => {
     { name: "Products", href: "/admin/products", icon: Package },
     { name: "Orders", href: "/admin/orders", icon: ShoppingBag },
     { name: "Content", href: "/admin/content", icon: Settings },
+    { name: "Contact", href: "/admin/contact", icon: Mail },
   ];
 
   const handleLogout = async () => {

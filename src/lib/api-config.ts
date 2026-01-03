@@ -117,6 +117,11 @@ export const API_ENDPOINTS = {
     CALCULATE_COST: '/delivery/calculate-cost',
   },
 
+  // Contact
+  CONTACT: {
+    SUBMIT: '/contact',
+  },
+
   // Test/Health
   TEST: {
     HEALTH: '/test/health',
