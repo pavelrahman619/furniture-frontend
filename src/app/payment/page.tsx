@@ -12,6 +12,7 @@ import {
 import { Lock, CreditCard, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { useCart } from "@/contexts/CartContext";
+import { formatCurrency } from "@/lib/currency-utils";
 
 // Initialize Stripe with your publishable key from environment variable
 const stripePromise = loadStripe(
@@ -50,6 +51,7 @@ interface OrderData {
   subtotal: number;
   total: number;
   amount: number;
+  tax?: number;
 }
 
 interface PaymentFormProps {
@@ -346,7 +348,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
       >
         {processing
           ? "PROCESSING PAYMENT..."
-          : `PAY $${total.toLocaleString()}`}
+          : `PAY $${formatCurrency(total)}`}
       </button>
 
       <div className="flex items-center justify-center space-x-2 text-sm text-gray-600">
@@ -512,7 +514,7 @@ function PaymentPageContent() {
                       {item.name} × {item.quantity}
                     </span>
                     <span className="text-gray-900">
-                      ${(item.price * item.quantity).toLocaleString()}
+                      ${formatCurrency(item.price * item.quantity)}
                     </span>
                   </div>
                 ))}
@@ -522,29 +524,34 @@ function PaymentPageContent() {
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">Subtotal</span>
                   <span className="text-gray-900">
-                    ${orderData.subtotal?.toLocaleString()}
+                    ${formatCurrency(orderData.subtotal || 0)}
                   </span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">Shipping</span>
-                  <span className="text-green-600 font-medium">FREE</span>
+                  <span className="text-gray-900">
+                    {orderData.delivery_cost === 0
+                      ? "FREE"
+                      : `$${formatCurrency(orderData.delivery_cost)}`}
+                  </span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">Tax</span>
                   <span className="text-gray-900">
-                    $
-                    {(
-                      total -
-                      (orderData.subtotal || 0) -
-                      (orderData.delivery_cost || 0)
-                    ).toLocaleString()}
+                    ${formatCurrency(
+                      orderData.tax !== undefined
+                        ? orderData.tax
+                        : total -
+                            (orderData.subtotal || 0) -
+                            (orderData.delivery_cost || 0)
+                    )}
                   </span>
                 </div>
                 <div className="border-t border-gray-200 pt-2">
                   <div className="flex justify-between text-lg font-medium">
                     <span className="text-gray-900">Total</span>
                     <span className="text-gray-900">
-                      ${total.toLocaleString()}
+                      ${formatCurrency(total)}
                     </span>
                   </div>
                 </div>

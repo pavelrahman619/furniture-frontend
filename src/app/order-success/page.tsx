@@ -6,6 +6,7 @@ import Image from "next/image";
 import { CheckCircle, Truck, Calendar, CreditCard } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import OrderService from "@/services/order.service";
+import { formatCurrency } from "@/lib/currency-utils";
 
 // Product image interface
 interface ProductImage {
@@ -379,7 +380,7 @@ const OrderSuccessContent = () => {
 
                 <div className="text-right">
                   <p className="text-lg font-light text-gray-900">
-                    ${item.price.toLocaleString()}
+                    ${formatCurrency(item.price)}
                   </p>
                 </div>
               </div>
@@ -399,7 +400,7 @@ const OrderSuccessContent = () => {
               <div className="flex justify-between items-center">
                 <span className="text-gray-600">Subtotal:</span>
                 <span className="text-gray-900">
-                  ${orderDetails.subtotal.toLocaleString()}
+                  ${formatCurrency(orderDetails.subtotal)}
                 </span>
               </div>
 
@@ -408,7 +409,7 @@ const OrderSuccessContent = () => {
                 <span className="text-gray-900">
                   {orderDetails.shippingCost === 0
                     ? 'Complimentary'
-                    : `$${orderDetails.shippingCost.toLocaleString()}`}
+                    : `$${formatCurrency(orderDetails.shippingCost)}`}
                 </span>
               </div>
 
@@ -416,7 +417,7 @@ const OrderSuccessContent = () => {
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">Tax:</span>
                   <span className="text-gray-900">
-                    ${orderDetails.tax.toLocaleString()}
+                    ${formatCurrency(orderDetails.tax)}
                   </span>
                 </div>
               )}
@@ -427,7 +428,7 @@ const OrderSuccessContent = () => {
                     Total:
                   </span>
                   <span className="text-xl font-light text-gray-900">
-                    ${orderDetails.total.toLocaleString()}
+                    ${formatCurrency(orderDetails.total)}
                   </span>
                 </div>
               </div>

@@ -7,6 +7,7 @@ import { ChevronLeft, CreditCard, Lock } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { useRouter } from "next/navigation";
 import DeliveryService, { AddressData } from "@/services/delivery.service";
+import { formatCurrency, calculateTax } from "@/lib/currency-utils";
 
 interface ShippingInfo {
   firstName: string;
@@ -104,7 +105,7 @@ const CheckoutPage = () => {
 
   // Calculate tax (9.75% on subtotal + shipping)
   const taxableAmount = subtotal + shipping;
-  const tax = Math.round(taxableAmount * 0.0975);
+  const tax = calculateTax(taxableAmount);
   // Backend formula: total = subtotal + delivery_cost + tax
   const total = subtotal + shipping + tax;
 
@@ -303,6 +304,7 @@ const CheckoutPage = () => {
               ? 0
               : currentShippingInfo.cost
             : 0;
+        const financingTax = calculateTax(subtotal + shippingCost);
 
         orderData = {
           items: cartItems.map((item) => ({
@@ -334,8 +336,9 @@ const CheckoutPage = () => {
           distance_miles: validationResult.distance_miles,
           delivery_zone_validated: true,
           subtotal: subtotal,
-          total: total,
-          amount: total,
+          tax: financingTax,
+          total: subtotal + shippingCost + financingTax,
+          amount: subtotal + shippingCost + financingTax,
         };
       }
 
@@ -517,6 +520,7 @@ const CheckoutPage = () => {
             distance_miles: distanceMiles,
             delivery_zone_validated: true,
             subtotal: subtotal,
+            tax: tax,
             total: subtotal + shippingCost + tax, // Backend requires 'total' field
             amount: subtotal + shippingCost + tax, // Total amount for payment (used by Stripe)
           };
@@ -928,7 +932,7 @@ const CheckoutPage = () => {
                         <p className="text-sm text-gray-500">SKU: {item.sku}</p>
                         <div className="flex justify-between items-center mt-2">
                           <span className="text-sm font-medium">
-                            ${item.price.toLocaleString()}
+                            ${formatCurrency(item.price)}
                           </span>
                         </div>
                       </div>
@@ -942,7 +946,7 @@ const CheckoutPage = () => {
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">Subtotal</span>
                   <span className="text-gray-900">
-                    ${subtotal.toLocaleString()}
+                    ${formatCurrency(subtotal)}
                   </span>
                 </div>
                 {/* <div className="flex justify-between text-sm">
@@ -975,7 +979,7 @@ const CheckoutPage = () => {
                       : deliveryInfo
                       ? deliveryInfo.isFree
                         ? "FREE DELIVERY!"
-                        : `$${deliveryInfo.cost.toLocaleString()}`
+                        : `$${formatCurrency(deliveryInfo.cost)}`
                       : shippingEstimate
                       ? shippingEstimate.loading
                         ? "ESTIMATING..."
@@ -983,7 +987,7 @@ const CheckoutPage = () => {
                         ? `FREE DELIVERY!${
                             shippingEstimate.isEstimate ? " (estimated)" : ""
                           }`
-                        : `$${shippingEstimate.cost.toLocaleString()}${
+                        : `$${formatCurrency(shippingEstimate.cost)}${
                             shippingEstimate.isEstimate ? " (estimated)" : ""
                           }`
                       : "Enter ZIP code for shipping estimate"}
@@ -991,13 +995,13 @@ const CheckoutPage = () => {
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">Tax</span>
-                  <span className="text-gray-900">${tax.toLocaleString()}</span>
+                  <span className="text-gray-900">${formatCurrency(tax)}</span>
                 </div>
                 <div className="border-t border-gray-200 pt-4">
                   <div className="flex justify-between text-lg font-medium">
                     <span className="text-gray-900">Total</span>
                     <span className="text-gray-900">
-                      ${total.toLocaleString()}
+                      ${formatCurrency(total)}
                     </span>
                   </div>
                 </div>
