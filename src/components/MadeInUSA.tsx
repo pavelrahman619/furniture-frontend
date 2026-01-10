@@ -1,6 +1,9 @@
 "use client";
 
+import { useRouter } from "next/navigation";
+
 const MadeInUSA = () => {
+  const router = useRouter();
   return (
     <section className="relative h-[700px] w-full overflow-hidden">
       {/* Background Image */}
@@ -24,7 +27,10 @@ const MadeInUSA = () => {
         </p>
 
         {/* Contact Us Button */}
-        <button className="bg-white text-gray-900 px-10 py-4 text-sm font-medium tracking-wider uppercase hover:bg-gray-100 transition-all duration-300 transform hover:scale-105 shadow-lg">
+        <button
+          onClick={() => router.push("/contact-us")}
+          className="bg-white text-gray-900 px-10 py-4 text-sm font-medium tracking-wider uppercase hover:bg-gray-100 transition-all duration-300 transform hover:scale-105 shadow-lg"
+        >
           CONTACT US
         </button>
       </div>

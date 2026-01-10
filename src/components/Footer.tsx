@@ -179,13 +179,6 @@ const Footer = () => {
                 >
                   <Facebook className="h-6 w-6" />
                 </a>
-                <a
-                  href="#"
-                  className="text-gray-400 hover:text-white transition-colors duration-200"
-                  aria-label="LinkedIn"
-                >
-                  <Linkedin className="h-6 w-6" />
-                </a>
               </div>
             </div>
           </div>

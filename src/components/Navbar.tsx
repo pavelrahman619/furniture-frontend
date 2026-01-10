@@ -59,8 +59,8 @@ const Navbar = () => {
     { name: "ALL PRODUCTS", href: "/products", hasDropdown: true },
     { name: "IN STOCK", href: "/products", hasDropdown: false },
     { name: "TRACK ORDER", href: "/track", hasDropdown: false },
-    { name: "CONTACT US", href: "#", hasDropdown: false },
-    { name: "ABOUT US", href: "#", hasDropdown: false },
+    { name: "CONTACT US", href: "/contact-us", hasDropdown: false },
+    { name: "ABOUT US", href: "/about-us", hasDropdown: false },
   ];
   // const mainNavItems = [
   // { name: "", href: "#" },

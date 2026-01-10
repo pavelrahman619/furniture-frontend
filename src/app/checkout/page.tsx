@@ -857,7 +857,8 @@ const CheckoutPage = () => {
                 </div>
                 <p className="text-xs text-blue-600 mb-4">
                   Apply for financing and get approved instantly. After filling
-                  out the form, please call our store to complete your order.
+                  out the form, please call , email or visit our store to
+                  complete your order.
                 </p>
                 <div className="space-y-2">
                   <button
