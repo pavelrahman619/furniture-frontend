@@ -27,6 +27,7 @@ import {
   AlertCircle,
   RefreshCw,
 } from "lucide-react";
+import { formatCurrency } from "@/lib/currency-utils";
 
 // Order status type for status updates
 type OrderStatus =
@@ -275,15 +276,14 @@ function OrderItemDisplay({ item, index }: OrderItemDisplayProps) {
         <div className="flex items-center space-x-4 text-sm text-gray-600">
           <span>Qty: {Number(item.quantity || 0)}</span>
           <span>•</span>
-          <span>${Number(item.price || 0).toLocaleString()} each</span>
+          <span>${formatCurrency(Number(item.price || 0))} each</span>
         </div>
       </div>
       <div className="text-right">
         <p className="text-lg font-semibold text-gray-900">
-          $
-          {(
+          ${formatCurrency(
             Number(item.price || 0) * Number(item.quantity || 0)
-          ).toLocaleString()}
+          )}
         </p>
       </div>
     </div>
@@ -504,7 +504,7 @@ export default function OrderDetailsPage() {
                     Total
                   </p>
                   <p className="text-xl font-bold text-gray-900">
-                    ${order.total.toLocaleString()}
+                    ${formatCurrency(order.total)}
                   </p>
                 </div>
               </div>
@@ -845,7 +845,7 @@ export default function OrderDetailsPage() {
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-600">Subtotal:</span>
                       <span className="text-gray-900">
-                        ${order.subtotal.toLocaleString()}
+                        ${formatCurrency(order.subtotal)}
                       </span>
                     </div>
 
@@ -854,14 +854,14 @@ export default function OrderDetailsPage() {
                       <span className="text-gray-900">
                         {order.delivery_cost === 0
                           ? "Free"
-                          : `$${order.delivery_cost.toLocaleString()}`}
+                          : `$${formatCurrency(order.delivery_cost)}`}
                       </span>
                     </div>
 
                     <div className="flex justify-between text-base font-semibold border-t border-gray-200 pt-2">
                       <span className="text-gray-900">Total:</span>
                       <span className="text-gray-900">
-                        ${order.total.toLocaleString()}
+                        ${formatCurrency(order.total)}
                       </span>
                     </div>
                   </div>

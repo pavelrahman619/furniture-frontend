@@ -6,6 +6,7 @@
 import React from 'react';
 import { MapPin, CreditCard } from 'lucide-react';
 import type { Order } from '@/types/order-tracking.types';
+import { formatCurrency } from '@/lib/currency-utils';
 
 interface OrderSummaryProps {
   order: Order;
@@ -26,7 +27,7 @@ export function OrderSummary({ order }: OrderSummaryProps) {
             <div className="flex justify-between items-center">
               <span className="text-gray-600">Subtotal:</span>
               <span className="text-gray-900">
-                ${order.subtotal.toLocaleString()}
+                ${formatCurrency(order.subtotal)}
               </span>
             </div>
           )}
@@ -37,7 +38,7 @@ export function OrderSummary({ order }: OrderSummaryProps) {
               <span className="text-gray-900">
                 {order.shippingCost === 0
                   ? 'Complimentary'
-                  : `$${order.shippingCost.toLocaleString()}`}
+                  : `$${formatCurrency(order.shippingCost)}`}
               </span>
             </div>
           )}
@@ -46,7 +47,7 @@ export function OrderSummary({ order }: OrderSummaryProps) {
             <div className="flex justify-between items-center">
               <span className="text-gray-600">Tax:</span>
               <span className="text-gray-900">
-                ${order.tax.toLocaleString()}
+                ${formatCurrency(order.tax)}
               </span>
             </div>
           )}
@@ -57,7 +58,7 @@ export function OrderSummary({ order }: OrderSummaryProps) {
                 Total:
               </span>
               <span className="text-xl font-light text-gray-900">
-                ${order.total.toLocaleString()}
+                ${formatCurrency(order.total)}
               </span>
             </div>
           </div>

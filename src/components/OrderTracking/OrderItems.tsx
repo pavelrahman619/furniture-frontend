@@ -6,6 +6,7 @@
 import React from 'react';
 import Image from 'next/image';
 import type { OrderItem } from '@/types/order-tracking.types';
+import { formatCurrency } from '@/lib/currency-utils';
 
 interface OrderItemsProps {
   items: OrderItem[];
@@ -68,12 +69,12 @@ export function OrderItems({ items }: OrderItemsProps) {
                 <div className="flex items-center space-x-4 text-sm text-gray-600">
                   <span>Qty: {item.quantity}</span>
                   <span>•</span>
-                  <span>${item.price.toLocaleString()} each</span>
+                  <span>${formatCurrency(item.price)} each</span>
                 </div>
               </div>
               <div className="text-right">
                 <p className="text-lg font-light text-gray-900">
-                  ${(item.price * item.quantity).toLocaleString()}
+                  ${formatCurrency(item.price * item.quantity)}
                 </p>
               </div>
             </div>

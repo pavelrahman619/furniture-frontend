@@ -18,6 +18,7 @@ import {
   Download,
   MessageCircle,
 } from "lucide-react";
+import { formatCurrency } from "@/lib/currency-utils";
 
 // Order interfaces
 interface OrderItem {
@@ -429,12 +430,12 @@ export default function CustomerOrderDetailsPage() {
                     <div className="flex items-center space-x-4 text-sm text-gray-600">
                       <span>Qty: {item.quantity}</span>
                       <span>•</span>
-                      <span>${item.price.toLocaleString()} each</span>
+                      <span>${formatCurrency(item.price)} each</span>
                     </div>
                   </div>
                   <div className="text-right">
                     <p className="text-lg font-light text-gray-900">
-                      ${(item.price * item.quantity).toLocaleString()}
+                      ${formatCurrency(item.price * item.quantity)}
                     </p>
                     <Link
                       href={`/products/${item.id}`}
@@ -462,7 +463,7 @@ export default function CustomerOrderDetailsPage() {
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">Subtotal:</span>
                   <span className="text-gray-900">
-                    ${order.subtotal.toLocaleString()}
+                    ${formatCurrency(order.subtotal)}
                   </span>
                 </div>
               )}
@@ -473,7 +474,7 @@ export default function CustomerOrderDetailsPage() {
                   <span className="text-gray-900">
                     {order.shippingCost === 0
                       ? "Complimentary"
-                      : `$${order.shippingCost.toLocaleString()}`}
+                      : `$${formatCurrency(order.shippingCost)}`}
                   </span>
                 </div>
               )}
@@ -482,7 +483,7 @@ export default function CustomerOrderDetailsPage() {
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">Tax:</span>
                   <span className="text-gray-900">
-                    ${order.tax.toLocaleString()}
+                    ${formatCurrency(order.tax)}
                   </span>
                 </div>
               )}
@@ -493,7 +494,7 @@ export default function CustomerOrderDetailsPage() {
                     Total:
                   </span>
                   <span className="text-xl font-light text-gray-900">
-                    ${order.total.toLocaleString()}
+                    ${formatCurrency(order.total)}
                   </span>
                 </div>
               </div>

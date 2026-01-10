@@ -9,6 +9,7 @@ import {
   AdminOrdersParams,
 } from "@/hooks/useAdminOrders";
 import { AdminOrder } from "@/services/order.service";
+import { formatCurrency } from "@/lib/currency-utils";
 
 import {
   Search, // Still needed for "No orders found" icon
@@ -292,9 +293,9 @@ export default function OrdersPage() {
                   <DollarSign className="h-4 w-4" />
                   <span>
                     Total Revenue: $
-                    {displayedOrders
-                      .reduce((sum, order) => sum + order.total, 0)
-                      .toLocaleString()}
+                    {formatCurrency(
+                      displayedOrders.reduce((sum, order) => sum + order.total, 0)
+                    )}
                   </span>
                 </div>
               </div>
@@ -608,7 +609,7 @@ export default function OrdersPage() {
                           </div> */}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                            ${order.total.toLocaleString()}
+                            ${formatCurrency(order.total)}
                           </td>
                           <td className="px-6 py-4">
                             <div className="flex items-center text-sm text-gray-900">
