@@ -8,6 +8,11 @@ import { useCart } from "@/contexts/CartContext";
 import { useRouter } from "next/navigation";
 import DeliveryService, { AddressData } from "@/services/delivery.service";
 import { formatCurrency, calculateTax } from "@/lib/currency-utils";
+import {
+  formatPhoneNumber,
+  extractPhoneDigits,
+  isValidPhoneNumber,
+} from "@/lib/phone-utils";
 
 interface ShippingInfo {
   firstName: string;
@@ -68,7 +73,7 @@ const CheckoutPage = () => {
   const [orderError, setOrderError] = useState<string | null>(null);
   const [isValidatingAddress, setIsValidatingAddress] = useState(false);
   const [validationSuccess, setValidationSuccess] = useState<string | null>(
-    null
+    null,
   );
   const [deliveryInfo, setDeliveryInfo] = useState<{
     cost: number;
@@ -149,7 +154,7 @@ const CheckoutPage = () => {
 
           const result = await DeliveryService.calculateDeliveryCost(
             fullAddress,
-            subtotal
+            subtotal,
           );
 
           setShippingEstimate({
@@ -167,7 +172,7 @@ const CheckoutPage = () => {
             error instanceof Error ? error.message : String(error);
           const isLocationError =
             errorMessage.includes(
-              "Delivery is only available in Los Angeles, CA"
+              "Delivery is only available in Los Angeles, CA",
             ) ||
             errorMessage.includes("not in LA") ||
             errorMessage.includes("Invalid address");
@@ -194,7 +199,7 @@ const CheckoutPage = () => {
         }
       }, 800); // 800ms debounce delay
     },
-    [subtotal]
+    [subtotal],
   );
 
   // Trigger shipping estimation when ZIP code changes (the key field for delivery estimation)
@@ -210,7 +215,7 @@ const CheckoutPage = () => {
     // Clear loading state when ZIP code changes
     if (shippingEstimate?.loading) {
       setShippingEstimate((prev) =>
-        prev ? { ...prev, loading: false } : null
+        prev ? { ...prev, loading: false } : null,
       );
     }
 
@@ -246,8 +251,8 @@ const CheckoutPage = () => {
       newErrors.email = "Email is invalid";
     if (!shippingInfo.phone.trim())
       newErrors.phone = "Phone number is required";
-    else if (!/^\d+$/.test(shippingInfo.phone.trim()))
-      newErrors.phone = "Phone number must contain only numbers";
+    else if (!isValidPhoneNumber(shippingInfo.phone))
+      newErrors.phone = "Phone number must be exactly 10 digits";
     if (!shippingInfo.address.trim()) newErrors.address = "Address is required";
     if (!shippingInfo.zipCode.trim())
       newErrors.zipCode = "ZIP code is required";
@@ -285,13 +290,12 @@ const CheckoutPage = () => {
           country: shippingInfo.country,
         };
 
-        const validationResult = await DeliveryService.validateAddress(
-          addressData
-        );
+        const validationResult =
+          await DeliveryService.validateAddress(addressData);
 
         if (!validationResult.within_delivery_zone) {
           setOrderError(
-            "Sorry, we don't deliver to this address yet. Please check that your address is in Los Angeles, CA."
+            "Sorry, we don't deliver to this address yet. Please check that your address is in Los Angeles, CA.",
           );
           setIsValidatingAddress(false);
           return;
@@ -356,7 +360,7 @@ const CheckoutPage = () => {
             payment_intent_id: "financing_" + Date.now(), // Unique identifier for financing orders
             order_data: orderData,
           }),
-        }
+        },
       );
 
       const result = await response.json();
@@ -372,7 +376,7 @@ const CheckoutPage = () => {
 
       setIsValidatingAddress(false);
       setValidationSuccess(
-        "Order submitted! Please complete the financing application in the new tab, then call our store."
+        "Order submitted! Please complete the financing application in the new tab, then call our store.",
       );
       router.push("/order-success?orderId=" + result.order_id);
       setIsProcessing(false);
@@ -402,13 +406,12 @@ const CheckoutPage = () => {
           country: shippingInfo.country,
         };
 
-        const validationResult = await DeliveryService.validateAddress(
-          addressData
-        );
+        const validationResult =
+          await DeliveryService.validateAddress(addressData);
 
         if (!validationResult.within_delivery_zone) {
           setOrderError(
-            "Sorry, we don't deliver to this address yet. Please check that your address is in Los Angeles, CA."
+            "Sorry, we don't deliver to this address yet. Please check that your address is in Los Angeles, CA.",
           );
           setIsValidatingAddress(false);
           return;
@@ -417,15 +420,15 @@ const CheckoutPage = () => {
         // Address is valid, show success message with distance
         setValidationSuccess(
           `✓ Address validated! Your location is ${validationResult.distance_miles.toFixed(
-            1
-          )} miles from our warehouse.`
+            1,
+          )} miles from our warehouse.`,
         );
 
         // Calculate delivery cost
         try {
           const costResult = await DeliveryService.calculateDeliveryCost(
             addressData,
-            subtotal
+            subtotal,
           );
 
           setDeliveryInfo({
@@ -442,8 +445,8 @@ const CheckoutPage = () => {
           if (costResult.is_free_delivery) {
             setValidationSuccess(
               `✓ Address validated! Your location is ${validationResult.distance_miles.toFixed(
-                1
-              )} miles from our warehouse. Free Delivery! Your order qualifies.`
+                1,
+              )} miles from our warehouse. Free Delivery! Your order qualifies.`,
             );
           }
         } catch (costError) {
@@ -457,8 +460,8 @@ const CheckoutPage = () => {
           });
           setValidationSuccess(
             `✓ Address validated! Your location is ${validationResult.distance_miles.toFixed(
-              1
-            )} miles from our warehouse.`
+              1,
+            )} miles from our warehouse.`,
           );
         }
 
@@ -687,16 +690,24 @@ const CheckoutPage = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Phone Number *
                   </label>
-                  <input
-                    type="tel"
-                    value={shippingInfo.phone}
-                    onChange={(e) =>
-                      handleShippingChange("phone", e.target.value)
-                    }
-                    className={`w-full border ${
-                      errors.phone ? "border-red-500" : "border-gray-300"
-                    } px-4 py-3 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent`}
-                  />
+                  <div className="flex">
+                    <span className="inline-flex items-center px-3 border border-r-0 border-gray-300 bg-gray-50 text-gray-700">
+                      +1
+                    </span>
+                    <input
+                      type="tel"
+                      value={formatPhoneNumber(shippingInfo.phone)}
+                      onChange={(e) => {
+                        const digits = extractPhoneDigits(e.target.value);
+                        handleShippingChange("phone", digits);
+                      }}
+                      placeholder="(123) 456-7890"
+                      maxLength={14}
+                      className={`flex-1 border ${
+                        errors.phone ? "border-red-500" : "border-gray-300"
+                      } px-4 py-3 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent`}
+                    />
+                  </div>
                   {errors.phone && (
                     <p className="text-red-500 text-sm mt-1">{errors.phone}</p>
                   )}
@@ -793,7 +804,7 @@ const CheckoutPage = () => {
             {/* Payment Section */}
             <div className="bg-white border border-gray-200 p-8">
               <h2 className="text-2xl font-light text-gray-900 tracking-wider mb-6">
-                PAYMENT
+                PAY WITH CARD
               </h2>
               <div className="bg-gray-50 border border-gray-200 p-6 rounded-lg">
                 <div className="flex items-center justify-center space-x-4 mb-4">
@@ -819,8 +830,8 @@ const CheckoutPage = () => {
                   {isValidatingAddress
                     ? "VALIDATING ADDRESS..."
                     : isProcessing
-                    ? "PROCESSING..."
-                    : "CONTINUE TO PAYMENT"}
+                      ? "PROCESSING..."
+                      : "CONTINUE TO PAYMENT"}
                 </button>
 
                 {validationSuccess && (
@@ -868,7 +879,7 @@ const CheckoutPage = () => {
                   <button
                     onClick={() =>
                       handleFinancingOption(
-                        "https://apply.snapfinance.com/snap-com/landing?paramId=qiUhkzP5F08l77TPejPjo0HePDUgEHE1nYuaQpwminqGeYcBeSJcjLxn9O+pW/tjNTjqqvnNmnmDfkyNRG90PtXmgsWitYRaSh8oUg2MEuI%3D&source=SHORT_CODE&merchantId=490294307&utm_source=ig&utm_medium=social&utm_content=link_in_bio&fbclid=PAdGRleAOl3YFleHRuA2FlbQIxMQBzcnRjBmFwcF9pZA8xMjQwMjQ1NzQyODc0MTQAAadaSbkzJoWa0ZfcQ4lor_krMUFrTRKzTqdij6-0rPWBUONC38mMEDYn6iZLPA_aem_w1p1bqiuY0f3CGRy_Q7RfA"
+                        "https://apply.snapfinance.com/snap-com/landing?paramId=qiUhkzP5F08l77TPejPjo0HePDUgEHE1nYuaQpwminqGeYcBeSJcjLxn9O+pW/tjNTjqqvnNmnmDfkyNRG90PtXmgsWitYRaSh8oUg2MEuI%3D&source=SHORT_CODE&merchantId=490294307&utm_source=ig&utm_medium=social&utm_content=link_in_bio&fbclid=PAdGRleAOl3YFleHRuA2FlbQIxMQBzcnRjBmFwcF9pZA8xMjQwMjQ1NzQyODc0MTQAAadaSbkzJoWa0ZfcQ4lor_krMUFrTRKzTqdij6-0rPWBUONC38mMEDYn6iZLPA_aem_w1p1bqiuY0f3CGRy_Q7RfA",
                       )
                     }
                     disabled={isProcessing || isValidatingAddress}
@@ -885,7 +896,7 @@ const CheckoutPage = () => {
                   <button
                     onClick={() =>
                       handleFinancingOption(
-                        "https://apply.acima.com/lease?app_id=lo&location_guid=loca-a92e49c0-280c-489a-9253-cc59ebafa41e&utm_campaign=merchant&utm_source=applyonmobile&lang=en&utm_medium=social&utm_content=link_in_bio&fbclid=PAdGRleAOl6QNleHRuA2FlbQIxMQBzcnRjBmFwcF9pZA8xMjQwMjQ1NzQyODc0MTQAAaem1Wgohp6NjrtK5krtO_Ut31cbV5Nqq62uzgQTX8wPi905ehy4eTKrmvHZvw_aem_AjrF1z_SpuyPcAPGvQpsnw"
+                        "https://apply.acima.com/lease?app_id=lo&location_guid=loca-a92e49c0-280c-489a-9253-cc59ebafa41e&utm_campaign=merchant&utm_source=applyonmobile&lang=en&utm_medium=social&utm_content=link_in_bio&fbclid=PAdGRleAOl6QNleHRuA2FlbQIxMQBzcnRjBmFwcF9pZA8xMjQwMjQ1NzQyODc0MTQAAaem1Wgohp6NjrtK5krtO_Ut31cbV5Nqq62uzgQTX8wPi905ehy4eTKrmvHZvw_aem_AjrF1z_SpuyPcAPGvQpsnw",
                       )
                     }
                     disabled={isProcessing || isValidatingAddress}
@@ -971,27 +982,31 @@ const CheckoutPage = () => {
                       isErrorState
                         ? "text-red-600 font-medium"
                         : currentShippingInfo?.isFree
-                        ? "text-green-600 font-medium"
-                        : ""
+                          ? "text-green-600 font-medium"
+                          : ""
                     }`}
                   >
                     {isErrorState
                       ? "Delivery not available for this location"
                       : deliveryInfo
-                      ? deliveryInfo.isFree
-                        ? "FREE DELIVERY!"
-                        : `$${formatCurrency(deliveryInfo.cost)}`
-                      : shippingEstimate
-                      ? shippingEstimate.loading
-                        ? "ESTIMATING..."
-                        : shippingEstimate.isFree
-                        ? `FREE DELIVERY!${
-                            shippingEstimate.isEstimate ? " (estimated)" : ""
-                          }`
-                        : `$${formatCurrency(shippingEstimate.cost)}${
-                            shippingEstimate.isEstimate ? " (estimated)" : ""
-                          }`
-                      : "Enter ZIP code for shipping estimate"}
+                        ? deliveryInfo.isFree
+                          ? "FREE DELIVERY!"
+                          : `$${formatCurrency(deliveryInfo.cost)}`
+                        : shippingEstimate
+                          ? shippingEstimate.loading
+                            ? "ESTIMATING..."
+                            : shippingEstimate.isFree
+                              ? `FREE DELIVERY!${
+                                  shippingEstimate.isEstimate
+                                    ? " (estimated)"
+                                    : ""
+                                }`
+                              : `$${formatCurrency(shippingEstimate.cost)}${
+                                  shippingEstimate.isEstimate
+                                    ? " (estimated)"
+                                    : ""
+                                }`
+                          : "Enter ZIP code for shipping estimate"}
                   </span>
                 </div>
                 <div className="flex justify-between text-sm">

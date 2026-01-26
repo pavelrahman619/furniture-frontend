@@ -3,6 +3,7 @@
 import { useState, FormEvent } from "react";
 import { useToast } from "@/contexts/ToastContext";
 import ContactService from "@/services/contact.service";
+import { formatPhoneNumber, extractPhoneDigits, isValidPhoneNumber } from "@/lib/phone-utils";
 
 export default function ContactUs() {
   const { success, error } = useToast();
@@ -17,6 +18,13 @@ export default function ContactUs() {
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    
+    // Validate phone number
+    if (!isValidPhoneNumber(formData.phone)) {
+      error("Invalid Phone Number", "Phone number must be exactly 10 digits");
+      return;
+    }
+    
     setIsSubmitting(true);
 
     try {
@@ -48,7 +56,13 @@ export default function ContactUs() {
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    // For phone field, extract only digits and limit to 10
+    if (name === "phone") {
+      const digits = extractPhoneDigits(value);
+      setFormData((prev) => ({ ...prev, [name]: digits }));
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    }
   };
 
   return (
@@ -167,15 +181,21 @@ export default function ContactUs() {
             </div>
 
             <div>
-              <input
-                type="tel"
-                name="phone"
-                value={formData.phone}
-                onChange={handleChange}
-                placeholder="Enter your phone number"
-                required
-                className="w-full px-4 py-3 border border-gray-300 rounded-md bg-gray-50 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent"
-              />
+              <div className="flex">
+                <span className="inline-flex items-center px-3 border border-r-0 border-gray-300 bg-gray-50 text-gray-700 rounded-l-md">
+                  +1
+                </span>
+                <input
+                  type="tel"
+                  name="phone"
+                  value={formatPhoneNumber(formData.phone)}
+                  onChange={handleChange}
+                  placeholder="(123) 456-7890"
+                  maxLength={14}
+                  required
+                  className="flex-1 px-4 py-3 border border-gray-300 rounded-r-md bg-gray-50 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent"
+                />
+              </div>
             </div>
 
             <div>
